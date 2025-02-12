@@ -49,3 +49,4 @@ export default tseslint.config({
 })
 ```
 # typing-game
+# typing-game
