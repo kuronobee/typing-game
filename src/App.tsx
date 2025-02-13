@@ -234,25 +234,9 @@ const App: React.FC = () => {
           totalEXP={totalEXP}
           onSubmit={handlePlayerAttack}
           currentQuestion={currentQuestion}
+          expGain={expGain}
         />
 
-        <div className="relative mx-4 mt-2 flex items-center">
-          <span className="text-white font-bold mr-2">Lv. {playerLevel}</span>
-          <div className="w-full h-4 bg-gray-700 rounded-full relative">
-            <div
-              className="h-full bg-yellow-500 rounded-full transition-all"
-              style={{ width: `${expProgress}%` }}
-            ></div>
-            {expGain !== null && (
-              <div className="absolute inset-0 flex justify-center items-center text-white font-bold text-sm animate-pulse">
-                +{expGain} EXP
-              </div>
-            )}
-          </div>
-        </div>
-        <p className="text-center text-white mt-1 text-sm">
-          次のレベルまで {levelUpThreshold - playerEXP} EXP
-        </p>
       </div>
     </div>
   );
