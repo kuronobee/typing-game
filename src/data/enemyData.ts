@@ -57,7 +57,7 @@ const enemies: EnemyType[] = [
     exp: 120,
     word: "ogre",
     image: new URL("../assets/enemies/great_ogre.png", import.meta.url).toString(),
-    scale: 1.4,
+    scale: 1.8,
     // 独自問題の例：multipleChoice
     originalQuestion: {
       id: "greatOgreQ1",
@@ -77,7 +77,7 @@ const enemies: EnemyType[] = [
     word: "golem",
     // 実際のファイル名に合わせて変更してください
     image: new URL("../assets/enemies/golem.png", import.meta.url).toString(),
-    scale: 1.2,
+    scale: 1.8,
     originalQuestion: {
       id: "golemQ1",
       type: "multipleChoice",
@@ -95,7 +95,7 @@ const enemies: EnemyType[] = [
     exp: 300,
     word: "dragon",
     image: new URL("../assets/enemies/dragon.png", import.meta.url).toString(),
-    scale: 1.5,
+    scale: 2.0,
     // 例：ドラゴン独自の multipleChoice 問題
     originalQuestion: {
       id: "dragon1",
@@ -115,7 +115,7 @@ const enemies: EnemyType[] = [
     word: "magma",
     // 実際に用意しているファイル名にあわせて変更してください
     image: new URL("../assets/enemies/magma_golem.png", import.meta.url).toString(),
-    scale: 1.4,
+    scale: 1.8,
     originalQuestion: {
       id: "magmaGolemQ1",
       type: "multipleChoice",

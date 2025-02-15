@@ -29,12 +29,14 @@ const App: React.FC = () => {
   // 問題コンテナの表示状態（true: 表示、false: 非表示）
   const [showQuestion, setShowQuestion] = useState(true);
   // 敵が倒された後、次の敵出現待ちの場合の状態
-  const [readyForNextEnemy, setReadyForNextEnemy] = useState(true);
+  const [readyForNextEnemy, setReadyForNextEnemy] = useState(false);
+  const [battlePaused, setBattlePaused] = useState(false); // 戦闘停止の状態
 
   const playerAttackPower = 10 + playerLevel * 2;
   const levelUpThreshold = playerLevel * 100;
   const expProgress = (playerEXP / levelUpThreshold) * 100;
-
+  
+  const inputRef = useRef<HTMLInputElement>(null);
   // タイマー管理用の ref
   const questionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -105,7 +107,7 @@ const App: React.FC = () => {
       if (newHP <= 0) {
         setMessage(`${monsterName} を倒した。${monsterExp} ポイントの経験値を得た。次は「次の敵に進む」ボタンを押せ。`);
         gainEXP(monsterExp);
-        setReadyForNextEnemy(true);
+        handleEnemyDefeat();
       } else {
           updateQuestion();
           setShowQuestion(true);
@@ -167,7 +169,35 @@ const App: React.FC = () => {
     setMessage(`${newEnemy.name} (Lv.${newEnemy.level}) が現れた！`);
     setWrongAttempts(0);
     setShowQuestion(true);
+    setReadyForNextEnemy(false);
+    setBattlePaused(false); // 戦闘を再開
+
+    setTimeout(() => {
+      inputRef.current?.focus();  // ボタンが押されたらフォーカスを当てる
+    }, 100);
   };
+
+  // 敵が倒れたときの処理
+  const handleEnemyDefeat = () => {
+    setMessage("敵を倒した！次に進むにはEnterキーを押すかボタンをクリックして下さい");
+    setReadyForNextEnemy(true);
+  }
+
+  // Enterキーで次の敵にす数
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key == "Enter" && battlePaused && readyForNextEnemy) {
+        spawnNewEnemy();
+      }
+      setBattlePaused(readyForNextEnemy); 
+    };
+    
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    }
+  }, [readyForNextEnemy, battlePaused]);  // readyForNextEnemyの変更を監視
 
   // コンポーネントアンマウント時にタイマーをクリア
   useEffect(() => {
@@ -231,6 +261,7 @@ const App: React.FC = () => {
           onSubmit={handlePlayerAttack}
           currentQuestion={currentQuestion}
           expGain={expGain}
+          inputRef={inputRef}
         />
 
       </div>

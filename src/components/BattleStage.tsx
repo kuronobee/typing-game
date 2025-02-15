@@ -93,7 +93,7 @@ const BattleStage: React.FC<BattleStageProps> = ({
       <div
         className="absolute z-10 transition-all duration-1000 ease-out"
         style={{
-          bottom: `calc(30px + ${positionOffset.y}px)`,
+          bottom: `calc(60px + ${positionOffset.y}px)`,
           left: `calc(50% + ${positionOffset.x}px)`,
           transform: "translateX(-50%)",
           opacity: 1,

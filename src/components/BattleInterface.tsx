@@ -16,6 +16,7 @@ interface BattleInterfaceProps {
   currentQuestion: Question | null;
   // 経験値バー用のプロパティ
   expGain?: number | null;
+  inputRef: React.RefObject<HTMLInputElement>;
 }
 
 const BattleInterface: React.FC<BattleInterfaceProps> = ({
@@ -30,6 +31,7 @@ const BattleInterface: React.FC<BattleInterfaceProps> = ({
   onSubmit,
   currentQuestion,
   expGain,
+  inputRef,
 }) => {
   const [userInput, setUserInput] = useState("");
 
@@ -58,6 +60,7 @@ const BattleInterface: React.FC<BattleInterfaceProps> = ({
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
           placeholder="正しい解答を入力..."
+          ref={inputRef}
         />
       </div>
       {/* プレイヤー情報 */}
