@@ -112,9 +112,7 @@ const BattleStage: React.FC<BattleStageProps> = ({
           key={currentQuestion.id}
           className={`absolute top-10 left-1/2 transform -translate-x-1/2 z-30 
             bg-black/50 border-white border-2 text-white px-4 py-2 rounded
-            transition-all duration-500 ease-in-out ${
-              showQuestion ? "opacity-100 scale-100" : "opacity-0"
-            }`}
+            `}
         >
           <p className="font-bold">問題: {currentQuestion.prompt}</p>
           <p className="mt-2">

@@ -107,13 +107,9 @@ const App: React.FC = () => {
         gainEXP(monsterExp);
         setReadyForNextEnemy(true);
       } else {
-        if (questionTimeoutRef.current) {
-          clearTimeout(questionTimeoutRef.current);
-        }
-        questionTimeoutRef.current = setTimeout(() => {
           updateQuestion();
           setShowQuestion(true);
-        }, 1000);
+
       }
     } else {
       setWrongAttempts((prev) => prev + 1);

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Question } from "../data/questions";
 import ExperienceBar from "./ExperienceBar";
+import PlayerStatus from "./PlayerStatus";
 
 interface BattleInterfaceProps {
   playerHP: number;
@@ -60,30 +61,12 @@ const BattleInterface: React.FC<BattleInterfaceProps> = ({
         />
       </div>
       {/* プレイヤー情報 */}
-      <div className="mb-2 flex justify-between items-center">
-        <div className="w-1/2">
-          <p className="text-sm">
-            HP: {playerHP} / {maxHP}
-          </p>
-          <div className="w-full h-3 bg-gray-700 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-green-500 transition-all"
-              style={{ width: `${(playerHP / maxHP) * 100}%` }}
-            ></div>
-          </div>
-        </div>
-        <div className="w-1/2">
-          <p className="text-sm">
-            MP: {playerMP} / {maxMP}
-          </p>
-          <div className="w-full h-3 bg-gray-700 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-blue-500 transition-all"
-              style={{ width: `${(playerMP / maxMP) * 100}%` }}
-            ></div>
-          </div>
-        </div>
-      </div>
+      <PlayerStatus
+        playerHP={playerHP}
+        maxHP={maxHP}
+        playerMP={playerMP}
+        maxMP={maxMP}
+      />
       {/* 経験値バーと次のレベルまでの表示 */}
       <ExperienceBar
         playerLevel={playerLevel}
