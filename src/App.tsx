@@ -15,16 +15,18 @@ import {
   ENEMY_HIT_ANIMATION_DURATION,
 } from "./data/constants";
 
+type MessageType = {
+  text: string;
+  sender: "enemy" | "player" | "system";
+}
+
 const App: React.FC = () => {
   // プレイヤーはPlayerクラスのインスタンスで管理
   const [player, setPlayer] = useState<PlayerModel>(PlayerModel.createDefault());
 
-  // 敵については、enemyDataからEnemyModelのインスタンスを生成する
-  const [currentEnemy, setCurrentEnemy] = useState<EnemyModel>(
-    new EnemyModel(enemiesData[0])
-  );
-  // その他の状態はこれまで通り
-  const [message, setMessage] = useState("問題に正しく回答して敵を倒せ！");
+  // 敵については、初期状態をnullにしておく
+  const [currentEnemy, setCurrentEnemy] = useState<EnemyModel | null>(null);
+  const [message, setMessage] = useState<MessageType | null>({text: "問題に正しく回答して敵を倒せ！", sender: "system"});
   const [expGain, setExpGain] = useState<number | null>(null);
   const [levelUpMessage, setLevelUpMessage] = useState("");
   const [showExpBar, setShowExpBar] = useState(false);
@@ -39,6 +41,9 @@ const App: React.FC = () => {
   const questionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
+    if (!currentEnemy) {
+      spawnNewEnemy();
+    }
     if (currentEnemy && currentEnemy.currentHP > 0) {
       if (currentEnemy.originalQuestion) {
         setCurrentQuestion(currentEnemy.originalQuestion);
@@ -56,10 +61,10 @@ const App: React.FC = () => {
   const handleEnemyAttack = useCallback(() => {
     if (currentEnemy.currentHP <= 0) return;
     const damage = Math.max(1, currentEnemy.attackPower - Math.floor(Math.random() * 3));
-    // 敵の内部処理として takeDamage を使う
+    // プレイヤーの内部処理として takeDamage を使う
     setPlayer(prev => prev.takeDamage(damage));
     // ※ EnemyModel は内部状態を持つため、必要に応じてsetStateなどで再レンダリングさせる設計にするか注意が必要です
-    setMessage(`${currentEnemy.name} の攻撃！ ${damage} のダメージ！`);
+    setMessage({text: `${currentEnemy.name} の攻撃！ ${damage} のダメージ！`, sender: "enemy"});
   }, [currentEnemy]);
 
   const updateQuestion = () => {
@@ -79,14 +84,14 @@ const App: React.FC = () => {
       const damage = Math.max(5, player.attack - currentEnemy.defense);
       // 敵モデルの内部処理でダメージを適用
       currentEnemy.takeDamage(damage);
-      setMessage(`正解！${damage} のダメージを与えた！`);
+      setMessage({text: `正解！${damage} のダメージを与えた！`, sender: "player"});
 
       setTimeout(() => {
         setEnemyHit(false);
       }, ENEMY_HIT_ANIMATION_DURATION);
 
       if (currentEnemy.currentHP <= 0) {
-        setMessage(`${monsterName} を倒した。${monsterExp} ポイントの経験値を得た。次は「次の敵に進む」ボタンを押せ。`);
+        setMessage({text: `${monsterName} を倒した。${monsterExp} ポイントの経験値を得た。次は「次の敵に進む」ボタンを押せ。`, sender: "system"});
         // プレイヤーの経験値加算処理（Player.addExp を利用）
         setPlayer(prev => prev.addExp(monsterExp));
         handleEnemyDefeat();
@@ -96,7 +101,7 @@ const App: React.FC = () => {
       }
     } else {
       setWrongAttempts(prev => prev + 1);
-      setMessage("間違い！正しい解答を入力してください！");
+      setMessage({text: "間違い！正しい解答を入力してください！", sender: "system"});
     }
   };
 
@@ -133,7 +138,7 @@ const App: React.FC = () => {
         commonQuestions[Math.floor(Math.random() * commonQuestions.length)]
       );
     }
-    setMessage(`${newEnemyData.name} (Lv.${newEnemyData.level}) が現れた！`);
+    setMessage({text: `${newEnemyData.name} (Lv.${newEnemyData.level}) が現れた！`, sender: "system"});
     setWrongAttempts(0);
     setShowQuestion(true);
     setReadyForNextEnemy(false);
@@ -145,7 +150,7 @@ const App: React.FC = () => {
   };
 
   const handleEnemyDefeat = () => {
-    setMessage("敵を倒した！次に進むにはEnterキーを押すかボタンをクリックして下さい");
+    setMessage({text: "敵を倒した！次に進むにはEnterキーを押すかボタンをクリックして下さい", sender: "system"});
     setReadyForNextEnemy(true);
   };
 
@@ -172,7 +177,10 @@ const App: React.FC = () => {
   if (player.hp <= 0) {
     return <GameOver totalEXP={player.totalExp} />;
   }
-
+  if (!currentEnemy) {
+    return <div>Loading...</div>;
+  }
+  
   return (
     <div className="w-full h-screen flex flex-col">
       <div className="relative flex-1">

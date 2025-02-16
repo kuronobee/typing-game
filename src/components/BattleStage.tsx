@@ -11,12 +11,16 @@ interface BattleStageProps {
   currentEnemy: EnemyModel;  // Enemy モデルのインスタンス
   player: Player;
   onEnemyAttack: () => void;
-  message: string;
+  message: MessageType | null;
   currentQuestion: Question | null;
   wrongAttempts: number;
   enemyHit: boolean;
   showQuestion: boolean;
 }
+type MessageType = {
+  text: string;
+  sender: "enemy" | "player" | "system";
+};
 
 const BattleStage: React.FC<BattleStageProps> = ({
   currentEnemy,
@@ -28,15 +32,19 @@ const BattleStage: React.FC<BattleStageProps> = ({
   enemyHit,
   showQuestion,
 }) => {
-  const [visibleMessage, setVisibleMessage] = useState("");
+  const [visibleMessage, setVisibleMessage] = useState<MessageType | null>(null);
   const [attackProgress, setAttackProgress] = useState(0); // 0～1 の割合
   const attackStartTimeRef = useRef<number>(Date.now());
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
+  // メッセージ表示処理
   useEffect(() => {
     if (message) {
       setVisibleMessage(message);
-      const timer = setTimeout(() => setVisibleMessage(""), MESSAGE_DISPLAY_DURATION);
-      return () => clearTimeout(timer);
+      if (timerRef.current) clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(() => {
+        setVisibleMessage(null);
+      }, MESSAGE_DISPLAY_DURATION);
     }
   }, [message]);
 
@@ -154,7 +162,18 @@ const BattleStage: React.FC<BattleStageProps> = ({
             visibleMessage ? "opacity-100 scale-100" : "opacity-0 scale-90 pointer-events-none"
           }`}
       >
-        <p>{visibleMessage}</p>
+        {visibleMessage && (
+          <p
+            className={
+            visibleMessage.sender === "enemy"
+            ? "text-red-200" : 
+              (visibleMessage.sender === "player" ? "text-blue-200" : "text-white")
+            }
+          style={{ whiteSpace: "pre-wrap" }}
+          >
+            {visibleMessage.text}
+          </p>
+        )}
       </div>
     </div>
   );

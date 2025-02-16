@@ -33,7 +33,7 @@ const enemies: EnemyType[] = [
   },
   {
     name: "ゴブリン",
-    level: 2,
+    level: 1,
     maxHP: 30,
     attackPower: 7,
     defense: 3,
