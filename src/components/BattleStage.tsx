@@ -29,21 +29,8 @@ const BattleStage: React.FC<BattleStageProps> = ({
   enemyHit,
   showQuestion,
 }) => {
-  const [visibleMessage, setVisibleMessage] = useState<MessageType | null>(null);
   const [attackProgress, setAttackProgress] = useState(0); // 0～1 の割合
   const attackStartTimeRef = useRef<number>(Date.now());
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-
-  // // メッセージ表示処理
-  // useEffect(() => {
-  //   if (message) {
-  //     setVisibleMessage(message);
-  //     if (timerRef.current) clearTimeout(timerRef.current);
-  //     timerRef.current = setTimeout(() => {
-  //       setVisibleMessage(null);
-  //     }, MESSAGE_DISPLAY_DURATION);
-  //   }
-  // }, [message]);
 
   const positionOffset = currentEnemy.positionOffset || { x: 0, y: 0 };
 

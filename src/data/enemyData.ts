@@ -1,23 +1,9 @@
 // src/data/enemyData.ts
 import { Question } from "./questions";
+import {IEnemyData} from "../models/EnemyModel"
 
-export interface EnemyType {
-  name: string;
-  level: number;
-  maxHP: number;
-  currentHP?: number;
-  attackPower: number;
-  defense: number;
-  exp: number;
-  word: string;
-  image: string;
-  positionOffset?: { x: number; y: number };
-  scale?: number;
-  speed: number; // ← 新規プロパティ
-  originalQuestion?: Question;
-}
 
-const enemies: EnemyType[] = [
+const enemies: IEnemyData[] = [
   {
     name: "スライム",
     level: 1,
@@ -48,6 +34,19 @@ const enemies: EnemyType[] = [
       prompt: "小さな怪物",
       answer: "goblin",
     },
+    specialAttacks: [
+      {
+        name: "fire breath",
+        probability: 1,
+        damage: 30,
+        perform: (enemy, player) => {
+          console.log(`${enemy.name} uses Fire Breath!`);
+          // 例として、プレイヤーに30のダメージを与える
+          // ここはプレイヤーのダメージ処理に合わせて実装してください
+          
+        },
+      },
+    ]
   },
   {
     name: "グレートオーガ",
@@ -105,6 +104,28 @@ const enemies: EnemyType[] = [
       answer: "dragon",
       choices: ["dragon", "slime", "goblin"],
     },
+    // 30% の確率で火炎攻撃、20% の確率で自己回復
+    specialAttacks: [
+      {
+        name: "fire breath",
+        probability: 0.3,
+        perform: (enemy, player) => {
+          console.log(`${enemy.name} uses Fire Breath!`);
+          // 例として、プレイヤーに30のダメージを与える
+          // ここはプレイヤーのダメージ処理に合わせて実装してください
+          // player.takeDamage(30);
+        },
+      },
+      {
+        name: "self-heal",
+        probability: 0.2,
+        perform: (enemy, player) => {
+          console.log(`${enemy.name} heals itself!`);
+          // 自己回復：現在HPを20回復。ただし、maxHP を超えないように
+          enemy.currentHP = Math.min(enemy.currentHP + 20, enemy.maxHP);
+        },
+      },
+    ],
   },
   {
     name: "マグマゴーレム",

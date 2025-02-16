@@ -1,4 +1,5 @@
 // src/models/EnemyModel.ts
+import {Player} from "./Player";
 
 export interface IEnemyData {
   name: string;
@@ -13,6 +14,17 @@ export interface IEnemyData {
   positionOffset?: { x: number; y: number };
   scale?: number;
   originalQuestion?: any; // Question型などに置き換えてください
+  specialAttacks?: SpecialAttack[];
+}
+
+export interface SpecialAttack {
+  name: string;
+  // probability: 0～1の数値。複数ある場合は合計が1未満なら通常攻撃も行われる
+  probability: number;
+  // damage: 攻撃によるダメージ（必ずしもダメージを与えない特殊攻撃もある
+  damage?: number;
+  // performは特殊攻撃実行時の追加効果を行うための関数
+  perform: (enemy: Enemy, player: Player) => void;
 }
 
 export class Enemy {
@@ -29,6 +41,7 @@ export class Enemy {
   positionOffset?: { x: number; y: number };
   scale?: number;
   originalQuestion?: any;
+  specialAttacks: SpecialAttack[];
 
   constructor(data: IEnemyData) {
     this.name = data.name;
@@ -45,6 +58,7 @@ export class Enemy {
     this.positionOffset = data.positionOffset;
     this.scale = data.scale;
     this.originalQuestion = data.originalQuestion;
+    this.specialAttacks = data.specialAttacks || [];
   }
 
   // ダメージを受ける処理（内部ロジック）
@@ -53,10 +67,27 @@ export class Enemy {
   }
 
   // 攻撃を行う（例としてランダムな値を用いたシンプルなダメージ計算）
-  performAttack(): number {
+  performAttack(player: Player): {damage: number; special?: string} {
+    // 複数の特殊攻撃が設定されている場合、ランダムに選んで発動する
+    if (this.specialAttacks.length > 0) {
+      const rand = Math.random(); // 0〜1 の乱数
+      let cumulative = 0;
+      for (const attack of this.specialAttacks) {
+        cumulative += attack.probability;
+        if (rand < cumulative) {
+          // 特殊攻撃発動
+          if (attack.perform) {
+          attack.perform(this, player);
+          }
+          // damage プロパティが設定されていればそのダメージを返す
+          const specialDamage = attack.damage || 0;
+          return { damage: specialDamage, special: attack.name };
+        }
+      }
+    }
+    // 特殊攻撃が発動しなかった場合、通常攻撃
     const damage = Math.max(this.attackPower - Math.floor(Math.random() * 3), 1);
-    return damage;
+    return { damage };  
   }
-
   // ここにさらに、特殊攻撃や状態異常などのメソッドを追加可能
 }
