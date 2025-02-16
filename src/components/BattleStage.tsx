@@ -2,14 +2,14 @@
 import React, { useEffect, useState, useRef } from "react";
 import bg from "../assets/bg/background.png";
 import Enemy from "./Enemy";
-import { EnemyType } from "../data/enemyData";
-import { Question } from "../data/questions";
 import { MAX_EFFECTIVE_SPEED, MS_IN_SECOND, TICK_INTERVAL, MESSAGE_DISPLAY_DURATION } from "../data/constants";
+import { Question } from "../data/questions";
 import { Player } from "../models/Player";
+import { Enemy as EnemyModel } from "../models/EnemyModel";
 
 interface BattleStageProps {
-  currentEnemy: EnemyType;
-  player: Player; // ここでプレイヤー全体を受け取る
+  currentEnemy: EnemyModel;  // Enemy モデルのインスタンス
+  player: Player;
   onEnemyAttack: () => void;
   message: string;
   currentQuestion: Question | null;
@@ -42,7 +42,6 @@ const BattleStage: React.FC<BattleStageProps> = ({
 
   const positionOffset = currentEnemy.positionOffset || { x: 0, y: 0 };
 
-  // プレイヤーの HP で生死チェック、攻撃タイマーの計算に player.speed を使用
   useEffect(() => {
     if (player.hp <= 0 || currentEnemy.currentHP <= 0) return;
 
@@ -121,14 +120,10 @@ const BattleStage: React.FC<BattleStageProps> = ({
           opacity: 1,
         }}
       >
-        <Enemy
-          {...currentEnemy}
-          enemyHit={enemyHit}
-          enemyDefeated={currentEnemy.currentHP <= 0}
-        />
+        <Enemy enemy={currentEnemy} enemyHit={enemyHit} enemyDefeated={currentEnemy.currentHP <= 0} />
       </div>
 
-      {/* 攻撃インジケータ（問題文コンテナ上部に配置） */}
+      {/* 攻撃インジケータ */}
       {currentQuestion && currentEnemy.currentHP > 0 && (
         <div className="absolute top-2 left-1/2 transform -translate-x-1/2 z-30 w-64">
           <div className="w-full h-2 bg-gray-300 rounded">

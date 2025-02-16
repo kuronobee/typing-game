@@ -3,9 +3,10 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import BattleStage from "./components/BattleStage";
 import BattleInterface from "./components/BattleInterface";
 import GameOver from "./components/GameOver";
-import enemies, { EnemyType } from "./data/enemyData";
+import enemiesData, { EnemyType } from "./data/enemyData"; // 既存の生データ
 import { commonQuestions, Question } from "./data/questions";
 import { Player as PlayerModel } from "./models/Player";
+import { Enemy as EnemyModel } from "./models/EnemyModel"; // 新しく作成したEnemyクラス
 import {
   LEVEL_UP_MESSAGE_DURATION,
   EXP_GAIN_DISPLAY_DURATION,
@@ -15,23 +16,20 @@ import {
 } from "./data/constants";
 
 const App: React.FC = () => {
-  // プレイヤーのパラメータは Player クラスのインスタンスで管理
+  // プレイヤーはPlayerクラスのインスタンスで管理
   const [player, setPlayer] = useState<PlayerModel>(PlayerModel.createDefault());
 
-  // 敵やその他の状態
-  const [currentEnemy, setCurrentEnemy] = useState<EnemyType>(
-    { ...enemies[0], currentHP: enemies[0].maxHP }
+  // 敵については、enemyDataからEnemyModelのインスタンスを生成する
+  const [currentEnemy, setCurrentEnemy] = useState<EnemyModel>(
+    new EnemyModel(enemiesData[0])
   );
+  // その他の状態はこれまで通り
   const [message, setMessage] = useState("問題に正しく回答して敵を倒せ！");
   const [expGain, setExpGain] = useState<number | null>(null);
   const [levelUpMessage, setLevelUpMessage] = useState("");
   const [showExpBar, setShowExpBar] = useState(false);
-
-  // 出題関連の状態
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
   const [wrongAttempts, setWrongAttempts] = useState(0);
-
-  // UI 状態
   const [enemyHit, setEnemyHit] = useState(false);
   const [showQuestion, setShowQuestion] = useState(true);
   const [readyForNextEnemy, setReadyForNextEnemy] = useState(false);
@@ -40,7 +38,6 @@ const App: React.FC = () => {
   const inputRef = useRef<HTMLInputElement>(null);
   const questionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // 敵が更新された際に新しい問題を設定
   useEffect(() => {
     if (currentEnemy && currentEnemy.currentHP > 0) {
       if (currentEnemy.originalQuestion) {
@@ -56,11 +53,12 @@ const App: React.FC = () => {
     }
   }, [currentEnemy]);
 
-  // handleEnemyAttack を useCallback でメモ化
   const handleEnemyAttack = useCallback(() => {
     if (currentEnemy.currentHP <= 0) return;
     const damage = Math.max(1, currentEnemy.attackPower - Math.floor(Math.random() * 3));
+    // 敵の内部処理として takeDamage を使う
     setPlayer(prev => prev.takeDamage(damage));
+    // ※ EnemyModel は内部状態を持つため、必要に応じてsetStateなどで再レンダリングさせる設計にするか注意が必要です
     setMessage(`${currentEnemy.name} の攻撃！ ${damage} のダメージ！`);
   }, [currentEnemy]);
 
@@ -71,32 +69,26 @@ const App: React.FC = () => {
     setWrongAttempts(0);
   };
 
-  // プレイヤー攻撃：正解なら敵にダメージを与え、経験値を加算
   const handlePlayerAttack = (input: string) => {
     if (readyForNextEnemy || !currentQuestion) return;
     if (input.toLowerCase() === currentQuestion.answer.toLowerCase()) {
       setEnemyHit(true);
       setShowQuestion(false);
-
       const monsterName = currentEnemy.name;
       const monsterExp = currentEnemy.exp;
       const damage = Math.max(5, player.attack - currentEnemy.defense);
-      const newEnemyHP = currentEnemy.currentHP - damage;
-
-      setCurrentEnemy(prev => ({
-        ...prev,
-        currentHP: Math.max(0, newEnemyHP),
-      }));
-
+      // 敵モデルの内部処理でダメージを適用
+      currentEnemy.takeDamage(damage);
       setMessage(`正解！${damage} のダメージを与えた！`);
 
       setTimeout(() => {
         setEnemyHit(false);
       }, ENEMY_HIT_ANIMATION_DURATION);
 
-      if (newEnemyHP <= 0) {
+      if (currentEnemy.currentHP <= 0) {
         setMessage(`${monsterName} を倒した。${monsterExp} ポイントの経験値を得た。次は「次の敵に進む」ボタンを押せ。`);
-        gainEXP(monsterExp);
+        // プレイヤーの経験値加算処理（Player.addExp を利用）
+        setPlayer(prev => prev.addExp(monsterExp));
         handleEnemyDefeat();
       } else {
         updateQuestion();
@@ -108,7 +100,6 @@ const App: React.FC = () => {
     }
   };
 
-  // 経験値獲得処理
   const gainEXP = (amount: number) => {
     setExpGain(amount);
     setTimeout(() => setExpGain(null), EXP_GAIN_DISPLAY_DURATION);
@@ -131,17 +122,18 @@ const App: React.FC = () => {
   };
 
   const spawnNewEnemy = () => {
-    const possibleEnemies = enemies.filter(e => e.level <= player.level);
-    const newEnemy = possibleEnemies[Math.floor(Math.random() * possibleEnemies.length)];
-    setCurrentEnemy({ ...newEnemy, currentHP: newEnemy.maxHP });
-    if (newEnemy.originalQuestion) {
-      setCurrentQuestion(newEnemy.originalQuestion);
+    // ここは既存の敵データから新しい EnemyModel インスタンスを生成します
+    const possibleEnemies = enemiesData.filter(e => e.level <= player.level);
+    const newEnemyData = possibleEnemies[Math.floor(Math.random() * possibleEnemies.length)];
+    setCurrentEnemy(new EnemyModel(newEnemyData));
+    if (newEnemyData.originalQuestion) {
+      setCurrentQuestion(newEnemyData.originalQuestion);
     } else {
       setCurrentQuestion(
         commonQuestions[Math.floor(Math.random() * commonQuestions.length)]
       );
     }
-    setMessage(`${newEnemy.name} (Lv.${newEnemy.level}) が現れた！`);
+    setMessage(`${newEnemyData.name} (Lv.${newEnemyData.level}) が現れた！`);
     setWrongAttempts(0);
     setShowQuestion(true);
     setReadyForNextEnemy(false);
@@ -183,7 +175,6 @@ const App: React.FC = () => {
 
   return (
     <div className="w-full h-screen flex flex-col">
-      {/* 上半分：バトルステージ */}
       <div className="relative flex-1">
         <BattleStage
           currentEnemy={currentEnemy}
@@ -193,8 +184,8 @@ const App: React.FC = () => {
           currentQuestion={currentQuestion}
           wrongAttempts={wrongAttempts}
           enemyHit={enemyHit}
-          showQuestion={showQuestion}        
-          />
+          showQuestion={showQuestion}
+        />
         {levelUpMessage && (
           <div className="absolute top-32 left-1/2 transform -translate-x-1/2 z-50 bg-black bg-opacity-50 text-white px-6 py-4 rounded-lg text-center shadow-xl border-2 border-white">
             {levelUpMessage}
@@ -214,10 +205,9 @@ const App: React.FC = () => {
           </div>
         )}
       </div>
-      {/* 下半分：プレイヤーのステータス＆入力 */}
       <div className="flex-1 bg-gray-900">
         <BattleInterface
-          player={player}
+          player={player} // playerオブジェクトを渡す
           onSubmit={handlePlayerAttack}
           currentQuestion={currentQuestion}
           expGain={expGain}

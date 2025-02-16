@@ -28,7 +28,7 @@ const enemies: EnemyType[] = [
     word: "slime",
     image: new URL("../assets/enemies/slime.png", import.meta.url).toString(),
     scale: 0.8,
-    speed: 13, // 例: 低速
+    speed: 200, // 例: 低速
     // originalQuestion はなし
   },
   {
