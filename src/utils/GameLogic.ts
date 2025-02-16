@@ -36,4 +36,14 @@ const getHint = (answer: string, wrongAttempts: number): string => {
     // Unicode THIN SPACE (U+2009) を区切り文字として使用
     return hintArray.join('\u2009');
   };
-    
+
+    // ファイアダメージ計算関数
+    export function calculateFireDamage(maxDamage: number, magicDefense: number): number {
+        const baseDamage = maxDamage * Math.exp(-magicDefense / 100);
+
+        // ランダム要素: ±10% の範囲で変動
+        const randomFactor = 0.9 + Math.random() * 0.2; // 0.9 〜 1.1 のランダム値
+        const finalDamage = baseDamage * randomFactor;
+
+        return Math.max(1, Math.round(finalDamage)); // 最小1ダメージ保証
+    };

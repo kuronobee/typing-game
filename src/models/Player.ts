@@ -6,6 +6,7 @@ export interface IPlayer {
   mp: number;
   maxMP: number;
   defense: number;
+  magicDefense: number;
   level: number;
   exp: number;
   totalExp: number;
@@ -19,6 +20,7 @@ export class Player implements IPlayer {
   mp: number;
   maxMP: number;
   defense: number;
+  magicDefense: number;
   level: number;
   exp: number;
   totalExp: number;
@@ -31,6 +33,7 @@ export class Player implements IPlayer {
     mp: number,
     maxMP: number,
     defense: number,
+    magicDefense: number,
     level: number,
     exp: number,
     totalExp: number,
@@ -42,6 +45,7 @@ export class Player implements IPlayer {
     this.mp = mp;
     this.maxMP = maxMP;
     this.defense = defense;
+    this.magicDefense = magicDefense;
     this.level = level;
     this.exp = exp;
     this.totalExp = totalExp;
@@ -52,7 +56,7 @@ export class Player implements IPlayer {
   // デフォルトのプレイヤー状態を返す
   static createDefault(): Player {
     // 例: HP=100, MP=50, defense=5, level=1, exp=0, speed=10, attack=10
-    return new Player(100, 100, 50, 50, 5, 1, 0, 0, 10, 10);
+    return new Player(100, 100, 50, 50, 5, 5, 1, 0, 0, 10, 10);
   }
 
   // 現在のレベルに応じたレベルアップに必要な経験値の閾値
@@ -70,7 +74,10 @@ export class Player implements IPlayer {
     let newMaxMP = this.maxMP;
     let newHp = this.hp;
     let newMp = this.mp;
+    let newDefense = this.defense;
+    let newMagicDefense = this.magicDefense;
     let newAttack = this.attack;
+    let newSpeed = this.speed;
     // 閾値は this.levelUpThreshold を使う
     let threshold = this.levelUpThreshold;
 
@@ -79,6 +86,9 @@ export class Player implements IPlayer {
       newLevel++;
       newMaxHP += 10;  // 最大HP 増加
       newMaxMP += 5;   // 最大MP 増加
+      newMagicDefense += 1; // 魔法防御力増加
+      newDefense += 1; // 防御力増加
+      newSpeed += 1; // スピード増加
       // レベルアップ時に HP/MP を全回復する
       newHp = newMaxHP;
       newMp = newMaxMP;
@@ -86,12 +96,12 @@ export class Player implements IPlayer {
       threshold = newLevel * 100;
     }
 
-    return new Player(newHp, newMaxHP, newMp, newMaxMP, this.defense, newLevel, remainingExp, newTotalExp, this.speed, newAttack);
+    return new Player(newHp, newMaxHP, newMp, newMaxMP, newDefense, newMagicDefense, newLevel, remainingExp, newTotalExp, newSpeed, newAttack);
   }
 
   // ダメージを受けた場合、新しいインスタンスを返す
   takeDamage(amount: number): Player {
     const newHp = Math.max(this.hp - amount, 0);
-    return new Player(newHp, this.maxHP, this.mp, this.maxMP, this.defense, this.level, this.exp, this.totalExp, this.speed, this.attack);
+    return new Player(newHp, this.maxHP, this.mp, this.maxMP, this.defense, this.magicDefense, this.level, this.exp, this.totalExp, this.speed, this.attack);
   }
 }

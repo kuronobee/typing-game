@@ -56,15 +56,17 @@ const App: React.FC = () => {
   const handleEnemyAttack = useCallback(() => {
     if(currentEnemy === undefined) return;
     if (currentEnemy!.currentHP <= 0) return;
-    const result = currentEnemy!.performAttack(player);
-    if (result.special) {
+    const attack = currentEnemy!.performAttack(player);
+    if (attack.special) {
       // 特殊攻撃の場合は、特殊攻撃のメッセージを表示
-      setMessage({text: `${currentEnemy!.name} uses ${result.special}！`, sender: "enemy"});
-      console.log(`handleEnemyAttack:${result.damage}`);
+      const tmp = `${attack.result.message}`;
+      const tmp2 = attack.result.damage != 0 ? `${attack.result.damage}のダメージ！`: "";
+      setMessage({text: tmp + tmp2, sender: "enemy"});
+      console.log(`handleEnemyAttack:${attack.result.damage}`);
     } else {
-      setMessage({text: `${currentEnemy!.name} の攻撃！ ${result.damage} のダメージ！`, sender: "enemy"});
+      setMessage({text: `${currentEnemy!.name} の攻撃！ ${attack.result.damage} のダメージ！`, sender: "enemy"});
     }
-    setPlayer(prev => prev.takeDamage(result.damage));
+    setPlayer(prev => prev.takeDamage(attack.result.damage));
     //const damage = Math.max(1, currentEnemy.attackPower - Math.floor(Math.random() * 3));
     // プレイヤーの内部処理として takeDamage を使う
     //setPlayer(prev => prev.takeDamage(damage));

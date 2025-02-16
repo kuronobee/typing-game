@@ -1,7 +1,7 @@
 // src/data/enemyData.ts
 import { Question } from "./questions";
 import {IEnemyData} from "../models/EnemyModel"
-
+import { calculateFireDamage } from "../utils/GameLogic";
 
 const enemies: IEnemyData[] = [
   {
@@ -37,13 +37,11 @@ const enemies: IEnemyData[] = [
     specialAttacks: [
       {
         name: "fire breath",
-        probability: 1,
-        damage: 30,
+        probability: 0.3,
         perform: (enemy, player) => {
           console.log(`${enemy.name} uses Fire Breath!`);
-          // 例として、プレイヤーに30のダメージを与える
           // ここはプレイヤーのダメージ処理に合わせて実装してください
-          
+          return {damage: calculateFireDamage(20, player.magicDefense), recovery: 0, message: `${enemy.name}は火を吹いた！`};
         },
       },
     ]

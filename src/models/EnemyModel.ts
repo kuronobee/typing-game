@@ -1,4 +1,5 @@
 // src/models/EnemyModel.ts
+import { stringify } from "postcss";
 import {Player} from "./Player";
 
 export interface IEnemyData {
@@ -22,9 +23,8 @@ export interface SpecialAttack {
   // probability: 0～1の数値。複数ある場合は合計が1未満なら通常攻撃も行われる
   probability: number;
   // damage: 攻撃によるダメージ（必ずしもダメージを与えない特殊攻撃もある
-  damage?: number;
   // performは特殊攻撃実行時の追加効果を行うための関数
-  perform: (enemy: Enemy, player: Player) => void;
+  perform: (enemy: Enemy, player: Player) => {damage: number, recovery: number, message: string};
 }
 
 export class Enemy {
@@ -67,7 +67,7 @@ export class Enemy {
   }
 
   // 攻撃を行う（例としてランダムな値を用いたシンプルなダメージ計算）
-  performAttack(player: Player): {damage: number; special?: string} {
+  performAttack(player: Player): {result: {damage: number, recovery: number, message: string}; special?: string; message?: string} {
     // 複数の特殊攻撃が設定されている場合、ランダムに選んで発動する
     if (this.specialAttacks.length > 0) {
       const rand = Math.random(); // 0〜1 の乱数
@@ -76,18 +76,14 @@ export class Enemy {
         cumulative += attack.probability;
         if (rand < cumulative) {
           // 特殊攻撃発動
-          if (attack.perform) {
-          attack.perform(this, player);
-          }
-          // damage プロパティが設定されていればそのダメージを返す
-          const specialDamage = attack.damage || 0;
-          return { damage: specialDamage, special: attack.name };
+          const result = attack.perform(this, player);
+          return {result, special: attack.name, message: attack.message};
         }
       }
     }
     // 特殊攻撃が発動しなかった場合、通常攻撃
     const damage = Math.max(this.attackPower - Math.floor(Math.random() * 3), 1);
-    return { damage };  
+    return {result: { damage: damage, recovery: 0, message: ""}, special: "", message: ""};  
   }
   // ここにさらに、特殊攻撃や状態異常などのメソッドを追加可能
 }
