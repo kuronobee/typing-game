@@ -1,35 +1,22 @@
-// App.tsx
+// src/App.tsx
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import BattleStage from "./components/BattleStage";
 import BattleInterface from "./components/BattleInterface";
 import GameOver from "./components/GameOver";
 import enemies, { EnemyType } from "./data/enemyData";
 import { commonQuestions, Question } from "./data/questions";
+import { Player as PlayerModel } from "./models/Player";
 import {
-  INITIAL_PLAYER_HP,
-  INITIAL_PLAYER_MP,
-  INITIAL_PLAYER_SPEED,
-  INITIAL_PLAYER_LEVEL,
-  INITIAL_PLAYER_EXP,
-  INITIAL_PLAYER_TOTAL_EXP,
-  BASE_PLAYER_ATTACK,
-  PLAYER_ATTACK_LEVEL_MULTIPLIER,
-  LEVEL_UP_EXP_MULTIPLIER,
   LEVEL_UP_MESSAGE_DURATION,
   EXP_GAIN_DISPLAY_DURATION,
   INPUT_FOCUS_DELAY,
+  MESSAGE_DISPLAY_DURATION,
   ENEMY_HIT_ANIMATION_DURATION,
 } from "./data/constants";
 
 const App: React.FC = () => {
-  // プレイヤーの状態
-  const [playerHP, setPlayerHP] = useState(INITIAL_PLAYER_HP);
-  const [playerMP, setPlayerMP] = useState(INITIAL_PLAYER_MP);
-  const [playerLevel, setPlayerLevel] = useState(INITIAL_PLAYER_LEVEL);
-  const [playerEXP, setPlayerEXP] = useState(INITIAL_PLAYER_EXP);
-  const [totalEXP, setTotalEXP] = useState(INITIAL_PLAYER_TOTAL_EXP);
-  // プレイヤーの speed（例として 100）
-  const [playerSpeed, setPlayerSpeed] = useState(INITIAL_PLAYER_SPEED);
+  // プレイヤーのパラメータは Player クラスのインスタンスで管理
+  const [player, setPlayer] = useState<PlayerModel>(PlayerModel.createDefault());
 
   // 敵やその他の状態
   const [currentEnemy, setCurrentEnemy] = useState<EnemyType>(
@@ -44,20 +31,16 @@ const App: React.FC = () => {
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
   const [wrongAttempts, setWrongAttempts] = useState(0);
 
-  // アニメーション・UI関連の状態
+  // UI 状態
   const [enemyHit, setEnemyHit] = useState(false);
   const [showQuestion, setShowQuestion] = useState(true);
   const [readyForNextEnemy, setReadyForNextEnemy] = useState(false);
   const [battlePaused, setBattlePaused] = useState(false);
 
-  // 攻撃力やレベルアップに必要な経験値の計算
-  const playerAttackPower = BASE_PLAYER_ATTACK + playerLevel * PLAYER_ATTACK_LEVEL_MULTIPLIER;
-  const levelUpThreshold = playerLevel * LEVEL_UP_EXP_MULTIPLIER;
-  
   const inputRef = useRef<HTMLInputElement>(null);
   const questionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // currentEnemy 更新時に、出題内容を設定
+  // 敵が更新された際に新しい問題を設定
   useEffect(() => {
     if (currentEnemy && currentEnemy.currentHP > 0) {
       if (currentEnemy.originalQuestion) {
@@ -73,15 +56,14 @@ const App: React.FC = () => {
     }
   }, [currentEnemy]);
 
-  // handleEnemyAttack を useCallback でメモ化（currentEnemy が変わったときのみ再生成）
+  // handleEnemyAttack を useCallback でメモ化
   const handleEnemyAttack = useCallback(() => {
     if (currentEnemy.currentHP <= 0) return;
     const damage = Math.max(1, currentEnemy.attackPower - Math.floor(Math.random() * 3));
-    setPlayerHP((prev) => Math.max(0, prev - damage));
+    setPlayer(prev => prev.takeDamage(damage));
     setMessage(`${currentEnemy.name} の攻撃！ ${damage} のダメージ！`);
   }, [currentEnemy]);
 
-  // 問題更新用の関数
   const updateQuestion = () => {
     setCurrentQuestion(
       commonQuestions[Math.floor(Math.random() * commonQuestions.length)]
@@ -89,24 +71,21 @@ const App: React.FC = () => {
     setWrongAttempts(0);
   };
 
-  // 正解時の処理
+  // プレイヤー攻撃：正解なら敵にダメージを与え、経験値を加算
   const handlePlayerAttack = (input: string) => {
     if (readyForNextEnemy || !currentQuestion) return;
-
     if (input.toLowerCase() === currentQuestion.answer.toLowerCase()) {
       setEnemyHit(true);
       setShowQuestion(false);
 
       const monsterName = currentEnemy.name;
       const monsterExp = currentEnemy.exp;
-      const damage = Math.max(5, playerAttackPower - currentEnemy.defense);
-      const newHP = currentEnemy.currentHP - damage;
+      const damage = Math.max(5, player.attack - currentEnemy.defense);
+      const newEnemyHP = currentEnemy.currentHP - damage;
 
-      console.log("Damage:", damage, "New HP:", newHP);
-
-      setCurrentEnemy((prev) => ({
+      setCurrentEnemy(prev => ({
         ...prev,
-        currentHP: Math.max(0, newHP),
+        currentHP: Math.max(0, newEnemyHP),
       }));
 
       setMessage(`正解！${damage} のダメージを与えた！`);
@@ -115,7 +94,7 @@ const App: React.FC = () => {
         setEnemyHit(false);
       }, ENEMY_HIT_ANIMATION_DURATION);
 
-      if (newHP <= 0) {
+      if (newEnemyHP <= 0) {
         setMessage(`${monsterName} を倒した。${monsterExp} ポイントの経験値を得た。次は「次の敵に進む」ボタンを押せ。`);
         gainEXP(monsterExp);
         handleEnemyDefeat();
@@ -124,7 +103,7 @@ const App: React.FC = () => {
         setShowQuestion(true);
       }
     } else {
-      setWrongAttempts((prev) => prev + 1);
+      setWrongAttempts(prev => prev + 1);
       setMessage("間違い！正しい解答を入力してください！");
     }
   };
@@ -133,40 +112,26 @@ const App: React.FC = () => {
   const gainEXP = (amount: number) => {
     setExpGain(amount);
     setTimeout(() => setExpGain(null), EXP_GAIN_DISPLAY_DURATION);
-    setTotalEXP((prev) => prev + amount);
-    setPlayerEXP((prev) => prev + amount);
+    setPlayer(prev => prev.addExp(amount));
     setShowExpBar(true);
   };
 
   useEffect(() => {
-    if (playerEXP >= levelUpThreshold) {
+    if (player.exp >= player.levelUpThreshold) {
       levelUp();
     }
-  }, [playerEXP, levelUpThreshold]);
+  }, [player.exp, player]);
 
   const levelUp = () => {
-    const overflowEXP = playerEXP - levelUpThreshold;
-    const hpIncrease = 20 + Math.floor(Math.random() * 5);
-    const mpIncrease = 10 + Math.floor(Math.random() * 3);
-    const attackIncrease = 2;
-
-    setPlayerLevel((prev) => prev + 1);
-    setPlayerEXP(overflowEXP >= 0 ? overflowEXP : 0);
-    setPlayerHP((prev) => prev + hpIncrease);
-    setPlayerMP((prev) => prev + mpIncrease);
-    setLevelUpMessage(
-      `レベルアップ！ (Lv.${playerLevel + 1})\nHP +${hpIncrease}, MP +${mpIncrease}, 攻撃力 +${attackIncrease}`
-    );
-
+    setLevelUpMessage(`レベルアップ！ (Lv.${player.level})`);
     setTimeout(() => {
       setLevelUpMessage("");
       setShowExpBar(false);
     }, LEVEL_UP_MESSAGE_DURATION);
   };
 
-  // 次の敵出現処理
   const spawnNewEnemy = () => {
-    const possibleEnemies = enemies.filter((e) => e.level <= playerLevel);
+    const possibleEnemies = enemies.filter(e => e.level <= player.level);
     const newEnemy = possibleEnemies[Math.floor(Math.random() * possibleEnemies.length)];
     setCurrentEnemy({ ...newEnemy, currentHP: newEnemy.maxHP });
     if (newEnemy.originalQuestion) {
@@ -187,13 +152,11 @@ const App: React.FC = () => {
     }, INPUT_FOCUS_DELAY);
   };
 
-  // 敵が倒れたときの処理
   const handleEnemyDefeat = () => {
     setMessage("敵を倒した！次に進むにはEnterキーを押すかボタンをクリックして下さい");
     setReadyForNextEnemy(true);
   };
 
-  // Enterキーで次の敵に進む処理
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Enter" && battlePaused && readyForNextEnemy) {
@@ -201,14 +164,11 @@ const App: React.FC = () => {
       }
       setBattlePaused(readyForNextEnemy);
     };
-    
+
     window.addEventListener("keydown", handleKeyDown);
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [readyForNextEnemy, battlePaused]);
 
-  // コンポーネントアンマウント時のタイマークリア
   useEffect(() => {
     return () => {
       if (questionTimeoutRef.current) {
@@ -217,24 +177,23 @@ const App: React.FC = () => {
     };
   }, []);
 
-  if (playerHP <= 0) {
-    return <GameOver totalEXP={totalEXP} />;
+  if (player.hp <= 0) {
+    return <GameOver totalEXP={player.totalExp} />;
   }
 
   return (
     <div className="w-full h-screen flex flex-col">
-      {/* 上半分：バトルエリア */}
       <div className="relative flex-1">
         <BattleStage
           currentEnemy={currentEnemy}
-          playerHP={playerHP}
+          playerHP={player.hp}
           onEnemyAttack={handleEnemyAttack}
           message={message}
           currentQuestion={currentQuestion}
           wrongAttempts={wrongAttempts}
           enemyHit={enemyHit}
           showQuestion={showQuestion}
-          playerSpeed={playerSpeed}
+          playerSpeed={player.speed}
         />
         {levelUpMessage && (
           <div className="absolute top-32 left-1/2 transform -translate-x-1/2 z-50 bg-black bg-opacity-50 text-white px-6 py-4 rounded-lg text-center shadow-xl border-2 border-white">
@@ -258,20 +217,20 @@ const App: React.FC = () => {
 
       {/* 下半分：プレイヤーのステータス＆入力 */}
       <div className="flex-1 bg-gray-900">
-        <BattleInterface
-          playerHP={playerHP}
-          maxHP={INITIAL_PLAYER_HP + playerLevel * 10}
-          playerMP={playerMP}
-          maxMP={INITIAL_PLAYER_MP + playerLevel * 5}
-          playerLevel={playerLevel}
-          playerEXP={playerEXP}
-          expToNextLevel={levelUpThreshold}
-          totalEXP={totalEXP}
-          onSubmit={handlePlayerAttack}
-          currentQuestion={currentQuestion}
-          expGain={expGain}
-          inputRef={inputRef}
-        />
+          <BattleInterface
+            playerHP={player.hp}
+            maxHP={player.maxHP}
+            playerMP={player.mp}
+            maxMP={player.maxMP}
+            playerLevel={player.level}
+            playerEXP={player.exp}
+            expToNextLevel={player.levelUpThreshold}
+            totalEXP={player.totalExp}
+            onSubmit={handlePlayerAttack}
+            currentQuestion={currentQuestion}
+            expGain={expGain}
+            inputRef={inputRef}
+          />
       </div>
     </div>
   );
