@@ -1,17 +1,37 @@
-import React, { useState, useEffect, useRef } from "react";
+// App.tsx
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import BattleStage from "./components/BattleStage";
 import BattleInterface from "./components/BattleInterface";
 import GameOver from "./components/GameOver";
 import enemies, { EnemyType } from "./data/enemyData";
 import { commonQuestions, Question } from "./data/questions";
+import {
+  INITIAL_PLAYER_HP,
+  INITIAL_PLAYER_MP,
+  INITIAL_PLAYER_SPEED,
+  INITIAL_PLAYER_LEVEL,
+  INITIAL_PLAYER_EXP,
+  INITIAL_PLAYER_TOTAL_EXP,
+  BASE_PLAYER_ATTACK,
+  PLAYER_ATTACK_LEVEL_MULTIPLIER,
+  LEVEL_UP_EXP_MULTIPLIER,
+  LEVEL_UP_MESSAGE_DURATION,
+  EXP_GAIN_DISPLAY_DURATION,
+  INPUT_FOCUS_DELAY,
+  ENEMY_HIT_ANIMATION_DURATION,
+} from "./data/constants";
 
 const App: React.FC = () => {
-  // プレイヤー・敵・経験値などの状態
-  const [playerHP, setPlayerHP] = useState(100);
-  const [playerMP, setPlayerMP] = useState(50);
-  const [playerLevel, setPlayerLevel] = useState(1);
-  const [playerEXP, setPlayerEXP] = useState(0);
-  const [totalEXP, setTotalEXP] = useState(0);
+  // プレイヤーの状態
+  const [playerHP, setPlayerHP] = useState(INITIAL_PLAYER_HP);
+  const [playerMP, setPlayerMP] = useState(INITIAL_PLAYER_MP);
+  const [playerLevel, setPlayerLevel] = useState(INITIAL_PLAYER_LEVEL);
+  const [playerEXP, setPlayerEXP] = useState(INITIAL_PLAYER_EXP);
+  const [totalEXP, setTotalEXP] = useState(INITIAL_PLAYER_TOTAL_EXP);
+  // プレイヤーの speed（例として 100）
+  const [playerSpeed, setPlayerSpeed] = useState(INITIAL_PLAYER_SPEED);
+
+  // 敵やその他の状態
   const [currentEnemy, setCurrentEnemy] = useState<EnemyType>(
     { ...enemies[0], currentHP: enemies[0].maxHP }
   );
@@ -24,50 +44,44 @@ const App: React.FC = () => {
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
   const [wrongAttempts, setWrongAttempts] = useState(0);
 
-  // アニメーション用の状態
+  // アニメーション・UI関連の状態
   const [enemyHit, setEnemyHit] = useState(false);
-  // 問題コンテナの表示状態（true: 表示、false: 非表示）
   const [showQuestion, setShowQuestion] = useState(true);
-  // 敵が倒された後、次の敵出現待ちの場合の状態
   const [readyForNextEnemy, setReadyForNextEnemy] = useState(false);
-  const [battlePaused, setBattlePaused] = useState(false); // 戦闘停止の状態
+  const [battlePaused, setBattlePaused] = useState(false);
 
-  const playerAttackPower = 10 + playerLevel * 2;
-  const levelUpThreshold = playerLevel * 100;
-  const expProgress = (playerEXP / levelUpThreshold) * 100;
+  // 攻撃力やレベルアップに必要な経験値の計算
+  const playerAttackPower = BASE_PLAYER_ATTACK + playerLevel * PLAYER_ATTACK_LEVEL_MULTIPLIER;
+  const levelUpThreshold = playerLevel * LEVEL_UP_EXP_MULTIPLIER;
   
   const inputRef = useRef<HTMLInputElement>(null);
-  // タイマー管理用の ref
   const questionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // currentEnemy 更新時に、質問をセットする
+  // currentEnemy 更新時に、出題内容を設定
   useEffect(() => {
-    if (currentEnemy) {
-      if(currentEnemy.currentHP > 0) {
-        if (currentEnemy.originalQuestion) {
-          setCurrentQuestion(currentEnemy.originalQuestion);
-        } else {
-          setCurrentQuestion(
-            commonQuestions[Math.floor(Math.random() * commonQuestions.length)]
-          );
-        }
-        setWrongAttempts(0);
-        setShowQuestion(true);
-        setReadyForNextEnemy(false);
+    if (currentEnemy && currentEnemy.currentHP > 0) {
+      if (currentEnemy.originalQuestion) {
+        setCurrentQuestion(currentEnemy.originalQuestion);
+      } else {
+        setCurrentQuestion(
+          commonQuestions[Math.floor(Math.random() * commonQuestions.length)]
+        );
       }
-
+      setWrongAttempts(0);
+      setShowQuestion(true);
+      setReadyForNextEnemy(false);
     }
   }, [currentEnemy]);
 
-  // 敵の攻撃処理（敵が倒れている場合はスキップ）
-  const handleEnemyAttack = () => {
+  // handleEnemyAttack を useCallback でメモ化（currentEnemy が変わったときのみ再生成）
+  const handleEnemyAttack = useCallback(() => {
     if (currentEnemy.currentHP <= 0) return;
     const damage = Math.max(1, currentEnemy.attackPower - Math.floor(Math.random() * 3));
     setPlayerHP((prev) => Math.max(0, prev - damage));
     setMessage(`${currentEnemy.name} の攻撃！ ${damage} のダメージ！`);
-  };
+  }, [currentEnemy]);
 
-  // 敵がまだ倒れていない場合の問題更新（今回は共通問題を再セット）
+  // 問題更新用の関数
   const updateQuestion = () => {
     setCurrentQuestion(
       commonQuestions[Math.floor(Math.random() * commonQuestions.length)]
@@ -77,9 +91,7 @@ const App: React.FC = () => {
 
   // 正解時の処理
   const handlePlayerAttack = (input: string) => {
-    // もし次の敵出現待ち状態なら、何もしない（ボタンで進むので）
-    if (readyForNextEnemy) return;
-    if (!currentQuestion) return;
+    if (readyForNextEnemy || !currentQuestion) return;
 
     if (input.toLowerCase() === currentQuestion.answer.toLowerCase()) {
       setEnemyHit(true);
@@ -90,7 +102,6 @@ const App: React.FC = () => {
       const damage = Math.max(5, playerAttackPower - currentEnemy.defense);
       const newHP = currentEnemy.currentHP - damage;
 
-      // ログ出力（デバッグ用）
       console.log("Damage:", damage, "New HP:", newHP);
 
       setCurrentEnemy((prev) => ({
@@ -102,16 +113,15 @@ const App: React.FC = () => {
 
       setTimeout(() => {
         setEnemyHit(false);
-      }, 300);
+      }, ENEMY_HIT_ANIMATION_DURATION);
 
       if (newHP <= 0) {
         setMessage(`${monsterName} を倒した。${monsterExp} ポイントの経験値を得た。次は「次の敵に進む」ボタンを押せ。`);
         gainEXP(monsterExp);
         handleEnemyDefeat();
       } else {
-          updateQuestion();
-          setShowQuestion(true);
-
+        updateQuestion();
+        setShowQuestion(true);
       }
     } else {
       setWrongAttempts((prev) => prev + 1);
@@ -122,7 +132,7 @@ const App: React.FC = () => {
   // 経験値獲得処理
   const gainEXP = (amount: number) => {
     setExpGain(amount);
-    setTimeout(() => setExpGain(null), 2000);
+    setTimeout(() => setExpGain(null), EXP_GAIN_DISPLAY_DURATION);
     setTotalEXP((prev) => prev + amount);
     setPlayerEXP((prev) => prev + amount);
     setShowExpBar(true);
@@ -132,7 +142,7 @@ const App: React.FC = () => {
     if (playerEXP >= levelUpThreshold) {
       levelUp();
     }
-  }, [playerEXP]);
+  }, [playerEXP, levelUpThreshold]);
 
   const levelUp = () => {
     const overflowEXP = playerEXP - levelUpThreshold;
@@ -151,10 +161,10 @@ const App: React.FC = () => {
     setTimeout(() => {
       setLevelUpMessage("");
       setShowExpBar(false);
-    }, 3000);
+    }, LEVEL_UP_MESSAGE_DURATION);
   };
 
-  // 次の敵出現処理（「次の敵に進む」ボタン押下時に呼ばれる）
+  // 次の敵出現処理
   const spawnNewEnemy = () => {
     const possibleEnemies = enemies.filter((e) => e.level <= playerLevel);
     const newEnemy = possibleEnemies[Math.floor(Math.random() * possibleEnemies.length)];
@@ -170,36 +180,35 @@ const App: React.FC = () => {
     setWrongAttempts(0);
     setShowQuestion(true);
     setReadyForNextEnemy(false);
-    setBattlePaused(false); // 戦闘を再開
+    setBattlePaused(false);
 
     setTimeout(() => {
-      inputRef.current?.focus();  // ボタンが押されたらフォーカスを当てる
-    }, 100);
+      inputRef.current?.focus();
+    }, INPUT_FOCUS_DELAY);
   };
 
   // 敵が倒れたときの処理
   const handleEnemyDefeat = () => {
     setMessage("敵を倒した！次に進むにはEnterキーを押すかボタンをクリックして下さい");
     setReadyForNextEnemy(true);
-  }
+  };
 
-  // Enterキーで次の敵にす数
+  // Enterキーで次の敵に進む処理
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key == "Enter" && battlePaused && readyForNextEnemy) {
+      if (event.key === "Enter" && battlePaused && readyForNextEnemy) {
         spawnNewEnemy();
       }
-      setBattlePaused(readyForNextEnemy); 
+      setBattlePaused(readyForNextEnemy);
     };
     
     window.addEventListener("keydown", handleKeyDown);
-
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
-    }
-  }, [readyForNextEnemy, battlePaused]);  // readyForNextEnemyの変更を監視
+    };
+  }, [readyForNextEnemy, battlePaused]);
 
-  // コンポーネントアンマウント時にタイマーをクリア
+  // コンポーネントアンマウント時のタイマークリア
   useEffect(() => {
     return () => {
       if (questionTimeoutRef.current) {
@@ -225,13 +234,13 @@ const App: React.FC = () => {
           wrongAttempts={wrongAttempts}
           enemyHit={enemyHit}
           showQuestion={showQuestion}
+          playerSpeed={playerSpeed}
         />
         {levelUpMessage && (
           <div className="absolute top-32 left-1/2 transform -translate-x-1/2 z-50 bg-black bg-opacity-50 text-white px-6 py-4 rounded-lg text-center shadow-xl border-2 border-white">
             {levelUpMessage}
           </div>
         )}
-        {/* 次の敵に進むボタン：敵が倒され、次の敵出現待ちの場合のみ表示 */}
         {readyForNextEnemy && (
           <div className="absolute bottom-50 left-1/2 transform -translate-x-1/2 z-50">
             <button
@@ -251,9 +260,9 @@ const App: React.FC = () => {
       <div className="flex-1 bg-gray-900">
         <BattleInterface
           playerHP={playerHP}
-          maxHP={100 + playerLevel * 10}
+          maxHP={INITIAL_PLAYER_HP + playerLevel * 10}
           playerMP={playerMP}
-          maxMP={50 + playerLevel * 5}
+          maxMP={INITIAL_PLAYER_MP + playerLevel * 5}
           playerLevel={playerLevel}
           playerEXP={playerEXP}
           expToNextLevel={levelUpThreshold}
@@ -263,7 +272,6 @@ const App: React.FC = () => {
           expGain={expGain}
           inputRef={inputRef}
         />
-
       </div>
     </div>
   );

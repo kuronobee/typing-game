@@ -5,7 +5,7 @@ export interface EnemyType {
   name: string;
   level: number;
   maxHP: number;
-  currentHP?: number; // 出現時に maxHP で初期化
+  currentHP?: number;
   attackPower: number;
   defense: number;
   exp: number;
@@ -13,7 +13,7 @@ export interface EnemyType {
   image: string;
   positionOffset?: { x: number; y: number };
   scale?: number;
-  // 各敵が保持するオリジナル問題（任意）
+  speed: number; // ← 新規プロパティ
   originalQuestion?: Question;
 }
 
@@ -28,7 +28,8 @@ const enemies: EnemyType[] = [
     word: "slime",
     image: new URL("../assets/enemies/slime.png", import.meta.url).toString(),
     scale: 0.8,
-    // オリジナル問題はなし → 共通問題が使用される
+    speed: 13, // 例: 低速
+    // originalQuestion はなし
   },
   {
     name: "ゴブリン",
@@ -40,7 +41,7 @@ const enemies: EnemyType[] = [
     word: "goblin",
     image: new URL("../assets/enemies/goblin.png", import.meta.url).toString(),
     scale: 1.2,
-    // 例：ゴブリン独自の問題（日本語→英語）
+    speed: 120, // 例: やや速い
     originalQuestion: {
       id: "goblin1",
       type: "word",
@@ -58,7 +59,7 @@ const enemies: EnemyType[] = [
     word: "ogre",
     image: new URL("../assets/enemies/great_ogre.png", import.meta.url).toString(),
     scale: 1.8,
-    // 独自問題の例：multipleChoice
+    speed: 80,
     originalQuestion: {
       id: "greatOgreQ1",
       type: "multipleChoice",
@@ -75,9 +76,9 @@ const enemies: EnemyType[] = [
     defense: 12,
     exp: 200,
     word: "golem",
-    // 実際のファイル名に合わせて変更してください
     image: new URL("../assets/enemies/golem.png", import.meta.url).toString(),
     scale: 1.8,
+    speed: 70,
     originalQuestion: {
       id: "golemQ1",
       type: "multipleChoice",
@@ -96,7 +97,7 @@ const enemies: EnemyType[] = [
     word: "dragon",
     image: new URL("../assets/enemies/dragon.png", import.meta.url).toString(),
     scale: 2.0,
-    // 例：ドラゴン独自の multipleChoice 問題
+    speed: 200,
     originalQuestion: {
       id: "dragon1",
       type: "multipleChoice",
@@ -113,9 +114,9 @@ const enemies: EnemyType[] = [
     defense: 15,
     exp: 400,
     word: "magma",
-    // 実際に用意しているファイル名にあわせて変更してください
     image: new URL("../assets/enemies/magma_golem.png", import.meta.url).toString(),
     scale: 1.8,
+    speed: 150,
     originalQuestion: {
       id: "magmaGolemQ1",
       type: "multipleChoice",
@@ -134,7 +135,7 @@ const enemies: EnemyType[] = [
     word: "arcdemon",
     image: new URL("../assets/enemies/arcdemon.png", import.meta.url).toString(),
     scale: 3.0,
-    // 例：アークデーモン独自の multipleChoice 問題
+    speed: 220,
     originalQuestion: {
       id: "arcdemon1",
       type: "multipleChoice",

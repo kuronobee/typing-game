@@ -1,3 +1,4 @@
+// src/components/BattleInterface.tsx
 import React, { useState } from "react";
 import { Question } from "../data/questions";
 import ExperienceBar from "./ExperienceBar";
@@ -14,7 +15,6 @@ interface BattleInterfaceProps {
   totalEXP: number;
   onSubmit: (input: string) => void;
   currentQuestion: Question | null;
-  // 経験値バー用のプロパティ
   expGain?: number | null;
   inputRef: React.RefObject<HTMLInputElement>;
 }
@@ -45,13 +45,9 @@ const BattleInterface: React.FC<BattleInterfaceProps> = ({
       setUserInput("");
     }
   };
-  // 経験値バーの進捗（%）
-  const expProgress = (playerEXP / expToNextLevel) * 100;
-  const expRemaining = expToNextLevel - playerEXP;
 
   return (
     <div className="absolute top-1/2 left-0 w-full p-4 bg-gray-900 text-white border-t border-gray-700">
-      {/* 入力フィールド */}
       <div className="flex">
         <input
           type="text"
@@ -63,20 +59,18 @@ const BattleInterface: React.FC<BattleInterfaceProps> = ({
           ref={inputRef}
         />
       </div>
-      {/* プレイヤー情報 */}
       <PlayerStatus
         playerHP={playerHP}
         maxHP={maxHP}
         playerMP={playerMP}
         maxMP={maxMP}
       />
-      {/* 経験値バーと次のレベルまでの表示 */}
       <ExperienceBar
         playerLevel={playerLevel}
         playerEXP={playerEXP}
         expToNextLevel={expToNextLevel}
         expGain={expGain}
-        />
+      />
     </div>
   );
 };

@@ -1,3 +1,4 @@
+// src/utils/GameLogic.ts
 import { EnemyType } from "../data/enemyData";
 
 // ダメージ計算関数（最低ダメージは 1）

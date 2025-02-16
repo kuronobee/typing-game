@@ -1,3 +1,4 @@
+// src/components/GameOver.tsx
 import React from "react";
 
 interface GameOverProps {
