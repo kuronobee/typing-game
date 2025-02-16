@@ -3,16 +3,10 @@ import React, { useState } from "react";
 import { Question } from "../data/questions";
 import ExperienceBar from "./ExperienceBar";
 import PlayerStatus from "./PlayerStatus";
+import { Player } from "../models/Player";
 
 interface BattleInterfaceProps {
-  playerHP: number;
-  maxHP: number;
-  playerMP: number;
-  maxMP: number;
-  playerLevel: number;
-  playerEXP: number;
-  expToNextLevel: number;
-  totalEXP: number;
+  player: Player;
   onSubmit: (input: string) => void;
   currentQuestion: Question | null;
   expGain?: number | null;
@@ -20,14 +14,7 @@ interface BattleInterfaceProps {
 }
 
 const BattleInterface: React.FC<BattleInterfaceProps> = ({
-  playerHP,
-  maxHP,
-  playerMP,
-  maxMP,
-  playerLevel,
-  playerEXP,
-  expToNextLevel,
-  totalEXP,
+  player,
   onSubmit,
   currentQuestion,
   expGain,
@@ -48,6 +35,7 @@ const BattleInterface: React.FC<BattleInterfaceProps> = ({
 
   return (
     <div className="absolute top-1/2 left-0 w-full p-4 bg-gray-900 text-white border-t border-gray-700">
+      {/* 入力フィールド */}
       <div className="flex">
         <input
           type="text"
@@ -59,16 +47,18 @@ const BattleInterface: React.FC<BattleInterfaceProps> = ({
           ref={inputRef}
         />
       </div>
+      {/* プレイヤーステータスの表示 */}
       <PlayerStatus
-        playerHP={playerHP}
-        maxHP={maxHP}
-        playerMP={playerMP}
-        maxMP={maxMP}
+        playerHP={player.hp}
+        maxHP={player.maxHP}
+        playerMP={player.mp}
+        maxMP={player.maxMP}
       />
+      {/* 経験値バー */}
       <ExperienceBar
-        playerLevel={playerLevel}
-        playerEXP={playerEXP}
-        expToNextLevel={expToNextLevel}
+        playerLevel={player.level}
+        playerEXP={player.exp}
+        expToNextLevel={player.levelUpThreshold}
         expGain={expGain}
       />
     </div>

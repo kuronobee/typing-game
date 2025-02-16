@@ -77,12 +77,13 @@ export class Player implements IPlayer {
     while (remainingExp >= threshold) {
       remainingExp -= threshold;
       newLevel++;
-      newMaxHP += 10;  // レベルアップごとの最大HP増加
-      newMaxMP += 5;   // MP 増加
-      newHp += 20;     // 現在HPの回復分
-      newMp += 10;
-      newAttack += 2;  // 攻撃力増加
-      threshold = newLevel * 100; // 新しいレベルの閾値に更新
+      newMaxHP += 10;  // 最大HP 増加
+      newMaxMP += 5;   // 最大MP 増加
+      // レベルアップ時に HP/MP を全回復する
+      newHp = newMaxHP;
+      newMp = newMaxMP;
+      newAttack += 2;
+      threshold = newLevel * 100;
     }
 
     return new Player(newHp, newMaxHP, newMp, newMaxMP, this.defense, newLevel, remainingExp, newTotalExp, this.speed, newAttack);

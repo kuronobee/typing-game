@@ -183,18 +183,18 @@ const App: React.FC = () => {
 
   return (
     <div className="w-full h-screen flex flex-col">
+      {/* 上半分：バトルステージ */}
       <div className="relative flex-1">
         <BattleStage
           currentEnemy={currentEnemy}
-          playerHP={player.hp}
+          player={player} // player オブジェクトを渡す
           onEnemyAttack={handleEnemyAttack}
           message={message}
           currentQuestion={currentQuestion}
           wrongAttempts={wrongAttempts}
           enemyHit={enemyHit}
-          showQuestion={showQuestion}
-          playerSpeed={player.speed}
-        />
+          showQuestion={showQuestion}        
+          />
         {levelUpMessage && (
           <div className="absolute top-32 left-1/2 transform -translate-x-1/2 z-50 bg-black bg-opacity-50 text-white px-6 py-4 rounded-lg text-center shadow-xl border-2 border-white">
             {levelUpMessage}
@@ -214,23 +214,15 @@ const App: React.FC = () => {
           </div>
         )}
       </div>
-
       {/* 下半分：プレイヤーのステータス＆入力 */}
       <div className="flex-1 bg-gray-900">
-          <BattleInterface
-            playerHP={player.hp}
-            maxHP={player.maxHP}
-            playerMP={player.mp}
-            maxMP={player.maxMP}
-            playerLevel={player.level}
-            playerEXP={player.exp}
-            expToNextLevel={player.levelUpThreshold}
-            totalEXP={player.totalExp}
-            onSubmit={handlePlayerAttack}
-            currentQuestion={currentQuestion}
-            expGain={expGain}
-            inputRef={inputRef}
-          />
+        <BattleInterface
+          player={player}
+          onSubmit={handlePlayerAttack}
+          currentQuestion={currentQuestion}
+          expGain={expGain}
+          inputRef={inputRef}
+        />
       </div>
     </div>
   );

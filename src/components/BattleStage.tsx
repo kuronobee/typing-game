@@ -5,29 +5,28 @@ import Enemy from "./Enemy";
 import { EnemyType } from "../data/enemyData";
 import { Question } from "../data/questions";
 import { MAX_EFFECTIVE_SPEED, MS_IN_SECOND, TICK_INTERVAL, MESSAGE_DISPLAY_DURATION } from "../data/constants";
+import { Player } from "../models/Player";
 
 interface BattleStageProps {
   currentEnemy: EnemyType;
-  playerHP: number;
+  player: Player; // ここでプレイヤー全体を受け取る
   onEnemyAttack: () => void;
   message: string;
   currentQuestion: Question | null;
   wrongAttempts: number;
   enemyHit: boolean;
   showQuestion: boolean;
-  playerSpeed: number;
 }
 
 const BattleStage: React.FC<BattleStageProps> = ({
   currentEnemy,
-  playerHP,
+  player,
   onEnemyAttack,
   message,
   currentQuestion,
   wrongAttempts,
   enemyHit,
   showQuestion,
-  playerSpeed,
 }) => {
   const [visibleMessage, setVisibleMessage] = useState("");
   const [attackProgress, setAttackProgress] = useState(0); // 0～1 の割合
@@ -43,11 +42,11 @@ const BattleStage: React.FC<BattleStageProps> = ({
 
   const positionOffset = currentEnemy.positionOffset || { x: 0, y: 0 };
 
-  // 敵の speed 差分に基づいて攻撃間隔を計算し、インジケータを更新
+  // プレイヤーの HP で生死チェック、攻撃タイマーの計算に player.speed を使用
   useEffect(() => {
-    if (playerHP <= 0 || currentEnemy.currentHP <= 0) return;
+    if (player.hp <= 0 || currentEnemy.currentHP <= 0) return;
 
-    const effectiveSpeed = (currentEnemy.speed || 0) - playerSpeed;
+    const effectiveSpeed = (currentEnemy.speed || 0) - player.speed;
     if (effectiveSpeed <= 0) {
       setAttackProgress(0);
       return;
@@ -68,7 +67,7 @@ const BattleStage: React.FC<BattleStageProps> = ({
 
     const timerId = setInterval(tick, TICK_INTERVAL);
     return () => clearInterval(timerId);
-  }, [playerHP, onEnemyAttack, currentEnemy, playerSpeed]);
+  }, [player.hp, onEnemyAttack, currentEnemy, player.speed]);
 
   const getHint = (answer: string, wrongAttempts: number): string => {
     const n = answer.length;
@@ -111,6 +110,7 @@ const BattleStage: React.FC<BattleStageProps> = ({
           backgroundSize: "100% 100%",
         }}
       />
+
       {/* 敵キャラ表示 */}
       <div
         className="absolute z-10 transition-all duration-1000 ease-out"
@@ -128,7 +128,7 @@ const BattleStage: React.FC<BattleStageProps> = ({
         />
       </div>
 
-      {/* 攻撃インジケータを問題文コンテナの上部に配置 */}
+      {/* 攻撃インジケータ（問題文コンテナ上部に配置） */}
       {currentQuestion && currentEnemy.currentHP > 0 && (
         <div className="absolute top-2 left-1/2 transform -translate-x-1/2 z-30 w-64">
           <div className="w-full h-2 bg-gray-300 rounded">
