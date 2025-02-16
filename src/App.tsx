@@ -7,18 +7,13 @@ import enemiesData, { EnemyType } from "./data/enemyData"; // 既存の生デー
 import { commonQuestions, Question } from "./data/questions";
 import { Player as PlayerModel } from "./models/Player";
 import { Enemy as EnemyModel } from "./models/EnemyModel"; // 新しく作成したEnemyクラス
+import {MessageType} from "./components/MessageDisplay";
 import {
   LEVEL_UP_MESSAGE_DURATION,
   EXP_GAIN_DISPLAY_DURATION,
   INPUT_FOCUS_DELAY,
-  MESSAGE_DISPLAY_DURATION,
   ENEMY_HIT_ANIMATION_DURATION,
 } from "./data/constants";
-
-type MessageType = {
-  text: string;
-  sender: "enemy" | "player" | "system";
-}
 
 const App: React.FC = () => {
   // プレイヤーはPlayerクラスのインスタンスで管理

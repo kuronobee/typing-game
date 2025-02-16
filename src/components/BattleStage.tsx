@@ -6,6 +6,7 @@ import { MAX_EFFECTIVE_SPEED, MS_IN_SECOND, TICK_INTERVAL, MESSAGE_DISPLAY_DURAT
 import { Question } from "../data/questions";
 import { Player } from "../models/Player";
 import { Enemy as EnemyModel } from "../models/EnemyModel";
+import MessageDisplay, {MessageType} from "./MessageDisplay";
 
 interface BattleStageProps {
   currentEnemy: EnemyModel;  // Enemy モデルのインスタンス
@@ -17,10 +18,6 @@ interface BattleStageProps {
   enemyHit: boolean;
   showQuestion: boolean;
 }
-type MessageType = {
-  text: string;
-  sender: "enemy" | "player" | "system";
-};
 
 const BattleStage: React.FC<BattleStageProps> = ({
   currentEnemy,
@@ -37,16 +34,16 @@ const BattleStage: React.FC<BattleStageProps> = ({
   const attackStartTimeRef = useRef<number>(Date.now());
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // メッセージ表示処理
-  useEffect(() => {
-    if (message) {
-      setVisibleMessage(message);
-      if (timerRef.current) clearTimeout(timerRef.current);
-      timerRef.current = setTimeout(() => {
-        setVisibleMessage(null);
-      }, MESSAGE_DISPLAY_DURATION);
-    }
-  }, [message]);
+  // // メッセージ表示処理
+  // useEffect(() => {
+  //   if (message) {
+  //     setVisibleMessage(message);
+  //     if (timerRef.current) clearTimeout(timerRef.current);
+  //     timerRef.current = setTimeout(() => {
+  //       setVisibleMessage(null);
+  //     }, MESSAGE_DISPLAY_DURATION);
+  //   }
+  // }, [message]);
 
   const positionOffset = currentEnemy.positionOffset || { x: 0, y: 0 };
 
@@ -155,26 +152,7 @@ const BattleStage: React.FC<BattleStageProps> = ({
       )}
 
       {/* メッセージ表示 */}
-      <div
-        className={`absolute bottom-10 left-1/2 transform -translate-x-1/2 z-20 
-          bg-black/50 border-white border-2 text-white px-4 py-2 rounded 
-          transition-all duration-500 ease-in-out ${
-            visibleMessage ? "opacity-100 scale-100" : "opacity-0 scale-90 pointer-events-none"
-          }`}
-      >
-        {visibleMessage && (
-          <p
-            className={
-            visibleMessage.sender === "enemy"
-            ? "text-red-200" : 
-              (visibleMessage.sender === "player" ? "text-blue-200" : "text-white")
-            }
-          style={{ whiteSpace: "pre-wrap" }}
-          >
-            {visibleMessage.text}
-          </p>
-        )}
-      </div>
+      <MessageDisplay newMessage={message}/>
     </div>
   );
 };
