@@ -33,6 +33,9 @@ const BattleInterface: React.FC<BattleInterfaceProps> = ({
     }
   };
 
+  // プレイヤーが毒状態かどうかをチェック
+  const isPoisoned = player.statusEffects.some((effect) => effect.type === "poison");
+
   return (
     <div className="absolute top-1/2 left-0 w-full p-4 bg-gray-900 text-white border-t border-gray-700">
       {/* 入力フィールド */}
@@ -53,6 +56,7 @@ const BattleInterface: React.FC<BattleInterfaceProps> = ({
         maxHP={player.maxHP}
         playerMP={player.mp}
         maxMP={player.maxMP}
+        isPoisoned={isPoisoned}
       />
       {/* 経験値バー */}
       <ExperienceBar

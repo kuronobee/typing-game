@@ -6,6 +6,7 @@ interface PlayerStatusProps {
   maxHP: number;
   playerMP: number;
   maxMP: number;
+  isPoisoned?: boolean;
 }
 
 const PlayerStatus: React.FC<PlayerStatusProps> = ({
@@ -13,6 +14,7 @@ const PlayerStatus: React.FC<PlayerStatusProps> = ({
   maxHP,
   playerMP,
   maxMP,
+  isPoisoned = false,
 }) => {
   const hpPercentage = (playerHP / maxHP) * 100;
   const mpPercentage = (playerMP / maxMP) * 100;
@@ -23,7 +25,7 @@ const PlayerStatus: React.FC<PlayerStatusProps> = ({
         <p className="text-sm">HP: {playerHP} / {maxHP}</p>
         <div className="w-full h-3 bg-gray-700 rounded-full overflow-hidden">
           <div
-            className="h-full bg-green-500 transition-all"
+            className={`h-full bg-green-500 transition-all ${isPoisoned ? "bg-purple-500" : "bg-green-500"}`}
             style={{ width: `${hpPercentage}%` }}
           ></div>
         </div>
