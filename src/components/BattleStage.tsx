@@ -2,14 +2,19 @@
 import React, { useEffect, useState, useRef } from "react";
 import bg from "../assets/bg/background.png";
 import Enemy from "./Enemy";
-import { MAX_EFFECTIVE_SPEED, MS_IN_SECOND, TICK_INTERVAL, MESSAGE_DISPLAY_DURATION } from "../data/constants";
+import {
+  MAX_EFFECTIVE_SPEED,
+  MS_IN_SECOND,
+  TICK_INTERVAL,
+  MESSAGE_DISPLAY_DURATION,
+} from "../data/constants";
 import { Question } from "../data/questions";
 import { Player } from "../models/Player";
 import { Enemy as EnemyModel } from "../models/EnemyModel";
-import MessageDisplay, {MessageType} from "./MessageDisplay";
+import MessageDisplay, { MessageType } from "./MessageDisplay";
 
 interface BattleStageProps {
-  currentEnemy: EnemyModel;  // Enemy モデルのインスタンス
+  currentEnemy: EnemyModel;
   player: Player;
   onEnemyAttack: () => void;
   message: MessageType | null;
@@ -29,15 +34,22 @@ const BattleStage: React.FC<BattleStageProps> = ({
   enemyHit,
   showQuestion,
 }) => {
-  const [attackProgress, setAttackProgress] = useState(0); // 0～1 の割合
+  const [attackProgress, setAttackProgress] = useState(0);
   const attackStartTimeRef = useRef<number>(Date.now());
+
+  // プレイヤーの最新情報を保持するための ref
+  const playerRef = useRef(player);
+  useEffect(() => {
+    playerRef.current = player;
+  }, [player]);
 
   const positionOffset = currentEnemy.positionOffset || { x: 0, y: 0 };
 
   useEffect(() => {
-    if (player.hp <= 0 || currentEnemy.currentHP <= 0) return;
-
-    const effectiveSpeed = (currentEnemy.speed || 0) - player.speed;
+    // 敵が存在しない、または敵が倒れている場合はタイマーを起動しない
+    if (!currentEnemy || currentEnemy.currentHP <= 0) return;
+    // プレイヤーの最新の速度を ref から取得する
+    const effectiveSpeed = (currentEnemy.speed || 0) - playerRef.current.speed;
     if (effectiveSpeed <= 0) {
       setAttackProgress(0);
       return;
@@ -58,7 +70,7 @@ const BattleStage: React.FC<BattleStageProps> = ({
 
     const timerId = setInterval(tick, TICK_INTERVAL);
     return () => clearInterval(timerId);
-  }, [player.hp, onEnemyAttack, currentEnemy, player.speed]);
+  }, [currentEnemy, onEnemyAttack]); // player.hp や player.speed は依存配列に含めない
 
   const getHint = (answer: string, wrongAttempts: number): string => {
     const n = answer.length;
@@ -101,7 +113,6 @@ const BattleStage: React.FC<BattleStageProps> = ({
           backgroundSize: "100% 100%",
         }}
       />
-
       {/* 敵キャラ表示 */}
       <div
         className="absolute z-10 transition-all duration-1000 ease-out"
@@ -112,9 +123,12 @@ const BattleStage: React.FC<BattleStageProps> = ({
           opacity: 1,
         }}
       >
-        <Enemy enemy={currentEnemy} enemyHit={enemyHit} enemyDefeated={currentEnemy.currentHP <= 0} />
+        <Enemy
+          enemy={currentEnemy}
+          enemyHit={enemyHit}
+          enemyDefeated={currentEnemy.currentHP <= 0}
+        />
       </div>
-
       {/* 攻撃インジケータ */}
       {currentQuestion && currentEnemy.currentHP > 0 && (
         <div className="absolute top-2 left-1/2 transform -translate-x-1/2 z-30 w-64">
@@ -126,7 +140,6 @@ const BattleStage: React.FC<BattleStageProps> = ({
           </div>
         </div>
       )}
-
       {/* 問題コンテナ */}
       {currentQuestion && currentEnemy.currentHP > 0 && (
         <div
@@ -134,12 +147,13 @@ const BattleStage: React.FC<BattleStageProps> = ({
           className="absolute top-10 left-1/2 transform -translate-x-1/2 z-30 bg-black/50 border-white border-2 text-white px-4 py-2 rounded"
         >
           <p className="font-bold">問題: {currentQuestion.prompt}</p>
-          <p className="mt-2">ヒント: {getHint(currentQuestion.answer, wrongAttempts)}</p>
+          <p className="mt-2">
+            ヒント: {getHint(currentQuestion.answer, wrongAttempts)}
+          </p>
         </div>
       )}
-
       {/* メッセージ表示 */}
-      <MessageDisplay newMessage={message}/>
+      <MessageDisplay newMessage={message} />
     </div>
   );
 };

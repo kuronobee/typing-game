@@ -5,7 +5,7 @@ import BattleInterface from "./components/BattleInterface";
 import GameOver from "./components/GameOver";
 import enemiesData, { EnemyType } from "./data/enemyData"; // 既存の生データ
 import { commonQuestions, Question } from "./data/questions";
-import { Player as PlayerModel } from "./models/Player";
+import { Player as PlayerModel, StatusEffect } from "./models/Player";
 import { Enemy as EnemyModel } from "./models/EnemyModel"; // 新しく作成したEnemyクラス
 import {MessageType} from "./components/MessageDisplay";
 import {
@@ -34,6 +34,47 @@ const App: React.FC = () => {
 
   const inputRef = useRef<HTMLInputElement>(null);
   const questionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // 毒の場合は毒タイマー
+  const poisonTimerRef = useRef<NodeJS.Timeout | null>(null);
+  // プレイヤーの最新情報を保持するための ref
+  const playerRef = useRef(player);
+  useEffect(() => {
+    playerRef.current = player;
+  }, [player]);
+  
+  // 毒攻撃を受けた時に呼ばれる関数
+  const handlePoisonAttack = (poisonEffect: StatusEffect) => {
+  // すでに毒のタイマーが動作中なら、何もしない
+  if (poisonTimerRef.current !== null) {
+    console.log("handlePoisonAttack: 毒のタイマーが動作中です");
+    return;
+  }
+  
+  // 毒の持続時間を player.statusEffects から取得
+  //const poisonEffect = player.statusEffects.find(e => e.type === "poison");
+  const ticks = poisonEffect.ticks;
+  // if (!poisonEffect) {
+  //   console.log("handlePoisonAttack: 毒状態が見つかりません");
+  //   return;
+  // }
+
+  //const ticks = poisonEffect.ticks;
+  console.log("handlePoisonAttack: 毒のタイマーを起動します");
+
+  // 1秒ごとにプレイヤーにダメージを与えるタイマーをセット（毎秒ダメージ）
+  poisonTimerRef.current = setInterval(() => {
+    console.log("handlePoisonAttack: setInterval 実行中");
+    setPlayer(prev => prev.takeDamage(poisonEffect.damagePerTick));
+  }, 1000); // 1秒ごとに実行
+
+  // ticks 秒後に毒のタイマーを停止
+  setTimeout(() => {
+    console.log("handlePoisonAttack: setTimeout 実行中");
+    clearInterval(poisonTimerRef.current!);
+    setPlayer(prev => prev.removeStatusEffects("poison"));
+    poisonTimerRef.current = null;
+  }, ticks * 1000);
+};
 
   useEffect(() => {
     if (!currentEnemy) {
@@ -53,26 +94,38 @@ const App: React.FC = () => {
     }
   }, [currentEnemy]);
 
+
   const handleEnemyAttack = useCallback(() => {
     if(currentEnemy === undefined) return;
     if (currentEnemy!.currentHP <= 0) return;
-    const attack = currentEnemy!.performAttack(player);
+    // playerを直接指定して、playerを監視にするとAppコンポーネントが再レンダリングされてしまい、攻撃インジケータがリセットされる不具合発生するため、useRef取得したplayerを使う
+    const attack = currentEnemy!.performAttack(playerRef.current); 
+    // 特殊攻撃を受けた場合の処理
     if (attack.special) {
+      // ステータス異常を付与
+      setPlayer(prev => prev.applyStatusEffects(attack.result.statusEffects));
+      // ステータス異常（毒効果）
+      const poisonEffect = attack.result.statusEffects.find(e => e.type === "poison");
+      if (poisonEffect) {
+        console.log("毒攻撃を受けました");
+        handlePoisonAttack(poisonEffect);
+      }
+      // ステータス異常（...） 今後追加予定
+      // if (  ) {}
+
       // 特殊攻撃の場合は、特殊攻撃のメッセージを表示
-      const tmp = `${attack.result.message}`;
-      const tmp2 = attack.result.damage != 0 ? `${attack.result.damage}のダメージ！`: "";
-      setMessage({text: tmp + tmp2, sender: "enemy"});
-      console.log(`handleEnemyAttack:${attack.result.damage}`);
-    } else {
+      const effect_message = `${attack.result.message}`;
+      const damage_message = attack.result.damage != 0 ? `${attack.result.damage}のダメージ！`: "";
+      setMessage({text: effect_message + damage_message, sender: "enemy"});
+    } else {  
+      // 通常攻撃の場合のメッセージ
       setMessage({text: `${currentEnemy!.name} の攻撃！ ${attack.result.damage} のダメージ！`, sender: "enemy"});
     }
+    // ダメージを受ける処理
     setPlayer(prev => prev.takeDamage(attack.result.damage));
-    //const damage = Math.max(1, currentEnemy.attackPower - Math.floor(Math.random() * 3));
-    // プレイヤーの内部処理として takeDamage を使う
-    //setPlayer(prev => prev.takeDamage(damage));
-    // ※ EnemyModel は内部状態を持つため、必要に応じてsetStateなどで再レンダリングさせる設計にするか注意が必要です
-    //setMessage({text: `${currentEnemy.name} の攻撃！ ${damage} のダメージ！`, sender: "enemy"});
   }, [currentEnemy]);
+
+
 
   const updateQuestion = () => {
     setCurrentQuestion(

@@ -16,6 +16,22 @@ const enemies: IEnemyData[] = [
     scale: 0.8,
     speed: 200, // 例: 低速
     // originalQuestion はなし
+    specialAttacks: [
+      {
+        name: "poison attack",
+        probability: 0.5,
+        perform: (enemy, player) => {
+          console.log(`${enemy.name} uses Poison Attack!`);
+          return {
+            damage: 0,
+            recovery: 0,
+            // 毒状態の詳細：5秒間、毎秒2ダメージを与える
+            statusEffects: [{ type: "poison", ticks: 5, damagePerTick: 2 }],
+            message: `${enemy.name}の攻撃で毒状態になった！`,
+          };
+        }
+      },
+    ]
   },
   {
     name: "ゴブリン",
@@ -41,7 +57,7 @@ const enemies: IEnemyData[] = [
         perform: (enemy, player) => {
           console.log(`${enemy.name} uses Fire Breath!`);
           // ここはプレイヤーのダメージ処理に合わせて実装してください
-          return {damage: calculateFireDamage(20, player.magicDefense), recovery: 0, message: `${enemy.name}は火を吹いた！`};
+          return {damage: calculateFireDamage(20, player.magicDefense), recovery: 0, statusEffects: [], message: `${enemy.name}は火を吹いた！`};
         },
       },
     ]
