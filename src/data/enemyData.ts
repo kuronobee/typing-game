@@ -26,7 +26,7 @@ const enemies: IEnemyData[] = [
             damage: 0,
             recovery: 0,
             // 毒状態の詳細：5秒間、毎秒2ダメージを与える
-            statusEffects: [{ type: "poison", ticks: 5, damagePerTick: 2 }],
+            statusEffects: [{ type: "poison", ticks: 10, damagePerTick: 2 }],
             message: `${enemy.name}の攻撃で毒状態になった！`,
           };
         }

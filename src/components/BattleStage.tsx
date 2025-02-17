@@ -6,9 +6,9 @@ import {
   MAX_EFFECTIVE_SPEED,
   MS_IN_SECOND,
   TICK_INTERVAL,
-  MESSAGE_DISPLAY_DURATION,
 } from "../data/constants";
 import { Question } from "../data/questions";
+import QuestionContainer from "./QuestionContainer";
 import { Player } from "../models/Player";
 import { Enemy as EnemyModel } from "../models/EnemyModel";
 import MessageDisplay, { MessageType } from "./MessageDisplay";
@@ -142,15 +142,7 @@ const BattleStage: React.FC<BattleStageProps> = ({
       )}
       {/* 問題コンテナ */}
       {currentQuestion && currentEnemy.currentHP > 0 && (
-        <div
-          key={currentQuestion.id}
-          className="absolute top-10 left-1/2 transform -translate-x-1/2 z-30 bg-black/50 border-white border-2 text-white px-4 py-2 rounded"
-        >
-          <p className="font-bold">問題: {currentQuestion.prompt}</p>
-          <p className="mt-2">
-            ヒント: {getHint(currentQuestion.answer, wrongAttempts)}
-          </p>
-        </div>
+        <QuestionContainer question={currentQuestion} wrongAttempts={wrongAttempts} />
       )}
       {/* メッセージ表示 */}
       <MessageDisplay newMessage={message} />
