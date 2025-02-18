@@ -1,15 +1,40 @@
 // src/components/QuestionContainer.tsx
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Question } from "../data/questions";
 
 interface QuestionContainerProps {
   question: Question;
   wrongAttempts: number;
+  attackProgress: number; // 0～1 の値（例: 0.5なら50%進捗）
+  round: number; // 新しい問題に切り替わったかどうかを判定するためのラウンド数
 }
 
-const QuestionContainer: React.FC<QuestionContainerProps> = ({ question, wrongAttempts }) => {
-  // ヒントを生成する関数（BattleStage.tsx から流用）
+const QuestionContainer: React.FC<QuestionContainerProps> = ({ question, wrongAttempts, attackProgress, round }) => {
+  // fullReveal が true の場合、ヒントは完全に開かれる
+  const [fullReveal, setFullReveal] = useState(false);
+
+  // question.id が変更されたら fullReveal を false にする
+  useEffect(() => {
+    setFullReveal(false);
+  }, [round]);
+  // Escキーで fullReveal を true にするイベントリスナー
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setFullReveal(true);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  // ヒント生成関数
   const getHint = (answer: string, wrongAttempts: number): string => {
+    // fullReveal が true なら答えをそのまま返す
+    if (fullReveal) {
+      return answer;
+    }
+    // 部分的にヒントを開く処理
     const n = answer.length;
     const hintArray = answer.split("").map(ch => (ch === " " ? " " : "_"));
     let nonSpaceIndices: number[] = [];
@@ -38,14 +63,24 @@ const QuestionContainer: React.FC<QuestionContainerProps> = ({ question, wrongAt
     return hintArray.join("\u2009");
   };
 
-  return (
-    <div
-      className="absolute top-10 left-1/2 transform -translate-x-1/2 z-30 bg-black/50 border-white border-2 text-white px-4 py-2 rounded"
-    >
-      <p className="font-bold">問題: {question.prompt}</p>
-      <p className="mt-2">ヒント: {getHint(question.answer, wrongAttempts)}</p>
-    </div>
-  );
+    return (
+        <div className="relative bg-black/50 border-white border-2 text-white px-4 py-2 rounded">
+            {/* 攻撃インジケータ */}
+            <div className="absolute top-2 left-1/2 transform -translate-x-1/2 z-30 w-64">
+                <div className="w-full h-2 bg-gray-300 rounded">
+                    <div
+                    className="h-full bg-red-500 rounded"
+                        style={{ width: `${Math.min(attackProgress * 100, 100)}%` }}
+                    ></div>
+                </div>
+            </div>
+            {/* ゲージと重ならないように上部にパディング */}
+            <div className="pt-4">
+                <p className="font-bold">問題: {question.prompt}</p>
+                <p className="mt-2">ヒント: {getHint(question.answer, wrongAttempts)}</p>
+            </div>
+        </div>
+    );
 };
 
 export default QuestionContainer;

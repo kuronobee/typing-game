@@ -22,6 +22,7 @@ interface BattleStageProps {
   wrongAttempts: number;
   enemyHit: boolean;
   showQuestion: boolean;
+  round: number;
 }
 
 const BattleStage: React.FC<BattleStageProps> = ({
@@ -33,6 +34,7 @@ const BattleStage: React.FC<BattleStageProps> = ({
   wrongAttempts,
   enemyHit,
   showQuestion,
+  round,
 }) => {
   const [attackProgress, setAttackProgress] = useState(0);
   const attackStartTimeRef = useRef<number>(Date.now());
@@ -129,20 +131,14 @@ const BattleStage: React.FC<BattleStageProps> = ({
           enemyDefeated={currentEnemy.currentHP <= 0}
         />
       </div>
-      {/* 攻撃インジケータ */}
-      {currentQuestion && currentEnemy.currentHP > 0 && (
-        <div className="absolute top-2 left-1/2 transform -translate-x-1/2 z-30 w-64">
-          <div className="w-full h-2 bg-gray-300 rounded">
-            <div
-              className="h-full bg-red-500 rounded"
-              style={{ width: `${Math.min(attackProgress * 100, 100)}%` }}
-            ></div>
-          </div>
-        </div>
-      )}
+
       {/* 問題コンテナ */}
       {currentQuestion && currentEnemy.currentHP > 0 && (
-        <QuestionContainer question={currentQuestion} wrongAttempts={wrongAttempts} />
+        <QuestionContainer 
+        question={currentQuestion} 
+        wrongAttempts={wrongAttempts}
+        attackProgress={attackProgress}
+        round={round} />
       )}
       {/* メッセージ表示 */}
       <MessageDisplay newMessage={message} />

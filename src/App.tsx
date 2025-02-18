@@ -31,7 +31,9 @@ const App: React.FC = () => {
   const [showQuestion, setShowQuestion] = useState(true);
   const [readyForNextEnemy, setReadyForNextEnemy] = useState(false);
   const [battlePaused, setBattlePaused] = useState(false);
-
+  // 問題のラウンド数
+  const [round, setRound] = useState(1);
+  
   const inputRef = useRef<HTMLInputElement>(null);
   const questionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   // 毒の場合は毒タイマー
@@ -131,6 +133,7 @@ const App: React.FC = () => {
     setCurrentQuestion(
       commonQuestions[Math.floor(Math.random() * commonQuestions.length)]
     );
+    setRound(prev => prev + 1); // 問題のラウンド数を更新
     setWrongAttempts(0);
   };
 
@@ -145,7 +148,6 @@ const App: React.FC = () => {
       // 敵モデルの内部処理でダメージを適用
       currentEnemy.takeDamage(damage);
       setMessage({text: `正解！${damage} のダメージを与えた！`, sender: "player"});
-
       setTimeout(() => {
         setEnemyHit(false);
       }, ENEMY_HIT_ANIMATION_DURATION);
@@ -253,6 +255,7 @@ const App: React.FC = () => {
           wrongAttempts={wrongAttempts}
           enemyHit={enemyHit}
           showQuestion={showQuestion}
+          round={round}
         />
         {levelUpMessage && (
           <div className="absolute top-32 left-1/2 transform -translate-x-1/2 z-50 bg-black bg-opacity-50 text-white px-6 py-4 rounded-lg text-center shadow-xl border-2 border-white">
