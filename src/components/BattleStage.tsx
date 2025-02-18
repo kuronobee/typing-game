@@ -23,6 +23,7 @@ interface BattleStageProps {
   enemyHit: boolean;
   showQuestion: boolean;
   round: number;
+  onFullRevealChange: (fullReveal: boolean) => void;
 }
 
 const BattleStage: React.FC<BattleStageProps> = ({
@@ -35,6 +36,7 @@ const BattleStage: React.FC<BattleStageProps> = ({
   enemyHit,
   showQuestion,
   round,
+  onFullRevealChange,
 }) => {
   const [attackProgress, setAttackProgress] = useState(0);
   const attackStartTimeRef = useRef<number>(Date.now());
@@ -138,7 +140,8 @@ const BattleStage: React.FC<BattleStageProps> = ({
         question={currentQuestion} 
         wrongAttempts={wrongAttempts}
         attackProgress={attackProgress}
-        round={round} />
+        round={round} 
+        onFullRevealChange={onFullRevealChange}/>
       )}
       {/* メッセージ表示 */}
       <MessageDisplay newMessage={message} />

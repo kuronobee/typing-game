@@ -33,7 +33,8 @@ const App: React.FC = () => {
   const [battlePaused, setBattlePaused] = useState(false);
   // 問題のラウンド数
   const [round, setRound] = useState(1);
-  
+  const [isHintFullyRevealed, setIsHintFullyRevealed] = useState(false);
+
   const inputRef = useRef<HTMLInputElement>(null);
   const questionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   // 毒の場合は毒タイマー
@@ -144,10 +145,12 @@ const App: React.FC = () => {
       setShowQuestion(false);
       const monsterName = currentEnemy.name;
       const monsterExp = currentEnemy.exp;
-      const damage = Math.max(5, player.attack - currentEnemy.defense);
+      // ダメージ計算ここから
+      // 敵に与える基本ダメージ
+      const damage = calculateEffectiveDamage();
       // 敵モデルの内部処理でダメージを適用
       currentEnemy.takeDamage(damage);
-      setMessage({text: `正解！${damage} のダメージを与えた！`, sender: "player"});
+      setMessage({text: `正解！${damage} のダメージを与えた！${effectiveWrongAttempts === 0 ? "" : "(ダメージ" + Math.floor((1-multiplier) * 100) + "%減)"}`, sender: "player"});
       setTimeout(() => {
         setEnemyHit(false);
       }, ENEMY_HIT_ANIMATION_DURATION);
@@ -164,6 +167,24 @@ const App: React.FC = () => {
     } else {
       setWrongAttempts(prev => prev + 1);
       setMessage({text: "間違い！正しい解答を入力してください！", sender: "system"});
+    }
+
+    // ダメージ計算関数
+    function calculateEffectiveDamage() {
+      const baseDamage = Math.max(5, player.attack - currentEnemy.defense);
+      console.log("baseDamage: ", baseDamage);
+      // 最大ヒント数は、答えの空白を除いた文字数
+      const answerNoSpaces = currentQuestion.answer.replace(/\s/g, "");
+      const maxHints = answerNoSpaces.length;
+      const effectiveWrongAttempts = isHintFullyRevealed ? maxHints : wrongAttempts;
+      console.log("effectiveWrongAttempts: ", effectiveWrongAttempts);
+      // ヒントの割合(0〜1)
+      const hintFraction = effectiveWrongAttempts / maxHints;
+      // 攻撃力倍率：ヒントが全て表示されていれば0.5、何も表示されなければ1.0
+      const multiplier = 1 - (hintFraction / 2);
+      const damage = Math.floor(baseDamage * multiplier);
+      console.log("damage: ", damage);
+      return damage;
     }
   };
 
@@ -256,6 +277,7 @@ const App: React.FC = () => {
           enemyHit={enemyHit}
           showQuestion={showQuestion}
           round={round}
+          onFullRevealChange={setIsHintFullyRevealed}
         />
         {levelUpMessage && (
           <div className="absolute top-32 left-1/2 transform -translate-x-1/2 z-50 bg-black bg-opacity-50 text-white px-6 py-4 rounded-lg text-center shadow-xl border-2 border-white">
