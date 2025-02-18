@@ -147,7 +147,7 @@ const App: React.FC = () => {
       const monsterExp = currentEnemy.exp;
       // ダメージ計算ここから
       // 敵に与える基本ダメージ
-      const { damage, effectiveWrongAttempts, multiplier } = newFunction();
+      const { damage, effectiveWrongAttempts, multiplier } = calculateEffectiveDamage();
       // ダメージ計算ここまで
       // 敵モデルの内部処理でダメージを適用
       currentEnemy.takeDamage(damage);
@@ -169,8 +169,8 @@ const App: React.FC = () => {
       setWrongAttempts(prev => prev + 1);
       setMessage({text: "間違い！正しい解答を入力してください！", sender: "system"});
     }
-
-    function newFunction() {
+    // ダメージ計算関数
+    function calculateEffectiveDamage() {
       const baseDamage = Math.max(5, player.attack - currentEnemy.defense);
       console.log("baseDamage: ", baseDamage);
       // 最大ヒント数は、答えの空白を除いた文字数
