@@ -125,9 +125,8 @@ const enemies: IEnemyData[] = [
         probability: 0.3,
         perform: (enemy, player) => {
           console.log(`${enemy.name} uses Fire Breath!`);
-          // 例として、プレイヤーに30のダメージを与える
           // ここはプレイヤーのダメージ処理に合わせて実装してください
-          // player.takeDamage(30);
+          return {damage: calculateFireDamage(20, player.magicDefense), recovery: 0, statusEffects: [], message: `${enemy.name}は火を吹いた！`};
         },
       },
       {
@@ -137,6 +136,7 @@ const enemies: IEnemyData[] = [
           console.log(`${enemy.name} heals itself!`);
           // 自己回復：現在HPを20回復。ただし、maxHP を超えないように
           enemy.currentHP = Math.min(enemy.currentHP + 20, enemy.maxHP);
+          return {damage: 0, recovery: 20, statusEffects: [], message: `${enemy.name}は傷を癒した！`};
         },
       },
     ],

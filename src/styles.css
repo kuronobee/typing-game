@@ -12,3 +12,29 @@
     animation: hitAnimation 0.3s ease-in-out;
   }
   
+@keyframes hit {
+    0% { transform: translateY(0); filter: brightness(1); }
+    50% { transform: translateY(10px); filter: brightness(5); }
+    100% { transform: translateY(0); filter: brightness(1); }
+}
+
+.animate-phit {
+    animation: hit 0.3s ease;
+}
+
+/* 炎を吐く */
+@keyframes flashRed {
+0% {
+    filter: brightness(1) saturate(1);
+}
+50% {
+    filter: brightness(1.5) saturate(2) hue-rotate(10deg);
+}
+100% {
+    filter: brightness(1) saturate(1);
+}
+}
+
+.flash-red {
+    animation: flashRed 0.3s ease-in-out;
+}

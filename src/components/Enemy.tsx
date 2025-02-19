@@ -5,10 +5,11 @@ import { Enemy as EnemyModel } from "../models/EnemyModel";
 interface EnemyProps {
   enemy: EnemyModel;  // Enemy クラスのインスタンスをそのまま受け取る
   enemyHit?: boolean;
+  playerHit?: boolean;
   enemyDefeated?: boolean;
 }
 
-const Enemy: React.FC<EnemyProps> = ({ enemy, enemyHit, enemyDefeated }) => {
+const Enemy: React.FC<EnemyProps> = ({ enemy, enemyHit, playerHit, enemyDefeated }) => {
   const hpPercentage = (enemy.currentHP / enemy.maxHP) * 100;
   const baseScale = enemy.scale || 1;
   const effectiveScale = enemyDefeated ? 0 : baseScale;
@@ -16,7 +17,7 @@ const Enemy: React.FC<EnemyProps> = ({ enemy, enemyHit, enemyDefeated }) => {
   return (
     <div className="relative flex flex-col items-center">
       <div
-        className={`transition-all duration-1000 ease-out ${enemyHit ? "animate-hit" : ""}`}
+        className={`transition-all duration-1000 ease-out ${enemyHit ? "animate-hit" : ""} ${playerHit ? "animate-phit": ""}`}
         style={{
           transform: `scale(${effectiveScale})`,
           transformOrigin: "bottom",

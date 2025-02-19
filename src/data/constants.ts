@@ -11,7 +11,7 @@ export const TICK_INTERVAL = 50;
 
 // 敵攻撃時のヒットアニメーションの継続時間（ミリ秒）
 export const ENEMY_HIT_ANIMATION_DURATION = 300;
-
+export const PLAYER_HIT_ANIMATION_DURATION = 300;
 // レベルアップ時のメッセージ表示時間（ミリ秒）
 export const LEVEL_UP_MESSAGE_DURATION = 3000;
 

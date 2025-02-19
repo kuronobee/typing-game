@@ -13,6 +13,7 @@ import {
   EXP_GAIN_DISPLAY_DURATION,
   INPUT_FOCUS_DELAY,
   ENEMY_HIT_ANIMATION_DURATION,
+  PLAYER_HIT_ANIMATION_DURATION,
 } from "./data/constants";
 
 const App: React.FC = () => {
@@ -27,13 +28,17 @@ const App: React.FC = () => {
   const [showExpBar, setShowExpBar] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
   const [wrongAttempts, setWrongAttempts] = useState(0);
-  const [enemyHit, setEnemyHit] = useState(false);
   const [showQuestion, setShowQuestion] = useState(true);
   const [readyForNextEnemy, setReadyForNextEnemy] = useState(false);
   const [battlePaused, setBattlePaused] = useState(false);
   // 問題のラウンド数
   const [round, setRound] = useState(1);
   const [isHintFullyRevealed, setIsHintFullyRevealed] = useState(false);
+  
+  // プレイヤー攻撃時のアニメーション管理用フラグ
+  const [enemyHit, setEnemyHit] = useState(false);
+  // 敵攻撃時のアニメーション管理用フラグ
+  const [playerHit, setPlayerHit] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const questionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -47,37 +52,29 @@ const App: React.FC = () => {
   
   // 毒攻撃を受けた時に呼ばれる関数
   const handlePoisonAttack = (poisonEffect: StatusEffect) => {
-  // すでに毒のタイマーが動作中なら、何もしない
-  if (poisonTimerRef.current !== null) {
-    console.log("handlePoisonAttack: 毒のタイマーが動作中です");
-    return;
-  }
-  
-  // 毒の持続時間を player.statusEffects から取得
-  //const poisonEffect = player.statusEffects.find(e => e.type === "poison");
-  const ticks = poisonEffect.ticks;
-  // if (!poisonEffect) {
-  //   console.log("handlePoisonAttack: 毒状態が見つかりません");
-  //   return;
-  // }
+    // すでに毒のタイマーが動作中なら、何もしない
+    if (poisonTimerRef.current !== null) {
+      console.log("handlePoisonAttack: 毒のタイマーが動作中です");
+      return;
+    }
+    
+    const ticks = poisonEffect.ticks;
+    console.log("handlePoisonAttack: 毒のタイマーを起動します");
 
-  //const ticks = poisonEffect.ticks;
-  console.log("handlePoisonAttack: 毒のタイマーを起動します");
+    // 1秒ごとにプレイヤーにダメージを与えるタイマーをセット（毎秒ダメージ）
+    poisonTimerRef.current = setInterval(() => {
+      console.log("handlePoisonAttack: setInterval 実行中");
+      setPlayer(prev => prev.takeDamage(poisonEffect.damagePerTick));
+    }, 1000); // 1秒ごとに実行
 
-  // 1秒ごとにプレイヤーにダメージを与えるタイマーをセット（毎秒ダメージ）
-  poisonTimerRef.current = setInterval(() => {
-    console.log("handlePoisonAttack: setInterval 実行中");
-    setPlayer(prev => prev.takeDamage(poisonEffect.damagePerTick));
-  }, 1000); // 1秒ごとに実行
-
-  // ticks 秒後に毒のタイマーを停止
-  setTimeout(() => {
-    console.log("handlePoisonAttack: setTimeout 実行中");
-    clearInterval(poisonTimerRef.current!);
-    setPlayer(prev => prev.removeStatusEffects("poison"));
-    poisonTimerRef.current = null;
-  }, ticks * 1000);
-};
+    // ticks 秒後に毒のタイマーを停止
+    setTimeout(() => {
+      console.log("handlePoisonAttack: setTimeout 実行中");
+      clearInterval(poisonTimerRef.current!);
+      setPlayer(prev => prev.removeStatusEffects("poison"));
+      poisonTimerRef.current = null;
+    }, ticks * 1000);
+  };
 
   useEffect(() => {
     if (!currentEnemy) {
@@ -121,6 +118,11 @@ const App: React.FC = () => {
       const damage_message = attack.result.damage != 0 ? `${attack.result.damage}のダメージ！`: "";
       setMessage({text: effect_message + damage_message, sender: "enemy"});
     } else {  
+      // 敵攻撃が発生した時、playerHitをtrueにしてアニメーションを発生させる
+      setPlayerHit(true);
+      setTimeout(() => {
+        setPlayerHit(false);
+      }, PLAYER_HIT_ANIMATION_DURATION);
       // 通常攻撃の場合のメッセージ
       setMessage({text: `${currentEnemy!.name} の攻撃！ ${attack.result.damage} のダメージ！`, sender: "enemy"});
     }
@@ -275,6 +277,7 @@ const App: React.FC = () => {
           currentQuestion={currentQuestion}
           wrongAttempts={wrongAttempts}
           enemyHit={enemyHit}
+          playerHit={playerHit}
           showQuestion={showQuestion}
           round={round}
           onFullRevealChange={setIsHintFullyRevealed}
