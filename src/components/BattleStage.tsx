@@ -22,6 +22,7 @@ interface BattleStageProps {
   wrongAttempts: number;
   enemyHit: boolean;
   playerHit: boolean;
+  playerFire: boolean;
   showQuestion: boolean;
   round: number;
   onFullRevealChange: (fullReveal: boolean) => void;
@@ -36,6 +37,7 @@ const BattleStage: React.FC<BattleStageProps> = ({
   wrongAttempts,
   enemyHit,
   playerHit,
+  playerFire,
   showQuestion,
   round,
   onFullRevealChange,
@@ -133,6 +135,7 @@ const BattleStage: React.FC<BattleStageProps> = ({
           enemy={currentEnemy}
           enemyHit={enemyHit}
           playerHit={playerHit}
+          playerFire={playerFire}
           enemyDefeated={currentEnemy.currentHP <= 0}
         />
       </div>

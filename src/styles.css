@@ -1,3 +1,4 @@
+/* src/styles.css */
 @import "tailwindcss";
 
 @keyframes hitAnimation {
@@ -25,16 +26,16 @@
 /* 炎を吐く */
 @keyframes flashRed {
 0% {
-    filter: brightness(1) saturate(1);
+    filter: brightness(1) saturate(1); transform: translateY(0);
 }
 50% {
-    filter: brightness(1.5) saturate(2) hue-rotate(10deg);
+    filter: brightness(1.5) sepia(1) saturate(5) hue-rotate(10deg); transform: translateY(10px);
 }
 100% {
-    filter: brightness(1) saturate(1);
+    filter: brightness(1) saturate(1); transform: translateY(0);
 }
 }
 
-.flash-red {
+.animate-fire {
     animation: flashRed 0.3s ease-in-out;
 }

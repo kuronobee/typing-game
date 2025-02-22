@@ -14,6 +14,7 @@ import {
   INPUT_FOCUS_DELAY,
   ENEMY_HIT_ANIMATION_DURATION,
   PLAYER_HIT_ANIMATION_DURATION,
+  PLAYER_FIREBREATH_ANIMATION_DURATION,
 } from "./data/constants";
 
 const App: React.FC = () => {
@@ -39,6 +40,8 @@ const App: React.FC = () => {
   const [enemyHit, setEnemyHit] = useState(false);
   // 敵攻撃時のアニメーション管理用フラグ
   const [playerHit, setPlayerHit] = useState(false);
+  // 敵の特殊攻撃（fire breath）のアニメーション管理用フラグ
+  const [playerFire, setPlayerFire] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const questionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -109,6 +112,14 @@ const App: React.FC = () => {
       if (poisonEffect) {
         console.log("毒攻撃を受けました");
         handlePoisonAttack(poisonEffect);
+      }
+      if (attack.special === "fire breath") {
+        console.log("特殊攻撃: fire breath");
+        // 炎攻撃のアニメーション
+        setPlayerFire(true);
+        setTimeout(() => {
+          setPlayerFire(false);
+        }, PLAYER_FIREBREATH_ANIMATION_DURATION);
       }
       // ステータス異常（...） 今後追加予定
       // if (  ) {}
@@ -278,6 +289,7 @@ const App: React.FC = () => {
           wrongAttempts={wrongAttempts}
           enemyHit={enemyHit}
           playerHit={playerHit}
+          playerFire={playerFire}
           showQuestion={showQuestion}
           round={round}
           onFullRevealChange={setIsHintFullyRevealed}
