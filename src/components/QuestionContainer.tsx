@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Question } from "../data/questions";
 
 interface QuestionContainerProps {
-  question: Question;
+  question: Question | null;
   wrongAttempts: number;
   attackProgress: number; // 0～1 の値（例: 0.5なら50%進捗）
   round: number; // 新しい問題に切り替わったかどうかを判定するためのラウンド数
@@ -22,7 +22,7 @@ const QuestionContainer: React.FC<QuestionContainerProps> = ({
   // 問題文が変更されたら fullReveal を false にする
   useEffect(() => {
     setFullReveal(false);
-  }, [round]);
+  }, [question]);
     // fullRevealの変化を上位コンポーネントへ通知
     useEffect(() => {
         if (onFullRevealChange) {

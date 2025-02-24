@@ -13,9 +13,10 @@ const enemies: IEnemyData[] = [
     exp: 50,
     word: "slime",
     image: new URL("../assets/enemies/slime.png", import.meta.url).toString(),
-    scale: 0.8,
+    scale: 0.5,
     speed: 200, // 例: 低速
     // originalQuestion はなし
+    questionMode: "common", // 問題はCommonQuestionsから選ぶ
     specialAttacks: [
       {
         name: "poison attack",
@@ -44,6 +45,7 @@ const enemies: IEnemyData[] = [
     image: new URL("../assets/enemies/goblin.png", import.meta.url).toString(),
     scale: 1.2,
     speed: 120, // 例: やや速い
+    questionMode: "both",
     originalQuestion: {
       id: "goblin1",
       type: "word",
@@ -73,6 +75,7 @@ const enemies: IEnemyData[] = [
     image: new URL("../assets/enemies/great_ogre.png", import.meta.url).toString(),
     scale: 1.8,
     speed: 80,
+    questionMode: "both",
     originalQuestion: {
       id: "greatOgreQ1",
       type: "multipleChoice",
@@ -92,6 +95,7 @@ const enemies: IEnemyData[] = [
     image: new URL("../assets/enemies/golem.png", import.meta.url).toString(),
     scale: 1.8,
     speed: 70,
+    questionMode: "both",
     originalQuestion: {
       id: "golemQ1",
       type: "multipleChoice",
@@ -111,6 +115,7 @@ const enemies: IEnemyData[] = [
     image: new URL("../assets/enemies/dragon.png", import.meta.url).toString(),
     scale: 2.0,
     speed: 200,
+    questionMode: "both",
     originalQuestion: {
       id: "dragon1",
       type: "multipleChoice",
@@ -152,6 +157,7 @@ const enemies: IEnemyData[] = [
     image: new URL("../assets/enemies/magma_golem.png", import.meta.url).toString(),
     scale: 1.8,
     speed: 150,
+    questionMode: "both",
     originalQuestion: {
       id: "magmaGolemQ1",
       type: "multipleChoice",
@@ -171,6 +177,7 @@ const enemies: IEnemyData[] = [
     image: new URL("../assets/enemies/arcdemon.png", import.meta.url).toString(),
     scale: 3.0,
     speed: 220,
+    questionMode: "original",
     originalQuestion: {
       id: "arcdemon1",
       type: "multipleChoice",

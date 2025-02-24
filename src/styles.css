@@ -39,3 +39,32 @@
 .animate-fire {
     animation: flashRed 0.3s ease-in-out;
 }
+
+/* コンテナに3D効果を付与 */
+.target-indicator-container {
+    perspective: 500px; /* 立体感の強さ（調整可能） */
+  }
+  
+  /* 3D横回転アニメーション */
+  @keyframes spin3d {
+    from {
+      transform: rotateY(0deg);
+    }
+    to {
+      transform: rotateY(360deg);
+    }
+  }
+  
+  /* ターゲットインジケーター（下向き三角形）のスタイル */
+  .target-indicator {
+    width: 0;
+    height: 0;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-top: 15px solid yellow;
+    transform-origin: center;
+    /* transform-style とアニメーションで3D回転 */
+    transform-style: preserve-3d;
+    animation: spin3d 1s linear infinite;
+  }
+    

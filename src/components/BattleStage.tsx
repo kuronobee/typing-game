@@ -14,36 +14,38 @@ import { Enemy as EnemyModel } from "../models/EnemyModel";
 import MessageDisplay, { MessageType } from "./MessageDisplay";
 
 interface BattleStageProps {
-  currentEnemy: EnemyModel;
+  currentEnemies: EnemyModel[];
+  targetIndex: number;
   player: Player;
-  onEnemyAttack: () => void;
+  onEnemyAttack: (enemy: EnemyModel) => void;
   message: MessageType | null;
   currentQuestion: Question | null;
   wrongAttempts: number;
-  enemyHit: boolean;
-  playerHit: boolean;
-  playerFire: boolean;
+  enemyHitFlags: boolean[];
+  enemyAttackFlags: boolean[];
+  enemyFireFlags: boolean[];
   showQuestion: boolean;
   round: number;
   onFullRevealChange: (fullReveal: boolean) => void;
 }
 
 const BattleStage: React.FC<BattleStageProps> = ({
-  currentEnemy,
+  currentEnemies,
+  targetIndex,
   player,
   onEnemyAttack,
   message,
   currentQuestion,
   wrongAttempts,
-  enemyHit,
-  playerHit,
-  playerFire,
+  enemyHitFlags = [],
+  enemyAttackFlags = [],
+  enemyFireFlags = [],
   showQuestion,
   round,
   onFullRevealChange,
 }) => {
-  const [attackProgress, setAttackProgress] = useState(0);
-  const attackStartTimeRef = useRef<number>(Date.now());
+  // 各敵毎の攻撃ゲージ進捗を管理する配列(0〜1)
+  const [attackProgresses, setAttackProgresses] = useState<number[]>([]);
 
   // プレイヤーの最新情報を保持するための ref
   const playerRef = useRef(player);
@@ -51,34 +53,47 @@ const BattleStage: React.FC<BattleStageProps> = ({
     playerRef.current = player;
   }, [player]);
 
-  const positionOffset = currentEnemy.positionOffset || { x: 0, y: 0 };
+  // currentEnemiesが変わったら、ゲージの進捗配列を初期化する
+  useEffect(() => {
+    setAttackProgresses(currentEnemies.map(() => 0));
+  }, [currentEnemies]);
 
   useEffect(() => {
-    // 敵が存在しない、または敵が倒れている場合はタイマーを起動しない
-    if (!currentEnemy || currentEnemy.currentHP <= 0) return;
-    // プレイヤーの最新の速度を ref から取得する
-    const effectiveSpeed = (currentEnemy.speed || 0) - playerRef.current.speed;
-    if (effectiveSpeed <= 0) {
-      setAttackProgress(0);
-      return;
+    if (enemyHitFlags[targetIndex]) {
+      setAttackProgresses((prevProgresses) => {
+        const updated = [...prevProgresses];
+        updated[targetIndex] = 0;
+        return updated;
+      });
     }
-    const attackInterval = (MAX_EFFECTIVE_SPEED / effectiveSpeed) * MS_IN_SECOND;
-    attackStartTimeRef.current = Date.now();
-
-    const tick = () => {
-      const elapsed = Date.now() - attackStartTimeRef.current;
-      if (elapsed >= attackInterval) {
-        onEnemyAttack();
-        attackStartTimeRef.current = Date.now();
-        setAttackProgress(0);
-      } else {
-        setAttackProgress(elapsed / attackInterval);
-      }
-    };
-
-    const timerId = setInterval(tick, TICK_INTERVAL);
+  }, [enemyHitFlags, targetIndex])
+  // 各敵のゲージをバックグラウンドで進行させるタイマー
+  useEffect(() => {
+    const timerId = setInterval(() => {
+      setAttackProgresses((prevProgresses) => prevProgresses.map((progress, i) => {
+        const enemy = currentEnemies[i];
+        // 敵が存在しない、または敵が倒れている場合はタイマーを起動しない
+        if (!enemy || enemy.defeated) return 0;
+        const effectiveSpeed = enemy.speed - playerRef.current.speed;
+        if (effectiveSpeed <= 0) return progress;
+        const attackInterval = (MAX_EFFECTIVE_SPEED / effectiveSpeed) * MS_IN_SECOND;
+        let newProgress = progress + TICK_INTERVAL / attackInterval;
+        if (newProgress >= 1) {
+          // ゲージが万端になったらその敵の攻撃を実行し、進捗をリセット
+          // 非同期に onEnemyAttack を呼ぶことで、レンダリング中の更新を回避
+          setTimeout(() => {
+            onEnemyAttack(enemy);
+          }, 0);
+          newProgress = 0;
+        }
+        return newProgress;
+      }));
+    }, TICK_INTERVAL);
     return () => clearInterval(timerId);
-  }, [currentEnemy, onEnemyAttack]); // player.hp や player.speed は依存配列に含めない
+  }, [currentEnemies, player, onEnemyAttack]);
+
+  // ターゲット敵の攻撃ゲージ進捗
+  const targetProgress = attackProgresses[targetIndex] || 0;
 
   const getHint = (answer: string, wrongAttempts: number): string => {
     const n = answer.length;
@@ -121,34 +136,49 @@ const BattleStage: React.FC<BattleStageProps> = ({
           backgroundSize: "100% 100%",
         }}
       />
-      {/* 敵キャラ表示 */}
-      <div
-        className="absolute z-10 transition-all duration-1000 ease-out"
-        style={{
-          bottom: `calc(60px + ${positionOffset.y}px)`,
-          left: `calc(50% + ${positionOffset.x}px)`,
-          transform: "translateX(-50%)",
-          opacity: 1,
-        }}
-      >
-        <Enemy
-          enemy={currentEnemy}
-          enemyHit={enemyHit}
-          playerHit={playerHit}
-          playerFire={playerFire}
-          enemyDefeated={currentEnemy.currentHP <= 0}
-        />
-      </div>
-
-      {/* 問題コンテナ */}
-      {currentQuestion && currentEnemy.currentHP > 0 && (
-        <QuestionContainer 
-        question={currentQuestion} 
-        wrongAttempts={wrongAttempts}
-        attackProgress={attackProgress}
-        round={round} 
-        onFullRevealChange={onFullRevealChange}/>
-      )}
+      {/* 複数の敵を表示 */}
+      {currentEnemies.map((enemy, index) => {
+        const isTarget = index === targetIndex;
+        // 各敵の進捗はattackProgresses[index]に入っている
+        const enemyProgress = attackProgresses[index] || 0;
+        return (
+          <div
+            key={index}
+            className="absolute z-10 transition-all duration-1000 ease-out"
+            style={{
+              bottom: `calc(60px + ${enemy.positionOffset?.y || 0}px)`,
+              left: `calc(50% + ${enemy.positionOffset?.x || 0}px)`,
+              transform: "translateX(-50%)",
+              opacity: enemy.currentHP > 0 ? 1 : 0,
+            }}
+          >
+            <Enemy
+              enemy={enemy}
+              enemyHit={enemyHitFlags[index]}
+              playerHit={enemyAttackFlags[index]}
+              playerFire={enemyFireFlags[index]}
+              // 他のアニメーション用フラグも必要に応じて
+              enemyDefeated={enemy.currentHP <= 0}
+              showHealth={isTarget}
+              showTargetIndicator={isTarget}
+              progress={enemyProgress}
+            />
+          </div>
+        );
+      })}
+      {/* ターゲット敵の質問コンテナのみ表示 */}
+      {currentEnemies[targetIndex] &&
+        currentEnemies[targetIndex].currentHP > 0 && (
+          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 w-[90%] z-30">
+            <QuestionContainer
+              question={currentQuestion}
+              wrongAttempts={wrongAttempts}
+              attackProgress={targetProgress}
+              round={round}
+              onFullRevealChange={onFullRevealChange}
+            />
+          </div>
+        )}
       {/* メッセージ表示 */}
       <MessageDisplay newMessage={message} />
     </div>
