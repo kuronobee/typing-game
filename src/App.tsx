@@ -405,7 +405,28 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Tab") {
+      // shift+tabでターゲットを反時計回転で選択
+      if (event.key === "Tab" && event.shiftKey) {
+        event.preventDefault(); // Shift+Tab のデフォルト動作を無効化
+        if (currentEnemies.filter(enemy => !enemy.defeated).length > 1) {
+          setTargetIndex((prev) => {
+            // 再帰的に前の生存している敵のインデックスを探す関数
+            const findPrevAliveIndex = (index: number): number => {
+              let newIndex = index - 1;
+              if (newIndex < 0) {
+                newIndex = currentEnemies.length - 1;
+              }
+              if (currentEnemies[newIndex].defeated) {
+                return findPrevAliveIndex(newIndex);
+              }
+              return newIndex;
+            };
+            return findPrevAliveIndex(prev);
+          });
+        }
+      }
+      // Tabキーで時計回転にターゲットを選択
+      else if (event.key === "Tab") {
         event.preventDefault(); // タブキーのデフォルト動作を無効化
         if (currentEnemies.filter(enemy => !enemy.defeated).length > 1) {
           setTargetIndex((prev) => {
@@ -423,7 +444,6 @@ const App: React.FC = () => {
           });
         }
       }
-
       else if (event.key === "Enter" && readyForNextStage) {
         spawnNewStage();
         setReadyForNextStage(false);
