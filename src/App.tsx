@@ -160,14 +160,6 @@ const App: React.FC = () => {
     }, duration);
   };
 
-  const updateQuestion = () => {
-    setCurrentQuestion(
-      commonQuestions[Math.floor(Math.random() * commonQuestions.length)]
-    );
-    setRound(prev => prev + 1); // 問題のラウンド数を更新
-    setWrongAttempts(0);
-  };
-
   // 次の生存している敵のインデックスを返す関数。見つからなければ -1 を返す。
   const findNextAliveEnemyIndex = (startIndex: number, enemies: EnemyModel[]): number => {
     // 現在のインデックスの次から探索
@@ -287,101 +279,6 @@ const App: React.FC = () => {
     setTimeout(() => setExpGain(null), EXP_GAIN_DISPLAY_DURATION);
     setPlayer(prev => prev.addExp(amount));
     setShowExpBar(true);
-  };
-
-  // 前回のプレイヤー状態を保持する ref
-  const prevPlayerRef = useRef(player);
-
-  useEffect(() => {
-    if (prevPlayerRef.current.level !== player.level) {
-      const diffHP = player.maxHP - prevPlayerRef.current.maxHP;
-      const diffMP = player.maxMP - prevPlayerRef.current.maxMP;
-      const diffAttack = player.attack - prevPlayerRef.current.attack;
-      const diffDefense = player.defense - prevPlayerRef.current.defense;
-      const diffMagicDefense = player.magicDefense - prevPlayerRef.current.magicDefense;
-      const diffSpeed = player.speed - prevPlayerRef.current.speed;
-      showLevelUpMessage(diffHP, diffMP, diffAttack, diffDefense, diffMagicDefense, diffSpeed);
-      prevPlayerRef.current = player;
-    }
-  }, [player]);
-
-  const showLevelUpMessage = (
-    diffHP: number,
-    diffMP: number,
-    diffAttack: number,
-    diffDefense: number,
-    diffMagicDefense: number,
-    diffSpeed: number
-  ) => {
-    const msg = (
-      <div>
-        <div className="font-bold text-xl mb-2">レベルアップ！ (Lv.{player.level})</div>
-        <table className="mx-auto text-left">
-          <tbody>
-            <tr>
-              <td>HP：</td>
-              <td>
-                {player.maxHP}{" "}
-                <span className="text-green-500">
-                  (+{diffHP})
-                </span>
-              </td>
-            </tr>
-            <tr>
-              <td>MP：</td>
-              <td>
-                {player.maxMP}{" "}
-                <span className="text-green-500">
-                  (+{diffMP})
-                </span>
-              </td>
-            </tr>
-            <tr>
-              <td>攻撃：</td>
-              <td>
-                {player.attack}{" "}
-                <span className="text-green-500">
-                  (+{diffAttack})
-                </span>
-              </td>
-            </tr>
-            <tr>
-              <td>防御：</td>
-              <td>
-                {player.defense}{" "}
-                <span className="text-green-500">
-                  (+{diffDefense})
-                </span>
-              </td>
-            </tr>
-            <tr>
-              <td>魔法防御：</td>
-              <td>
-                {player.magicDefense}{" "}
-                <span className="text-green-500">
-                  (+{diffMagicDefense})
-                </span>
-              </td>
-            </tr>
-            <tr>
-              <td>スピード：</td>
-              <td>
-                {player.speed}{" "}
-                <span className="text-green-500">
-                  (+{diffSpeed})
-                </span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    );
-
-    setLevelUpMessage(msg);
-    setTimeout(() => {
-      setLevelUpMessage(null);
-      setShowExpBar(false);
-    }, LEVEL_UP_MESSAGE_DURATION);
   };
 
   const spawnNewStage = () => {

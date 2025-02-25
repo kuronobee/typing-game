@@ -71,6 +71,7 @@ const LevelUpNotifier: React.FC<LevelUpNotifierProps> = ({ player }) => {
                             </tr>
                         </tbody>
                     </table>
+                    <p className="mt-4 text-sm">Enterキーまたはこの領域をクリックして閉じてください。</p>
                 </div>
             );
 
@@ -78,17 +79,30 @@ const LevelUpNotifier: React.FC<LevelUpNotifierProps> = ({ player }) => {
             // 前回の状態を更新
             prevPlayerRef.current = player;
 
-            const timer = setTimeout(() => {
-                setMessage(null);
-            }, LEVEL_UP_MESSAGE_DURATION);
-            return () => clearTimeout(timer);
+            // const timer = setTimeout(() => {
+            //     setMessage(null);
+            // }, LEVEL_UP_MESSAGE_DURATION);
+            // return () => clearTimeout(timer);
         }
     }, [player]);
+
+    // メッセージが表示されているときにEnterキーで閉じる処理
+    useEffect(() => {
+        if(!message) return;
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "Enter") {
+                setMessage(null);
+            }
+        };
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [message]);
 
     if (!message) return null;
 
     return (
-        <div className="absolute top-32 left-1/2 transform -translate-x-1/2 z-51 bg-black bg-opacity-50 text-white px-6 py-4 rounded-lg text-center shadow-xl border-2 border-white">
+        <div className="absolute top-32 left-1/2 transform -translate-x-1/2 z-51 bg-black bg-opacity-50 text-white px-6 py-4 rounded-lg text-center shadow-xl border-2 border-white"
+        onClick={() => setMessage(null)}>
             {message}
         </div>
     );
