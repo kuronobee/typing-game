@@ -16,6 +16,7 @@ import {
   PLAYER_FIREBREATH_ANIMATION_DURATION,
 } from "./data/constants";
 import { stages } from "./data/stages";
+import LevelUpNotifier from "./components/LevelUpNotifier";
 
 const App: React.FC = () => {
   // プレイヤーはPlayerクラスのインスタンスで管理
@@ -24,7 +25,7 @@ const App: React.FC = () => {
   // 敵については、初期状態をnullにしておく
   const [message, setMessage] = useState<MessageType | null>({ text: "問題に正しく回答して敵を倒せ！", sender: "system" });
   const [expGain, setExpGain] = useState<number | null>(null);
-  const [levelUpMessage, setLevelUpMessage] = useState("");
+  const [levelUpMessage, setLevelUpMessage] = useState<React.ReactNode>(null);
   const [showExpBar, setShowExpBar] = useState(false);
   const [wrongAttempts, setWrongAttempts] = useState(0);
   const [showQuestion, setShowQuestion] = useState(true);
@@ -184,14 +185,27 @@ const App: React.FC = () => {
     return -1; // すべて倒れている場合
   };
 
+  // ターゲットの変化により問題を入れかえる
+  useEffect(() => {
+    if (currentEnemies.length > 0) {
+      const targetEnemy = currentEnemies[targetIndex];
+      if (targetEnemy && !targetEnemy.defeated) {
+        // すでに出題されている問題があればそれを、なければ getNextQuestion() で生成する
+        setCurrentQuestion(targetEnemy.presentedQuestion || targetEnemy.getNextQuestion());
+        console.log(targetEnemy.presentedQuestion);
+      }
+    }
+  }, [targetIndex, currentEnemies]);
+
   const handlePlayerAttack = (input: string) => {
     if (!currentEnemies.length) return;
     // ターゲットの敵を取得
     const targetEnemy = currentEnemies[targetIndex];
     if (!targetEnemy || targetEnemy.defeated) return;
 
-    setCurrentQuestion(targetEnemy.getNextQuestion());
-    if (!currentQuestion) return;
+    if (!currentQuestion) {
+      setCurrentQuestion(targetEnemy.getNextQuestion());
+    }
 
     if (input.toLowerCase() === currentQuestion.answer.toLowerCase()) {
       // 正解の場合
@@ -213,14 +227,15 @@ const App: React.FC = () => {
         });
       }, ENEMY_HIT_ANIMATION_DURATION);
       setMessage({ text: `正解！${damage} のダメージを与えた！`, sender: "player" });
+      setWrongAttempts(0);
       // 敵のHPが0担った場合は、defeatedフラグを立てる
       if (targetEnemy.defeated) {
         setMessage({ text: `${targetEnemy.name} を倒した。`, sender: "system" });
         // TODO：現在画面から消去
         const nextIndex = findNextAliveEnemyIndex(targetIndex, currentEnemies);
-        if(nextIndex !== -1) {
+        if (nextIndex !== -1) {
           setTargetIndex(nextIndex);
-        }     
+        }
       } else {
         // 次の問題を表示
         setCurrentQuestion(targetEnemy.getNextQuestion());
@@ -229,38 +244,9 @@ const App: React.FC = () => {
       checkStageCompletion();
     } else {
       // 不正解の場合
-      //setWrongAttempts(prev => prev + 1);
+      setWrongAttempts(prev => prev + 1);
       setMessage({ text: "間違い！正しい解答を入力してください！", sender: "system" });
     }
-    // if (readyForNextEnemy || !currentQuestion) return;
-    // if (input.toLowerCase() === currentQuestion.answer.toLowerCase()) {
-    //   setEnemyHit(true);
-    //   setShowQuestion(false);
-    //   const monsterName = currentEnemy.name;
-    //   const monsterExp = currentEnemy.exp;
-    //   // ダメージ計算ここから
-    //   // 敵に与える基本ダメージ
-    //   const { damage, effectiveWrongAttempts, multiplier } = calculateEffectiveDamage();
-    //   // ダメージ計算ここまで
-    //   // 敵モデルの内部処理でダメージを適用
-    //   currentEnemy.takeDamage(damage);
-    //   setMessage({text: `正解！${damage} のダメージを与えた！${effectiveWrongAttempts === 0 ? "" : "(ダメージ" + Math.floor((1-multiplier) * 100) + "%減)"}`, sender: "player"});
-    //   setTimeout(() => {
-    //     setEnemyHit(false);
-    //   }, ENEMY_HIT_ANIMATION_DURATION);
-
-    //   if (currentEnemy.currentHP <= 0) {
-    //     setMessage({text: `${monsterName} を倒した。${monsterExp} ポイントの経験値を得た。次は「次の敵に進む」ボタンを押せ。`, sender: "system"});
-    //     // プレイヤーの経験値加算処理（Player.addExp を利用）
-    //     setPlayer(prev => prev.addExp(monsterExp));
-    //     handleEnemyDefeat();
-    //   } else {
-    //     updateQuestion();
-    //     setShowQuestion(true);
-    //   }
-    // } else {
-    //   setWrongAttempts(prev => prev + 1);
-    //   setMessage({text: "間違い！正しい解答を入力してください！", sender: "system"});
   }
 
   // 全ての敵が倒されたかどうかチェックする関数
@@ -269,8 +255,11 @@ const App: React.FC = () => {
     if (allDefeated) {
       const totalEXP = currentEnemies.reduce((sum, enemy) => sum + enemy.exp, 0);
       gainEXP(totalEXP);
+      console.log("倒した！");
       setMessage({ text: `全ての敵を倒した！${totalEXP} EXPを獲得しました。Enterキーで次のステージに進む。`, sender: "system" });
-      setReadyForNextStage(true);
+      setTimeout(() => {
+        setReadyForNextStage(true);
+      }, 2000);
     }
   }
 
@@ -300,16 +289,97 @@ const App: React.FC = () => {
     setShowExpBar(true);
   };
 
-  useEffect(() => {
-    if (player.exp >= player.levelUpThreshold) {
-      levelUp();
-    }
-  }, [player.exp, player]);
+  // 前回のプレイヤー状態を保持する ref
+  const prevPlayerRef = useRef(player);
 
-  const levelUp = () => {
-    setLevelUpMessage(`レベルアップ！ (Lv.${player.level})`);
+  useEffect(() => {
+    if (prevPlayerRef.current.level !== player.level) {
+      const diffHP = player.maxHP - prevPlayerRef.current.maxHP;
+      const diffMP = player.maxMP - prevPlayerRef.current.maxMP;
+      const diffAttack = player.attack - prevPlayerRef.current.attack;
+      const diffDefense = player.defense - prevPlayerRef.current.defense;
+      const diffMagicDefense = player.magicDefense - prevPlayerRef.current.magicDefense;
+      const diffSpeed = player.speed - prevPlayerRef.current.speed;
+      showLevelUpMessage(diffHP, diffMP, diffAttack, diffDefense, diffMagicDefense, diffSpeed);
+      prevPlayerRef.current = player;
+    }
+  }, [player]);
+
+  const showLevelUpMessage = (
+    diffHP: number,
+    diffMP: number,
+    diffAttack: number,
+    diffDefense: number,
+    diffMagicDefense: number,
+    diffSpeed: number
+  ) => {
+    const msg = (
+      <div>
+        <div className="font-bold text-xl mb-2">レベルアップ！ (Lv.{player.level})</div>
+        <table className="mx-auto text-left">
+          <tbody>
+            <tr>
+              <td>HP：</td>
+              <td>
+                {player.maxHP}{" "}
+                <span className="text-green-500">
+                  (+{diffHP})
+                </span>
+              </td>
+            </tr>
+            <tr>
+              <td>MP：</td>
+              <td>
+                {player.maxMP}{" "}
+                <span className="text-green-500">
+                  (+{diffMP})
+                </span>
+              </td>
+            </tr>
+            <tr>
+              <td>攻撃：</td>
+              <td>
+                {player.attack}{" "}
+                <span className="text-green-500">
+                  (+{diffAttack})
+                </span>
+              </td>
+            </tr>
+            <tr>
+              <td>防御：</td>
+              <td>
+                {player.defense}{" "}
+                <span className="text-green-500">
+                  (+{diffDefense})
+                </span>
+              </td>
+            </tr>
+            <tr>
+              <td>魔法防御：</td>
+              <td>
+                {player.magicDefense}{" "}
+                <span className="text-green-500">
+                  (+{diffMagicDefense})
+                </span>
+              </td>
+            </tr>
+            <tr>
+              <td>スピード：</td>
+              <td>
+                {player.speed}{" "}
+                <span className="text-green-500">
+                  (+{diffSpeed})
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    );
+
+    setLevelUpMessage(msg);
     setTimeout(() => {
-      setLevelUpMessage("");
+      setLevelUpMessage(null);
       setShowExpBar(false);
     }, LEVEL_UP_MESSAGE_DURATION);
   };
@@ -337,8 +407,20 @@ const App: React.FC = () => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Tab") {
         event.preventDefault(); // タブキーのデフォルト動作を無効化
-        if (currentEnemies.length > 0) {
-          setTargetIndex((prev) => (prev + 1) % currentEnemies.length);
+        if (currentEnemies.filter(enemy => !enemy.defeated).length > 1) {
+          setTargetIndex((prev) => {
+            // 再帰的に次の生存敵のインデックスを探す関数
+            const findNextAliveIndex = (index: number): number => {
+              const newIndex = (index + 1) % currentEnemies.length;
+              // もし戻ってきたら、すべて倒れている可能性があるので、そのまま返す
+              if (newIndex === index) return index;
+              if (currentEnemies[newIndex].defeated) {
+                return findNextAliveIndex(newIndex);
+              }
+              return newIndex;
+            };
+            return findNextAliveIndex(prev);
+          });
         }
       }
 
@@ -385,11 +467,8 @@ const App: React.FC = () => {
           round={round}
           onFullRevealChange={setIsHintFullyRevealed}
         />
-        {levelUpMessage && (
-          <div className="absolute top-32 left-1/2 transform -translate-x-1/2 z-50 bg-black bg-opacity-50 text-white px-6 py-4 rounded-lg text-center shadow-xl border-2 border-white">
-            {levelUpMessage}
-          </div>
-        )}
+        {/* levelUpNotifierを表示 */}
+        <LevelUpNotifier player={player} />
         {readyForNextStage && (
           <div className="absolute bottom-50 left-1/2 transform -translate-x-1/2 z-50">
             <button

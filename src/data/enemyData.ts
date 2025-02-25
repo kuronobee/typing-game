@@ -46,12 +46,12 @@ const enemies: IEnemyData[] = [
     scale: 1.2,
     speed: 120, // 例: やや速い
     questionMode: "both",
-    originalQuestion: {
+    originalQuestions: [{
       id: "goblin1",
       type: "word",
       prompt: "小さな怪物",
       answer: "goblin",
-    },
+    }],
     specialAttacks: [
       {
         name: "fire breath",
@@ -76,13 +76,13 @@ const enemies: IEnemyData[] = [
     scale: 1.8,
     speed: 80,
     questionMode: "both",
-    originalQuestion: {
+    originalQuestions:[{
       id: "greatOgreQ1",
       type: "multipleChoice",
       prompt: "Which monster wields a huge spiked club?",
       answer: "ogre",
       choices: ["slime", "goblin", "ogre"],
-    },
+    }],
   },
   {
     name: "ゴーレム",
@@ -96,13 +96,13 @@ const enemies: IEnemyData[] = [
     scale: 1.8,
     speed: 70,
     questionMode: "both",
-    originalQuestion: {
+    originalQuestions: [{
       id: "golemQ1",
       type: "multipleChoice",
       prompt: "Which monster is made of earth or clay?",
       answer: "golem",
       choices: ["slime", "goblin", "golem"],
-    },
+    }],
   },  
   {
     name: "ドラゴン",
@@ -114,15 +114,15 @@ const enemies: IEnemyData[] = [
     word: "dragon",
     image: new URL("../assets/enemies/dragon.png", import.meta.url).toString(),
     scale: 2.0,
-    speed: 200,
+    speed: 100,
     questionMode: "both",
-    originalQuestion: {
+    originalQuestions: [{
       id: "dragon1",
       type: "multipleChoice",
       prompt: "Which creature breathes fire?",
       answer: "dragon",
       choices: ["dragon", "slime", "goblin"],
-    },
+    }],
     // 30% の確率で火炎攻撃、20% の確率で自己回復
     specialAttacks: [
       {
@@ -158,13 +158,13 @@ const enemies: IEnemyData[] = [
     scale: 1.8,
     speed: 150,
     questionMode: "both",
-    originalQuestion: {
+    originalQuestions: [{
       id: "magmaGolemQ1",
       type: "multipleChoice",
       prompt: "Which golem is formed from molten rock?",
       answer: "magma",
       choices: ["magma", "golem", "basilisk"],
-    },
+    }],
   },  
   {
     name: "アークデーモン",
@@ -178,13 +178,13 @@ const enemies: IEnemyData[] = [
     scale: 3.0,
     speed: 220,
     questionMode: "original",
-    originalQuestion: {
+    originalQuestions: [{
       id: "arcdemon1",
       type: "multipleChoice",
       prompt: "Which monster is an arch demon?",
       answer: "arcdemon",
       choices: ["goblin", "dragon", "arcdemon"],
-    },
+    }],
   },  
 ];
 

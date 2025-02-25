@@ -1,5 +1,7 @@
 // src/models/EnemyModel.ts
 import { stringify } from "postcss";
+import {useState} from "react";
+
 import { Player, StatusEffect } from "./Player";
 import { Question, commonQuestions } from "../data/questions";
 
@@ -53,6 +55,7 @@ export class Enemy {
   scale?: number;
   questionMode: "original" | "common" | "both";
   originalQuestions?: Question[]; // 敵が持つ、オリジナル問題
+  private _presentedQuestion: Question | null;
   specialAttacks: SpecialAttack[];
   defeated: boolean;
 
@@ -72,8 +75,13 @@ export class Enemy {
     this.scale = data.scale;
     this.questionMode = "common";
     this.originalQuestions = [];
+    this._presentedQuestion = null;
     this.specialAttacks = data.specialAttacks || [];
     this.defeated = false;
+  }
+
+  public get presentedQuestion(): Question | null {
+    return this._presentedQuestion;
   }
 
   // ダメージを受ける処理（内部ロジック）
@@ -127,22 +135,25 @@ export class Enemy {
   // getNextQuestion method now uses 'question' property
   public getNextQuestion(): Question {
     if (this.questionMode === "original") {
-      return (this.originalQuestions ? this.originalQuestions[Math.floor(Math.random() * this.originalQuestions.length)]        
-          : commonQuestions[Math.floor(Math.random() * commonQuestions.length)]);
+      this._presentedQuestion = (this.originalQuestions ? this.originalQuestions[Math.floor(Math.random() * this.originalQuestions.length)]        
+      : commonQuestions[Math.floor(Math.random() * commonQuestions.length)]);
     } else if (this.questionMode === "common") {
-      return commonQuestions[
+      this._presentedQuestion = commonQuestions[
         Math.floor(Math.random() * commonQuestions.length)
       ];
     } else if (this.questionMode === "both") {
       if (this.originalQuestions && Math.random() < 0.5) {
-        return this.originalQuestions[Math.floor(Math.random() * this.originalQuestions.length)];
+        this._presentedQuestion = this.originalQuestions[Math.floor(Math.random() * this.originalQuestions.length)];
       } else {
-        return commonQuestions[
+        this._presentedQuestion = commonQuestions[
           Math.floor(Math.random() * commonQuestions.length)
         ];
       }
     }
-    return commonQuestions[Math.floor(Math.random() * commonQuestions.length)];
+    else {
+      this._presentedQuestion = commonQuestions[Math.floor(Math.random() * commonQuestions.length)];
+    }
+    return this._presentedQuestion;
   }
   // ここにさらに、特殊攻撃や状態異常などのメソッドを追加可能
 }

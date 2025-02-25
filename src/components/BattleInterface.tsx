@@ -10,7 +10,7 @@ interface BattleInterfaceProps {
   onSubmit: (input: string) => void;
   currentQuestion: Question | null;
   expGain?: number | null;
-  inputRef: React.RefObject<HTMLInputElement>;
+  inputRef: React.RefObject<HTMLInputElement | null> ;
 }
 
 const BattleInterface: React.FC<BattleInterfaceProps> = ({

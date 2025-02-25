@@ -30,7 +30,7 @@ const Enemy: React.FC<EnemyProps> = ({
     ${enemyHit ? "animate-hit" : ""}
     ${playerHit ? "animate-phit" : ""}
     ${playerFire ? "animate-fire" : ""}`;
-
+    
     const gaugeOffset = 96 * (1 - effectiveScale);
     return (
         <div className="relative inline-block">
