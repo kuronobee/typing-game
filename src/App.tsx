@@ -25,7 +25,6 @@ const App: React.FC = () => {
   // 敵については、初期状態をnullにしておく
   const [message, setMessage] = useState<MessageType | null>({ text: "問題に正しく回答して敵を倒せ！", sender: "system" });
   const [expGain, setExpGain] = useState<number | null>(null);
-  const [levelUpMessage, setLevelUpMessage] = useState<React.ReactNode>(null);
   const [showExpBar, setShowExpBar] = useState(false);
   const [wrongAttempts, setWrongAttempts] = useState(0);
   const [showQuestion, setShowQuestion] = useState(true);
@@ -215,7 +214,7 @@ const App: React.FC = () => {
 
     if (input.toLowerCase() === currentQuestion.answer.toLowerCase()) {
       // 正解の場合
-      const { damage } = calculateEffectiveDamage(currentQuestion); // プレイヤー攻撃計算
+      const { damage, effectiveWrongAttempts, multiplier, specialMessage } = calculateEffectiveDamage(currentQuestion); // プレイヤー攻撃計算
       targetEnemy.takeDamage(damage);
 
       // 新しい識別子を生成してダメージを設定
@@ -250,7 +249,12 @@ const App: React.FC = () => {
           return newFlags;
         });
       }, ENEMY_HIT_ANIMATION_DURATION);
-      setMessage({ text: `正解！${damage} のダメージを与えた！`, sender: "player" });
+      if (damage === 0) {
+        setMessage({text: "正解！しかし、攻撃を外してしまった！", sender: "player"});
+      }
+      else {
+        setMessage({ text: `正解！${specialMessage} ${damage} のダメージを与えた！`, sender: "player" });
+      }
       setWrongAttempts(0);
       // 敵のHPが0担った場合は、defeatedフラグを立てる
       if (targetEnemy.defeated) {
@@ -303,8 +307,6 @@ const App: React.FC = () => {
     const answerNoSpaces = currentQuestion.answer.replace(/\s/g, "");
     const maxHints = answerNoSpaces.length;
     const effectiveWrongAttempts = isHintFullyRevealed ? maxHints : wrongAttempts;
-    console.log("effectiveWrongAttempts: ", effectiveWrongAttempts);
-    
     const hintFraction = effectiveWrongAttempts / maxHints;
     // ヒントが全て表示されているときは倍率が0.5、表示されていなければ1.0
     const multiplier = 1 - (hintFraction / 2);
@@ -318,17 +320,20 @@ const App: React.FC = () => {
     
     // クリティカルとミスの確率を計算
     // 例として、基本ミス確率5%に敵のluckとspeedによる影響、クリティカルは基本5%にプレイヤーのluckとpowerの影響
-    const missProbability = Math.min(0.01 + (enemyLuck + enemySpeed) * 0.005, 0.1);     // 最大20%程度
-    const critProbability = Math.min(0.01 + (playerLuck + playerPower) * 0.005, 0.15);      // 最大30%程度
+    const missProbability = Math.min(0.01 + (enemyLuck + enemySpeed) * 0.005, 0.1);  
+    const critProbability = Math.min(0.01 + (playerLuck + playerPower) * 0.005, 0.15);
     
+    // ヒントが完全に開かれている場合、クリティカル発生は無効にする。
+    const effectiveCritProbability = isHintFullyRevealed ? 0 : critProbability;
+
     const rand = Math.random();
     let specialMessage = "";
     
     // 攻撃ミスをまずチェック
     if (rand < missProbability) {
       damage = 0;
-      specialMessage = "攻撃ミス！";
-    } else if (rand < missProbability + critProbability) {
+      specialMessage = "ミス！";
+    } else if (rand < missProbability + effectiveCritProbability) {
       // クリティカルの場合は、敵の防御力を無視し、さらに大きな倍率（ここでは1.5倍）をかける
       damage = Math.floor(player.attack * randomFactor * 1.5);
       specialMessage = "クリティカル！";
@@ -336,7 +341,6 @@ const App: React.FC = () => {
       damage = Math.floor(damage);
     }
     
-    console.log("damage: ", damage);
     return { damage, effectiveWrongAttempts, multiplier, specialMessage };
   }
   
@@ -448,7 +452,6 @@ const App: React.FC = () => {
           enemyAttackFlags={enemyAttackFlags}
           enemyFireFlags={enemyFireFlags}
           showQuestion={showQuestion}
-          round={round}
           damageNumbers={damageNumbers}
           onFullRevealChange={setIsHintFullyRevealed}
         />

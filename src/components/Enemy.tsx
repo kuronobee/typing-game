@@ -80,7 +80,7 @@ const Enemy: React.FC<EnemyProps> = ({
             {damage && (
                 <div 
                 key={damage.id}
-                className="absolute top-0 left-1/2 transform -translate-x-1/2 text-red-500 font-bold text-xl animate-damage-fade"
+                className="absolute top-0 left-1/2 transform -translate-x-1/2 text-red-500 font-bold text-2xl animate-damage-fade"
                 style={{ top: `${gaugeOffset + 5}px`}}>
                     {damage.value}
                 </div>

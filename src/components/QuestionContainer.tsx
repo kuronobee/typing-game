@@ -6,7 +6,6 @@ interface QuestionContainerProps {
   question: Question | null;
   wrongAttempts: number;
   attackProgress: number; // 0～1 の値（例: 0.5なら50%進捗）
-  round: number; // 新しい問題に切り替わったかどうかを判定するためのラウンド数
   onFullRevealChange: (fullReveal: boolean) => void;
 }
 
@@ -14,7 +13,6 @@ const QuestionContainer: React.FC<QuestionContainerProps> = ({
     question, 
     wrongAttempts, 
     attackProgress, 
-    round,
     onFullRevealChange, }) => {
   // fullReveal が true の場合、ヒントは完全に開かれる
   const [fullReveal, setFullReveal] = useState(false);
