@@ -11,6 +11,7 @@ interface EnemyProps {
     showHealth?: boolean; // 体力ゲージ表示用フラグ
     showTargetIndicator?: boolean; // ターゲット指定用フラグ
     progress: number; // 攻撃ゲージの進捗
+    damage?: number | null;
 }
 
 const Enemy: React.FC<EnemyProps> = ({
@@ -21,7 +22,8 @@ const Enemy: React.FC<EnemyProps> = ({
     enemyDefeated,
     showHealth = false,
     showTargetIndicator = false,
-    progress, }) => {
+    progress,
+    damage }) => {
     const hpPercentage = (enemy.currentHP / enemy.maxHP) * 100;
     const baseScale = enemy.scale || 1;
     const effectiveScale = enemyDefeated ? 0 : baseScale;
@@ -30,7 +32,7 @@ const Enemy: React.FC<EnemyProps> = ({
     ${enemyHit ? "animate-hit" : ""}
     ${playerHit ? "animate-phit" : ""}
     ${playerFire ? "animate-fire" : ""}`;
-    
+
     const gaugeOffset = 96 * (1 - effectiveScale);
     return (
         <div className="relative inline-block">
@@ -72,6 +74,12 @@ const Enemy: React.FC<EnemyProps> = ({
                     <div
                         className="h-full bg-green-500 rounded-full transition-all duration-300"
                         style={{ width: `${hpPercentage}%` }} />
+                </div>
+            )}
+            {/* ダメージ数値の表示 */}
+            {damage != null && damage !== undefined && (
+                <div className="absolute top-0 left-1/2 transform -translate-x-1/2 text-red-500 font-bold text-xl animate-damage-fade">
+                    {damage}
                 </div>
             )}
         </div>

@@ -53,9 +53,14 @@ const App: React.FC = () => {
   // 敵の攻撃アニメーションを管理するフラグ
   const [enemyAttackFlags, setEnemyAttackFlags] = useState<boolean[]>([]);
   const [enemyFireFlags, setEnemyFireFlags] = useState<boolean[]>([]);
-
+  // 敵のグラフィックにダメージを表示するための変数
+  const [damageNumbers, setDamageNumbers] = useState<(number | null)[]>([]);
   // プレーヤーが敵に攻撃した場合を識別するフラグ
   const [enemyHitFlags, setEnemyHitFlags] = useState<boolean[]>([]);
+
+  useEffect(() => {
+    setDamageNumbers(currentEnemies.map(() => null));
+  }, [currentEnemies]);
 
   // currentEnemies が更新されたら、フラグ配列も初期化
   useEffect(() => {
@@ -104,7 +109,9 @@ const App: React.FC = () => {
     // 敵の攻撃を実行。performAttackは敵の特攻攻撃ロジックも含む
     // playerを直接指定して、playerを監視にするとAppコンポーネントが再レンダリングされてしまい、攻撃インジケータがリセットされる不具合発生するため、useRef取得したplayerを使う
     const attack = attackingEnemy.performAttack(playerRef.current);
-
+    console.log("damageaaa", attack.result.damage);
+    let damageToApply: number;
+    let specialMessage = "";
     // 特殊攻撃を受けた場合の処理
     if (attack.special) {
       // ステータス異常を付与
@@ -124,17 +131,20 @@ const App: React.FC = () => {
       // if (  ) {}
 
       // 特殊攻撃の場合は、特殊攻撃のメッセージを表示
-      const effect_message = `${attack.result.message}`;
-      const damage_message = attack.result.damage != 0 ? `${attack.result.damage}のダメージ！` : "";
+      specialMessage = `${attack.result.message}`;
+      damageToApply = attack.result.damage;
+      const effect_message = `${specialMessage}`;
+      const damage_message = damageToApply != 0 ? `${damageToApply}のダメージ！` : "";
       setMessage({ text: effect_message + damage_message, sender: "enemy" });
     } else {
       // 攻撃する敵のアニメーションフラグだけを更新
       triggerEnemyAttackAnimation(setEnemyAttackFlags, attackingEnemy, PLAYER_HIT_ANIMATION_DURATION);
+      damageToApply = attack.result.damage;
       // 通常攻撃の場合のメッセージ
-      setMessage({ text: `${attackingEnemy.name} の攻撃！ ${attack.result.damage} のダメージ！`, sender: "enemy" });
+      setMessage({ text: `${attackingEnemy.name} の攻撃！ ${damageToApply} のダメージ！`, sender: "enemy" });
     }
     // ダメージを受ける処理
-    setPlayer(prev => prev.takeDamage(attack.result.damage));
+    setPlayer(prev => prev.takeDamage(damageToApply));
   }, [currentEnemies, playerRef]);
 
   // 攻撃する敵のアニメーションフラグを更新
@@ -201,9 +211,24 @@ const App: React.FC = () => {
 
     if (input.toLowerCase() === currentQuestion.answer.toLowerCase()) {
       // 正解の場合
-      console.log("正解！");
       const { damage } = calculateEffectiveDamage(currentQuestion); // プレイヤー攻撃計算
       targetEnemy.takeDamage(damage);
+
+      // 敵のダメージ表示用stateを更新する
+      setDamageNumbers(prev => {
+        const newDamage = [...prev];
+        newDamage[targetIndex] = damage;
+        return newDamage;
+      });
+      // 数秒後にダメージ表示を消す
+      setTimeout(() => {
+        setDamageNumbers(prev => {
+          const newDamage = [...prev];
+          newDamage[targetIndex] = null;
+          return newDamage;
+        });
+      }, 5000);
+
       // 攻撃が当たったことをBattleStageに知らせる
       setEnemyHitFlags((prev) => {
         const newFlags = [...prev];
@@ -258,22 +283,56 @@ const App: React.FC = () => {
   // ダメージ計算関数
   function calculateEffectiveDamage(currentQuestion: Question) {
     const targetEnemy = currentEnemies[targetIndex];
+    
+    // 基本ダメージ：プレイヤーの攻撃力から敵の防御力を差し引いた値（最低5）
     const baseDamage = Math.max(5, player.attack - targetEnemy.defense);
     console.log("baseDamage: ", baseDamage);
-    // 最大ヒント数は、答えの空白を除いた文字数
+    
+    // ランダムな変動（+-10%）
+    const randomFactor = 0.9 + Math.random() * 0.2; // 0.9〜1.1
+    let damage = baseDamage * randomFactor;
+    
+    // ヒントに基づく補正
     const answerNoSpaces = currentQuestion.answer.replace(/\s/g, "");
     const maxHints = answerNoSpaces.length;
     const effectiveWrongAttempts = isHintFullyRevealed ? maxHints : wrongAttempts;
     console.log("effectiveWrongAttempts: ", effectiveWrongAttempts);
-    // ヒントの割合(0〜1)
+    
     const hintFraction = effectiveWrongAttempts / maxHints;
-    // 攻撃力倍率：ヒントが全て表示されていれば0.5、何も表示されなければ1.0
+    // ヒントが全て表示されているときは倍率が0.5、表示されていなければ1.0
     const multiplier = 1 - (hintFraction / 2);
-    const damage = Math.floor(baseDamage * multiplier);
+    damage *= multiplier;
+    
+    // プレイヤーと敵のパラメータを取得（存在しなければ0とする）
+    const playerLuck = player.luck || 0;
+    const playerPower = player.power || 0;
+    const enemyLuck = targetEnemy.luck || 0;
+    const enemySpeed = targetEnemy.speed || 0;
+    
+    // クリティカルとミスの確率を計算
+    // 例として、基本ミス確率5%に敵のluckとspeedによる影響、クリティカルは基本5%にプレイヤーのluckとpowerの影響
+    const missProbability = Math.min(0.01 + (enemyLuck + enemySpeed) * 0.005, 0.1);     // 最大20%程度
+    const critProbability = Math.min(0.01 + (playerLuck + playerPower) * 0.005, 0.15);      // 最大30%程度
+    
+    const rand = Math.random();
+    let specialMessage = "";
+    
+    // 攻撃ミスをまずチェック
+    if (rand < missProbability) {
+      damage = 0;
+      specialMessage = "攻撃ミス！";
+    } else if (rand < missProbability + critProbability) {
+      // クリティカルの場合は、敵の防御力を無視し、さらに大きな倍率（ここでは1.5倍）をかける
+      damage = Math.floor(player.attack * randomFactor * 1.5);
+      specialMessage = "クリティカル！";
+    } else {
+      damage = Math.floor(damage);
+    }
+    
     console.log("damage: ", damage);
-    return { damage, effectiveWrongAttempts, multiplier };
+    return { damage, effectiveWrongAttempts, multiplier, specialMessage };
   }
-
+  
   const gainEXP = (amount: number) => {
     setExpGain(amount);
     setTimeout(() => setExpGain(null), EXP_GAIN_DISPLAY_DURATION);
@@ -287,6 +346,7 @@ const App: React.FC = () => {
     // ステージの配置情報を利用して各敵に positionOffset を設定する
     const enemies = stage.enemies.map((enemyData, index) => {
       const enemyInstance = new EnemyModel(enemyData);
+      console.log("enemyInstance", enemyInstance);
       enemyInstance.positionOffset = stage.positions[index] || { x: 0, y: 0 };
       return enemyInstance;
     });
@@ -382,6 +442,7 @@ const App: React.FC = () => {
           enemyFireFlags={enemyFireFlags}
           showQuestion={showQuestion}
           round={round}
+          damageNumbers={damageNumbers}
           onFullRevealChange={setIsHintFullyRevealed}
         />
         {/* levelUpNotifierを表示 */}

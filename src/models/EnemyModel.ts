@@ -1,7 +1,4 @@
 // src/models/EnemyModel.ts
-import { stringify } from "postcss";
-import {useState} from "react";
-
 import { Player, StatusEffect } from "./Player";
 import { Question, commonQuestions } from "../data/questions";
 
@@ -13,6 +10,7 @@ export interface IEnemyData {
   defense: number;
   exp: number;
   speed: number;
+  luck?: number;
   word: string;
   image: string;
   positionOffset?: { x: number; y: number };
@@ -49,6 +47,7 @@ export class Enemy {
   defense: number;
   exp: number;
   speed: number;
+  luck?: number;
   word: string;
   image: string;
   positionOffset?: { x: number; y: number };
@@ -69,12 +68,13 @@ export class Enemy {
     this.defense = data.defense;
     this.exp = data.exp;
     this.speed = data.speed;
+    this.luck = data.luck;
     this.word = data.word;
     this.image = data.image;
     this.positionOffset = data.positionOffset;
     this.scale = data.scale;
-    this.questionMode = "common";
-    this.originalQuestions = [];
+    this.questionMode = data.questionMode;
+    this.originalQuestions = data.originalQuestions;
     this._presentedQuestion = null;
     this.specialAttacks = data.specialAttacks || [];
     this.defeated = false;
@@ -123,7 +123,7 @@ export class Enemy {
     }
     // 特殊攻撃が発動しなかった場合、通常攻撃
     const damage = Math.max(
-      this.attackPower - Math.floor(Math.random() * 3),
+      this.attackPower - Math.floor(Math.random() * 3) - Math.floor(player.defense * Math.random()),
       1
     );
     return {

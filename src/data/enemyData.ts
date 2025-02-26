@@ -14,7 +14,7 @@ const enemies: IEnemyData[] = [
     word: "slime",
     image: new URL("../assets/enemies/slime.png", import.meta.url).toString(),
     scale: 0.5,
-    speed: 200, // 例: 低速
+    speed: 50, // 例: 低速
     // originalQuestion はなし
     questionMode: "common", // 問題はCommonQuestionsから選ぶ
     specialAttacks: [
@@ -44,7 +44,7 @@ const enemies: IEnemyData[] = [
     word: "goblin",
     image: new URL("../assets/enemies/goblin.png", import.meta.url).toString(),
     scale: 1.2,
-    speed: 120, // 例: やや速い
+    speed: 70, // 例: やや速い
     questionMode: "both",
     originalQuestions: [{
       id: "goblin1",
@@ -74,7 +74,7 @@ const enemies: IEnemyData[] = [
     word: "ogre",
     image: new URL("../assets/enemies/great_ogre.png", import.meta.url).toString(),
     scale: 1.8,
-    speed: 80,
+    speed: 50,
     questionMode: "both",
     originalQuestions:[{
       id: "greatOgreQ1",
@@ -186,6 +186,68 @@ const enemies: IEnemyData[] = [
       choices: ["goblin", "dragon", "arcdemon"],
     }],
   },  
+  {
+    name: "幽霊剣士",
+    level: 3,
+    maxHP: 150,
+    attackPower: 12,
+    defense: 3,
+    exp: 50,
+    word: "arcdemon",
+    image: new URL("../assets/enemies/ghost_samurai.png", import.meta.url).toString(),
+    scale: 2.0,
+    speed: 220,
+    questionMode: "original",
+    originalQuestions: [{
+      id: "o1",
+      type: "word",
+      prompt: "幽霊",
+      answer: "ghost",
+    }],
+
+  },
+  {
+    name: "グリズリー",
+    level: 3,
+    maxHP: 50,
+    attackPower: 12,
+    defense: 5,
+    exp: 70,
+    word: "bear",
+    image: new URL("../assets/enemies/bear.png", import.meta.url).toString(),
+    scale: 2.0,
+    speed: 50,
+    luck: 10,
+    questionMode: "common",
+    originalQuestions: [{
+      id: "o1",
+      type: "word",
+      prompt: "幽霊",
+      answer: "ghost",
+    }],
+  },
+  {
+    name: "チーター",
+    level: 3,
+    maxHP: 45,
+    attackPower: 7,
+    defense: 3,
+    exp: 40,
+    word: "bear",
+    image: new URL("../assets/enemies/cheetah.png", import.meta.url).toString(),
+    scale: 1.0,
+    speed: 100,
+    luck: 5,
+    questionMode: "common",
+    originalQuestions: [{
+      id: "o1",
+      type: "word",
+      prompt: "幽霊",
+      answer: "ghost",
+    }],
+
+  }
+
 ];
 
 export default enemies;

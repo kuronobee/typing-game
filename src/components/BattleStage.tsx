@@ -26,6 +26,7 @@ interface BattleStageProps {
   enemyFireFlags: boolean[];
   showQuestion: boolean;
   round: number;
+  damageNumbers: (number | null)[];
   onFullRevealChange: (fullReveal: boolean) => void;
 }
 
@@ -42,6 +43,7 @@ const BattleStage: React.FC<BattleStageProps> = ({
   enemyFireFlags = [],
   showQuestion,
   round,
+  damageNumbers = [],
   onFullRevealChange,
 }) => {
   // 各敵毎の攻撃ゲージ進捗を管理する配列(0〜1)
@@ -67,6 +69,7 @@ const BattleStage: React.FC<BattleStageProps> = ({
       });
     }
   }, [enemyHitFlags, targetIndex])
+  
   // 各敵のゲージをバックグラウンドで進行させるタイマー
   useEffect(() => {
     const timerId = setInterval(() => {
@@ -90,7 +93,7 @@ const BattleStage: React.FC<BattleStageProps> = ({
       }));
     }, TICK_INTERVAL);
     return () => clearInterval(timerId);
-  }, [currentEnemies, player, onEnemyAttack]);
+  }, [currentEnemies, onEnemyAttack]);
 
   // ターゲット敵の攻撃ゲージ進捗
   const targetProgress = attackProgresses[targetIndex] || 0;
@@ -162,6 +165,7 @@ const BattleStage: React.FC<BattleStageProps> = ({
               showHealth={isTarget}
               showTargetIndicator={isTarget}
               progress={enemyProgress}
+              damage={damageNumbers[index]}
             />
           </div>
         );

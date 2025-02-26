@@ -17,6 +17,8 @@ export interface IPlayer {
   totalExp: number;
   speed: number;
   attack: number;
+  luck: number;
+  power: number;
   statusEffects: StatusEffect[];
 }
 
@@ -32,6 +34,8 @@ export class Player implements IPlayer {
   totalExp: number;
   speed: number;
   attack: number;
+  luck: number;
+  power: number;
   statusEffects: StatusEffect[];
 
   constructor(
@@ -46,6 +50,8 @@ export class Player implements IPlayer {
     totalExp: number,
     speed: number,
     attack: number,
+    luck: number,
+    power: number,
     statusEffects: StatusEffect[] = []
   ) {
     this.hp = hp;
@@ -59,13 +65,15 @@ export class Player implements IPlayer {
     this.totalExp = totalExp;
     this.speed = speed;
     this.attack = attack;
+    this.luck = luck;
+    this.power = power;
     this.statusEffects = statusEffects;
   }
 
   // デフォルトのプレイヤー状態を返す
   static createDefault(): Player {
     // 例: HP=100, MP=50, defense=5, level=1, exp=0, speed=10, attack=10
-    return new Player(100, 100, 50, 50, 5, 5, 1, 0, 0, 10, 10, []);
+    return new Player(100, 100, 50, 50, 5, 5, 1, 0, 0, 10, 10, 10, 10, []);
   }
 
   // 現在のレベルに応じたレベルアップに必要な経験値の閾値
@@ -87,6 +95,8 @@ export class Player implements IPlayer {
     let newMagicDefense = this.magicDefense;
     let newAttack = this.attack;
     let newSpeed = this.speed;
+    let newLuck = this.luck;
+    let newPower = this.power;
     // 閾値は this.levelUpThreshold を使う
     let threshold = this.levelUpThreshold;
 
@@ -98,6 +108,8 @@ export class Player implements IPlayer {
       newMagicDefense += 1; // 魔法防御力増加
       newDefense += 1; // 防御力増加
       newSpeed += 1; // スピード増加
+      newLuck += 1;
+      newPower += 1;
       // レベルアップ時に HP/MP を全回復する
       newHp = newMaxHP;
       newMp = newMaxMP;
@@ -117,12 +129,15 @@ export class Player implements IPlayer {
       newTotalExp, 
       newSpeed, 
       newAttack, 
+      newLuck,
+      newPower,
       this.statusEffects);
   }
 
   // ダメージを受けた場合、新しいインスタンスを返す
   takeDamage(amount: number): Player {
     const newHp = Math.max(this.hp - amount, 0);
+    console.log("newHP", newHp);
     return new Player(
       newHp,
       this.maxHP, 
@@ -135,6 +150,8 @@ export class Player implements IPlayer {
       this.totalExp, 
       this.speed, 
       this.attack,
+      this.luck,
+      this.power,
       this.statusEffects);
   }
 
@@ -153,6 +170,8 @@ export class Player implements IPlayer {
       this.totalExp,
       this.speed,
       this.attack,
+      this.luck,
+      this.power,
       [...this.statusEffects, effect]
     );
   }
@@ -176,6 +195,8 @@ export class Player implements IPlayer {
       this.totalExp,
       this.speed,
       this.attack,
+      this.luck,
+      this.power,
       [...this.statusEffects, ...newEffects]
     );
   }
@@ -193,6 +214,8 @@ export class Player implements IPlayer {
       this.totalExp,
       this.speed,
       this.attack,
+      this.luck,
+      this.power,
       newEffects
     );
   }
@@ -214,6 +237,8 @@ export class Player implements IPlayer {
       this.totalExp,
       this.speed,
       this.attack,
+      this.luck,
+      this.power,
       newStatusEffects
     );
   }

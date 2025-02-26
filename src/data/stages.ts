@@ -27,5 +27,35 @@ export const stages: Stage[] = [
     ],
     positions: [{ x: -150, y: -10 }, { x: 0, y: 0 }, { x: 150, y: -10 }],
   },
+  {
+    id: "stage2",
+    enemies: [
+      enemiesData.find(e => e.name === "幽霊剣士")!,
+    ],
+    positions: [{ x: 0, y: 0 }],
+  },
+  {
+    id: "stage2",
+    enemies: [
+      enemiesData.find(e => e.name === "グリズリー")!,
+      enemiesData.find(e => e.name==="グリズリー")!,
+    ],
+    positions: [{ x: -90, y: 0 }, { x: 90, y: 0 }],
+  },
+  {
+    id: "stage2",
+    enemies: [
+      enemiesData.find(e => e.name === "チーター")!,
+    ],
+    positions: [{ x: 0, y: 0 }],
+  },
+  {
+    id: "stage2",
+    enemies: [
+      enemiesData.find(e => e.name === "グリズリー")!,
+    ],
+    positions: [{ x: 0, y: 0 }],
+  },
+
   // 他のステージも追加可能
 ];
