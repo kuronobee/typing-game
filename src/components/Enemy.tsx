@@ -11,7 +11,7 @@ interface EnemyProps {
     showHealth?: boolean; // 体力ゲージ表示用フラグ
     showTargetIndicator?: boolean; // ターゲット指定用フラグ
     progress: number; // 攻撃ゲージの進捗
-    damage?: number | null;
+    damage?: DamageDisplay | null;
 }
 
 const Enemy: React.FC<EnemyProps> = ({
@@ -77,10 +77,12 @@ const Enemy: React.FC<EnemyProps> = ({
                 </div>
             )}
             {/* ダメージ数値の表示 */}
-            {damage != null && damage !== undefined && (
-                <div className="absolute top-0 left-1/2 transform -translate-x-1/2 text-red-500 font-bold text-xl animate-damage-fade"
+            {damage && (
+                <div 
+                key={damage.id}
+                className="absolute top-0 left-1/2 transform -translate-x-1/2 text-red-500 font-bold text-xl animate-damage-fade"
                 style={{ top: `${gaugeOffset + 5}px`}}>
-                    {damage}
+                    {damage.value}
                 </div>
             )}
         </div>

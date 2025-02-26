@@ -101,11 +101,18 @@ const LevelUpNotifier: React.FC<LevelUpNotifierProps> = ({ player }) => {
     if (!message) return null;
 
     return (
-        <div className="absolute top-32 left-1/2 transform -translate-x-1/2 z-51 bg-black bg-opacity-50 text-white px-6 py-4 rounded-lg text-center shadow-xl border-2 border-white"
-        onClick={() => setMessage(null)}>
+        <div className="fixed inset-0 flex items-center justify-center z-50">
+          <div className="relative bg-black bg-opacity-75 text-white px-6 py-4 rounded-lg text-center shadow-xl border-2 border-white">
+            {/* 右上の×ボタン */}
+            <button
+              className="absolute top-2 right-2 text-white text-xl focus:outline-none"
+              onClick={() => setMessage(null)}
+            >
+              ×
+            </button>
             {message}
+          </div>
         </div>
-    );
-};
+      );};
 
 export default LevelUpNotifier;

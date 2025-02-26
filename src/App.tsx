@@ -53,8 +53,12 @@ const App: React.FC = () => {
   // 敵の攻撃アニメーションを管理するフラグ
   const [enemyAttackFlags, setEnemyAttackFlags] = useState<boolean[]>([]);
   const [enemyFireFlags, setEnemyFireFlags] = useState<boolean[]>([]);
+  type DamageDisplay = {
+    value: number;
+    id: number;
+  };
   // 敵のグラフィックにダメージを表示するための変数
-  const [damageNumbers, setDamageNumbers] = useState<(number | null)[]>([]);
+  const [damageNumbers, setDamageNumbers] = useState<(DamageDisplay | null)[]>([]);
   // プレーヤーが敵に攻撃した場合を識別するフラグ
   const [enemyHitFlags, setEnemyHitFlags] = useState<boolean[]>([]);
 
@@ -214,20 +218,23 @@ const App: React.FC = () => {
       const { damage } = calculateEffectiveDamage(currentQuestion); // プレイヤー攻撃計算
       targetEnemy.takeDamage(damage);
 
+      // 新しい識別子を生成してダメージを設定
+      const newDamage: DamageDisplay = { value: damage, id: Date.now() };
+
       // 敵のダメージ表示用stateを更新する
       setDamageNumbers(prev => {
-        const newDamage = [...prev];
-        newDamage[targetIndex] = damage;
-        return newDamage;
+        const newArr = [...prev];
+        newArr[targetIndex] = newDamage;
+        return newArr;
       });
-      // 数秒後にダメージ表示を消す
+      // 既存のタイマーをキャンセルしてから、新しいタイマーで消去
       setTimeout(() => {
         setDamageNumbers(prev => {
-          const newDamage = [...prev];
-          newDamage[targetIndex] = null;
-          return newDamage;
+          const newArr = [...prev];
+          newArr[targetIndex] = null;
+          return newArr;
         });
-      }, 2000);
+      }, 1000);
 
       // 攻撃が当たったことをBattleStageに知らせる
       setEnemyHitFlags((prev) => {

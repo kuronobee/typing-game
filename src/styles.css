@@ -102,5 +102,5 @@
 }
 
 .animate-damage-fade {
-  animation: damageFloat 2s ease-out forwards;
+  animation: damageFloat 1s ease-out forwards;
 }
