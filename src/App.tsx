@@ -227,7 +227,7 @@ const App: React.FC = () => {
           newDamage[targetIndex] = null;
           return newDamage;
         });
-      }, 5000);
+      }, 2000);
 
       // 攻撃が当たったことをBattleStageに知らせる
       setEnemyHitFlags((prev) => {

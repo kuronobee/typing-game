@@ -78,7 +78,8 @@ const Enemy: React.FC<EnemyProps> = ({
             )}
             {/* ダメージ数値の表示 */}
             {damage != null && damage !== undefined && (
-                <div className="absolute top-0 left-1/2 transform -translate-x-1/2 text-red-500 font-bold text-xl animate-damage-fade">
+                <div className="absolute top-0 left-1/2 transform -translate-x-1/2 text-red-500 font-bold text-xl animate-damage-fade"
+                style={{ top: `${gaugeOffset + 5}px`}}>
                     {damage}
                 </div>
             )}
