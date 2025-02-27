@@ -2,6 +2,11 @@
 import React from "react";
 import { Enemy as EnemyModel } from "../models/EnemyModel";
 
+type DamageDisplay = {
+    value: number;
+    id: number;
+};
+
 interface EnemyProps {
     enemy: EnemyModel;  // Enemy クラスのインスタンスをそのまま受け取る
     enemyHit?: boolean;

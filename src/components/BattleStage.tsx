@@ -13,6 +13,11 @@ import { Player } from "../models/Player";
 import { Enemy as EnemyModel } from "../models/EnemyModel";
 import MessageDisplay, { MessageType } from "./MessageDisplay";
 
+type DamageDisplay = {
+  value: number;
+  id: number;
+};
+
 interface BattleStageProps {
   currentEnemies: EnemyModel[];
   targetIndex: number;
@@ -24,8 +29,7 @@ interface BattleStageProps {
   enemyHitFlags: boolean[];
   enemyAttackFlags: boolean[];
   enemyFireFlags: boolean[];
-  showQuestion: boolean;
-  damageNumbers: (number | null)[];
+  damageNumbers: (DamageDisplay | null)[];
   onFullRevealChange: (fullReveal: boolean) => void;
 }
 
@@ -40,7 +44,6 @@ const BattleStage: React.FC<BattleStageProps> = ({
   enemyHitFlags = [],
   enemyAttackFlags = [],
   enemyFireFlags = [],
-  showQuestion,
   damageNumbers = [],
   onFullRevealChange,
 }) => {
@@ -95,35 +98,6 @@ const BattleStage: React.FC<BattleStageProps> = ({
 
   // ターゲット敵の攻撃ゲージ進捗
   const targetProgress = attackProgresses[targetIndex] || 0;
-
-  const getHint = (answer: string, wrongAttempts: number): string => {
-    const n = answer.length;
-    const hintArray = answer.split("").map((ch) => (ch === " " ? " " : "_"));
-    let nonSpaceIndices: number[] = [];
-    for (let i = 0; i < n; i++) {
-      if (answer[i] !== " ") {
-        nonSpaceIndices.push(i);
-      }
-    }
-    let orderList: number[] = [];
-    if (nonSpaceIndices.length > 1) {
-      orderList.push(nonSpaceIndices[1]);
-    }
-    if (nonSpaceIndices.length > 3) {
-      orderList.push(nonSpaceIndices[3]);
-    }
-    for (let idx of nonSpaceIndices) {
-      if (!orderList.includes(idx)) {
-        orderList.push(idx);
-      }
-    }
-    const reveals = Math.min(wrongAttempts, orderList.length);
-    for (let i = 0; i < reveals; i++) {
-      const idx = orderList[i];
-      hintArray[idx] = answer[idx];
-    }
-    return hintArray.join("\u2009");
-  };
 
   return (
     <div className="relative w-full h-full">

@@ -47,7 +47,7 @@ const QuestionContainer: React.FC<QuestionContainerProps> = ({
     }
     // 部分的にヒントを開く処理
     const n = answer.length;
-    const hintArray = answer.split("").map(ch => (ch === " " ? " " : "_"));
+    const hintArray: string[] = answer.split("").map(ch => (ch === " " ? " " : "_"));
     let nonSpaceIndices: number[] = [];
     for (let i = 0; i < n; i++) {
       if (answer[i] !== " ") {
@@ -87,8 +87,8 @@ const QuestionContainer: React.FC<QuestionContainerProps> = ({
             </div>
             {/* ゲージと重ならないように上部にパディング */}
             <div className="pt-4">
-                <p className="font-bold">問題: {question.prompt}</p>
-                <p className="mt-2">ヒント: {getHint(question.answer, wrongAttempts)}</p>
+                <p className="font-bold">問題: {question?.prompt}</p>
+                <p className="mt-2">ヒント: {getHint(question?.answer ?? "", wrongAttempts)}</p>
             </div>
         </div>
     );

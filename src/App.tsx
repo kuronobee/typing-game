@@ -8,9 +8,7 @@ import { Player as PlayerModel, StatusEffect } from "./models/Player";
 import { Enemy as EnemyModel } from "./models/EnemyModel"; // 新しく作成したEnemyクラス
 import { MessageType } from "./components/MessageDisplay";
 import {
-  LEVEL_UP_MESSAGE_DURATION,
   EXP_GAIN_DISPLAY_DURATION,
-  INPUT_FOCUS_DELAY,
   ENEMY_HIT_ANIMATION_DURATION,
   PLAYER_HIT_ANIMATION_DURATION,
   PLAYER_FIREBREATH_ANIMATION_DURATION,
@@ -25,21 +23,15 @@ const App: React.FC = () => {
   // 敵については、初期状態をnullにしておく
   const [message, setMessage] = useState<MessageType | null>({ text: "問題に正しく回答して敵を倒せ！", sender: "system" });
   const [expGain, setExpGain] = useState<number | null>(null);
-  const [showExpBar, setShowExpBar] = useState(false);
+  //const [showExpBar, setShowExpBar] = useState(false);
   const [wrongAttempts, setWrongAttempts] = useState(0);
-  const [showQuestion, setShowQuestion] = useState(true);
   const [readyForNextStage, setReadyForNextStage] = useState(false);
-  // 問題のラウンド数
-  const [round, setRound] = useState(1);
   const [isHintFullyRevealed, setIsHintFullyRevealed] = useState(false);
 
-  // プレイヤー攻撃時のアニメーション管理用フラグ
-  const [enemyHit, setEnemyHit] = useState(false);
-
   const inputRef = useRef<HTMLInputElement>(null);
-  const questionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const questionTimeoutRef = useRef<number | null>(null);
   // 毒の場合は毒タイマー
-  const poisonTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const poisonTimerRef = useRef<number | null>(null);
   // プレイヤーの最新情報を保持するための ref
   const playerRef = useRef(player);
   const [currentEnemies, setCurrentEnemies] = useState<EnemyModel[]>([]);
@@ -214,7 +206,7 @@ const App: React.FC = () => {
 
     if (input.toLowerCase() === currentQuestion.answer.toLowerCase()) {
       // 正解の場合
-      const { damage, effectiveWrongAttempts, multiplier, specialMessage } = calculateEffectiveDamage(currentQuestion); // プレイヤー攻撃計算
+      const { damage, specialMessage } = calculateEffectiveDamage(currentQuestion); // プレイヤー攻撃計算
       targetEnemy.takeDamage(damage);
 
       // 新しい識別子を生成してダメージを設定
@@ -348,7 +340,7 @@ const App: React.FC = () => {
     setExpGain(amount);
     setTimeout(() => setExpGain(null), EXP_GAIN_DISPLAY_DURATION);
     setPlayer(prev => prev.addExp(amount));
-    setShowExpBar(true);
+    //setShowExpBar(true);
   };
 
   const spawnNewStage = () => {
@@ -451,7 +443,6 @@ const App: React.FC = () => {
           enemyHitFlags={enemyHitFlags}
           enemyAttackFlags={enemyAttackFlags}
           enemyFireFlags={enemyFireFlags}
-          showQuestion={showQuestion}
           damageNumbers={damageNumbers}
           onFullRevealChange={setIsHintFullyRevealed}
         />
@@ -475,7 +466,6 @@ const App: React.FC = () => {
         <BattleInterface
           player={player} // playerオブジェクトを渡す
           onSubmit={handlePlayerAttack}
-          currentQuestion={currentQuestion}
           expGain={expGain}
           inputRef={inputRef}
         />

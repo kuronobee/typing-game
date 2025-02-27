@@ -1,7 +1,6 @@
 // src/components/LevelUpNotifier.tsx
 import React, { useEffect, useRef, useState } from "react";
 import { Player as PlayerModel } from "../models/Player";
-import { LEVEL_UP_MESSAGE_DURATION } from "../data/constants";
 
 interface LevelUpNotifierProps {
     player: PlayerModel;

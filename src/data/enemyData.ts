@@ -1,5 +1,4 @@
 // src/data/enemyData.ts
-import { Question } from "./questions";
 import {IEnemyData} from "../models/EnemyModel"
 import { calculateFireDamage } from "../utils/GameLogic";
 
@@ -22,7 +21,7 @@ const enemies: IEnemyData[] = [
         name: "poison attack",
         probability: 0.5,
         perform: (enemy, player) => {
-          console.log(`${enemy.name} uses Poison Attack!`);
+          console.log("player", player);
           return {
             damage: 0,
             recovery: 0,
@@ -139,6 +138,7 @@ const enemies: IEnemyData[] = [
         probability: 0.2,
         perform: (enemy, player) => {
           console.log(`${enemy.name} heals itself!`);
+          console.log("player", player);
           // 自己回復：現在HPを20回復。ただし、maxHP を超えないように
           enemy.currentHP = Math.min(enemy.currentHP + 20, enemy.maxHP);
           return {damage: 0, recovery: 20, statusEffects: [], message: `${enemy.name}は傷を癒した！`};

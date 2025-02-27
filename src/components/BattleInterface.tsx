@@ -1,6 +1,5 @@
 // src/components/BattleInterface.tsx
 import React, { useState } from "react";
-import { Question } from "../data/questions";
 import ExperienceBar from "./ExperienceBar";
 import PlayerStatus from "./PlayerStatus";
 import { Player } from "../models/Player";
@@ -8,7 +7,6 @@ import { Player } from "../models/Player";
 interface BattleInterfaceProps {
   player: Player;
   onSubmit: (input: string) => void;
-  currentQuestion: Question | null;
   expGain?: number | null;
   inputRef: React.RefObject<HTMLInputElement | null> ;
 }
@@ -16,7 +14,6 @@ interface BattleInterfaceProps {
 const BattleInterface: React.FC<BattleInterfaceProps> = ({
   player,
   onSubmit,
-  currentQuestion,
   expGain,
   inputRef,
 }) => {

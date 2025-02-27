@@ -1,9 +1,10 @@
 // src/data/stages.ts
-import enemiesData, { EnemyType } from "./enemyData";
+import enemiesData from "./enemyData";
+import { IEnemyData } from "../models/EnemyModel";
 
 export interface Stage {
   id: string;
-  enemies: EnemyType[];
+  enemies: IEnemyData[];
   // 配置情報。各敵ごとに画面上のオフセット（例：x, y座標）を指定する場合
   positions: { x: number; y: number }[];
 }

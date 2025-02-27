@@ -12,7 +12,7 @@ interface MessageDisplayProps {
 
 const MessageDisplay: React.FC<MessageDisplayProps> = ({ newMessage }) => {
   const [message, setMessage] = useState<MessageType | null>(null);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (newMessage) {
