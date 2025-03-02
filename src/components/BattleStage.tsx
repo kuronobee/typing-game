@@ -31,6 +31,9 @@ interface BattleStageProps {
   enemyFireFlags: boolean[];
   damageNumbers: (DamageDisplay | null)[];
   onFullRevealChange: (fullReveal: boolean) => void;
+  onSelectTarget: (index: number) => void;
+  comboCount: number;
+  showCombo: boolean;
 }
 
 const BattleStage: React.FC<BattleStageProps> = ({
@@ -46,6 +49,9 @@ const BattleStage: React.FC<BattleStageProps> = ({
   enemyFireFlags = [],
   damageNumbers = [],
   onFullRevealChange,
+  onSelectTarget,
+  comboCount,
+  showCombo,
 }) => {
   // 各敵毎の攻撃ゲージ進捗を管理する配列(0〜1)
   const [attackProgresses, setAttackProgresses] = useState<number[]>([]);
@@ -70,7 +76,7 @@ const BattleStage: React.FC<BattleStageProps> = ({
       });
     }
   }, [enemyHitFlags, targetIndex])
-  
+
   // 各敵のゲージをバックグラウンドで進行させるタイマー
   useEffect(() => {
     const timerId = setInterval(() => {
@@ -100,7 +106,7 @@ const BattleStage: React.FC<BattleStageProps> = ({
   const targetProgress = attackProgresses[targetIndex] || 0;
 
   return (
-    <div className="relative w-full h-full">
+    <div className="top-1/4 z-50 relative w-full h-full">
       {/* 背景画像 */}
       <div
         className="absolute inset-0"
@@ -121,10 +127,15 @@ const BattleStage: React.FC<BattleStageProps> = ({
             key={index}
             className="absolute z-10 transition-all duration-1000 ease-out"
             style={{
-              bottom: `calc(60px + ${enemy.positionOffset?.y || 0}px)`,
+              bottom: `calc(70px + ${enemy.positionOffset?.y || 0}px)`,
               left: `calc(50% + ${enemy.positionOffset?.x || 0}px)`,
               transform: "translateX(-50%)",
               opacity: enemy.currentHP > 0 ? 1 : 0,
+            }}
+            onClick={() => {
+              if (!enemy.defeated) {
+                onSelectTarget(index);
+              }
             }}
           >
             <Enemy
@@ -139,6 +150,14 @@ const BattleStage: React.FC<BattleStageProps> = ({
               progress={enemyProgress}
               damage={damageNumbers[index]}
             />
+            {/* コンボ表示: ターゲットかつコンボ数が2以上なら表示 */}
+            {isTarget && comboCount > 1 && showCombo && (
+              <div 
+                key={comboCount}
+                className="absolute top-[-30px] left-1/2 transform -translate-x-1/2 text-yellow-400 font-bold text-xl animate-combo-fade">
+                {comboCount}Combo
+              </div>
+            )}
           </div>
         );
       })}

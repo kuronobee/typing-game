@@ -26,7 +26,7 @@ const MessageDisplay: React.FC<MessageDisplayProps> = ({ newMessage }) => {
 
   return (
     <div
-      className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 z-20 
+      className={`absolute bottom-20 left-1/2 transform -translate-x-1/2 z-20 
         bg-black/50 border-white border-2 text-white px-4 py-2 rounded
         w-[90vw]
         transition-all duration-500 ease-in-out ${

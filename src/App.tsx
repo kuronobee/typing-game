@@ -12,6 +12,7 @@ import {
   ENEMY_HIT_ANIMATION_DURATION,
   PLAYER_HIT_ANIMATION_DURATION,
   PLAYER_FIREBREATH_ANIMATION_DURATION,
+  COMBO_ANIMATION_DURATION,
 } from "./data/constants";
 import { stages } from "./data/stages";
 import LevelUpNotifier from "./components/LevelUpNotifier";
@@ -34,6 +35,15 @@ const App: React.FC = () => {
   const poisonTimerRef = useRef<number | null>(null);
   // プレイヤーの最新情報を保持するための ref
   const playerRef = useRef(player);
+  const prevLevelRef = useRef(player.level);
+
+  useEffect(() => {
+    if (player.level > prevLevelRef.current) {
+      setShowLevelUp(true);
+    }
+    prevLevelRef.current = player.level;
+  }, [player.level]);
+
   const [currentEnemies, setCurrentEnemies] = useState<EnemyModel[]>([]);
   const [targetIndex, setTargetIndex] = useState<number>(0);
   const [currentQuestion, setCurrentQuestion] = useState<Question>(commonQuestions[Math.floor(Math.random() * commonQuestions.length)]);
@@ -52,7 +62,18 @@ const App: React.FC = () => {
   const [damageNumbers, setDamageNumbers] = useState<(DamageDisplay | null)[]>([]);
   // プレーヤーが敵に攻撃した場合を識別するフラグ
   const [enemyHitFlags, setEnemyHitFlags] = useState<boolean[]>([]);
+  const [showLevelUp, setShowLevelUp] = useState(false);
 
+  const [comboCount, setComboCount] = useState<number>(0);
+  const [showCombo, setShowCombo] = useState<boolean>(false);
+  useEffect(() => {
+    // COMBO_ANIMATION_DURATION が 1000 の場合 "1000ms" として設定
+    document.documentElement.style.setProperty(
+      "--combo-animation-duration",
+      `${COMBO_ANIMATION_DURATION}ms`
+    );
+  }, []);
+  
   useEffect(() => {
     setDamageNumbers(currentEnemies.map(() => null));
   }, [currentEnemies]);
@@ -205,8 +226,13 @@ const App: React.FC = () => {
     }
 
     if (input.toLowerCase() === currentQuestion.answer.toLowerCase()) {
-      // 正解の場合
-      const { damage, specialMessage } = calculateEffectiveDamage(currentQuestion); // プレイヤー攻撃計算
+      // 正解の場合 → combo数を更新（前回のコンボに1加算）
+      const newCombo = comboCount + 1;
+      setComboCount(newCombo);
+      setShowCombo(true);
+      setTimeout(() => setShowCombo(false), COMBO_ANIMATION_DURATION);
+
+      const { damage, specialMessage } = calculateEffectiveDamage(currentQuestion, newCombo); // プレイヤー攻撃計算
       targetEnemy.takeDamage(damage);
 
       // 新しい識別子を生成してダメージを設定
@@ -263,7 +289,8 @@ const App: React.FC = () => {
       // 全摘のdefatedフラグをチェック
       checkStageCompletion();
     } else {
-      // 不正解の場合
+      // 不正解の場合 → コンボリセット
+      setComboCount(0);
       setWrongAttempts(prev => prev + 1);
       setMessage({ text: "間違い！正しい解答を入力してください！", sender: "system" });
     }
@@ -284,7 +311,7 @@ const App: React.FC = () => {
   }
 
   // ダメージ計算関数
-  function calculateEffectiveDamage(currentQuestion: Question) {
+  function calculateEffectiveDamage(currentQuestion: Question, combo: number) {
     const targetEnemy = currentEnemies[targetIndex];
     
     // 基本ダメージ：プレイヤーの攻撃力から敵の防御力を差し引いた値（最低5）
@@ -333,6 +360,9 @@ const App: React.FC = () => {
       damage = Math.floor(damage);
     }
     
+    // コンボによる攻撃力アップ（毎回1.1%アップ）
+    damage = Math.floor(damage * (1 + combo * 0.011));
+
     return { damage, effectiveWrongAttempts, multiplier, specialMessage };
   }
   
@@ -360,7 +390,6 @@ const App: React.FC = () => {
 
     // メッセージ更新などの処理
     setMessage({ text: `${stage.id} が始まった！`, sender: "system" });
-
   };
 
   useEffect(() => {
@@ -428,10 +457,16 @@ const App: React.FC = () => {
   if (currentEnemies.length === 0) {
     return <div>Loading...</div>;
   }
+  const handleSelectTarget = (index: number) => {
+    setTargetIndex(index);
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  };
 
   return (
     <div className="w-full h-screen flex flex-col">
-      <div className="relative flex-1">
+      <div className="relative flex-[0.45]">
         <BattleStage
           currentEnemies={currentEnemies}
           targetIndex={targetIndex}
@@ -445,10 +480,14 @@ const App: React.FC = () => {
           enemyFireFlags={enemyFireFlags}
           damageNumbers={damageNumbers}
           onFullRevealChange={setIsHintFullyRevealed}
+          onSelectTarget={handleSelectTarget}
+          comboCount={comboCount}
+          showCombo={showCombo}
         />
         {/* levelUpNotifierを表示 */}
-        <LevelUpNotifier player={player} />
-        {readyForNextStage && (
+        <LevelUpNotifier player={player} onClose={() => setShowLevelUp(false)}/>
+        {/* 「次の敵に進む」ボタンはLevelUpNotifierが閉じられてから表示 */}
+        {readyForNextStage && !showLevelUp && (
           <div className="absolute bottom-50 left-1/2 transform -translate-x-1/2 z-50">
             <button
               onClick={() => {
@@ -462,7 +501,7 @@ const App: React.FC = () => {
           </div>
         )}
       </div>
-      <div className="flex-1 bg-gray-900">
+      <div className="flex-[0.55] bg-gray-900">
         <BattleInterface
           player={player} // playerオブジェクトを渡す
           onSubmit={handlePlayerAttack}

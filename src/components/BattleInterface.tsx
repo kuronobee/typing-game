@@ -1,14 +1,13 @@
 // src/components/BattleInterface.tsx
 import React, { useState } from "react";
-import ExperienceBar from "./ExperienceBar";
-import PlayerStatus from "./PlayerStatus";
 import { Player } from "../models/Player";
+import PlayerInfo from "./PlayerInfo";
 
 interface BattleInterfaceProps {
   player: Player;
   onSubmit: (input: string) => void;
   expGain?: number | null;
-  inputRef: React.RefObject<HTMLInputElement | null> ;
+  inputRef: React.RefObject<HTMLInputElement | null>;
 }
 
 const BattleInterface: React.FC<BattleInterfaceProps> = ({
@@ -31,12 +30,12 @@ const BattleInterface: React.FC<BattleInterfaceProps> = ({
   };
 
   // プレイヤーが毒状態かどうかをチェック
-  const isPoisoned = player.statusEffects.some((effect) => effect.type === "poison");
+  // const isPoisoned = player.statusEffects.some((effect) => effect.type === "poison");
 
   return (
-    <div className="absolute top-1/2 left-0 w-full p-4 bg-gray-900 text-white border-t border-gray-700">
+    <div className="absolute top-0 left-0 w-full p-2 bg-gray-900 text-white border-t border-gray-700">
       {/* 入力フィールド */}
-      <div className="flex">
+      <div>
         <input
           type="text"
           className="w-full p-2 text-lg bg-amber-200 text-black rounded"
@@ -47,16 +46,12 @@ const BattleInterface: React.FC<BattleInterfaceProps> = ({
           ref={inputRef}
         />
       </div>
-      {/* プレイヤーステータスの表示 */}
-      <PlayerStatus
+      <PlayerInfo
         playerHP={player.hp}
         maxHP={player.maxHP}
         playerMP={player.mp}
         maxMP={player.maxMP}
-        isPoisoned={isPoisoned}
-      />
-      {/* 経験値バー */}
-      <ExperienceBar
+        isPoisoned={player.statusEffects.some(effect => effect.type === "poison")}
         playerLevel={player.level}
         playerEXP={player.exp}
         expToNextLevel={player.levelUpThreshold}

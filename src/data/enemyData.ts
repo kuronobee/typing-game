@@ -12,7 +12,7 @@ const enemies: IEnemyData[] = [
     exp: 50,
     word: "slime",
     image: new URL("../assets/enemies/slime.png", import.meta.url).toString(),
-    scale: 0.5,
+    scale: 0.4,
     speed: 50, // 例: 低速
     // originalQuestion はなし
     questionMode: "common", // 問題はCommonQuestionsから選ぶ
@@ -42,7 +42,7 @@ const enemies: IEnemyData[] = [
     exp: 80,
     word: "goblin",
     image: new URL("../assets/enemies/goblin.png", import.meta.url).toString(),
-    scale: 1.2,
+    scale: 1.0,
     speed: 70, // 例: やや速い
     questionMode: "both",
     originalQuestions: [{
@@ -72,7 +72,7 @@ const enemies: IEnemyData[] = [
     exp: 120,
     word: "ogre",
     image: new URL("../assets/enemies/great_ogre.png", import.meta.url).toString(),
-    scale: 1.8,
+    scale: 1.7,
     speed: 50,
     questionMode: "both",
     originalQuestions:[{
@@ -112,7 +112,7 @@ const enemies: IEnemyData[] = [
     exp: 300,
     word: "dragon",
     image: new URL("../assets/enemies/dragon.png", import.meta.url).toString(),
-    scale: 2.0,
+    scale: 1.5,
     speed: 100,
     questionMode: "both",
     originalQuestions: [{
@@ -155,7 +155,7 @@ const enemies: IEnemyData[] = [
     exp: 400,
     word: "magma",
     image: new URL("../assets/enemies/magma_golem.png", import.meta.url).toString(),
-    scale: 1.8,
+    scale: 1.5,
     speed: 150,
     questionMode: "both",
     originalQuestions: [{
@@ -175,7 +175,7 @@ const enemies: IEnemyData[] = [
     exp: 500,
     word: "arcdemon",
     image: new URL("../assets/enemies/arcdemon.png", import.meta.url).toString(),
-    scale: 3.0,
+    scale: 1.7,
     speed: 220,
     questionMode: "original",
     originalQuestions: [{
@@ -195,7 +195,7 @@ const enemies: IEnemyData[] = [
     exp: 50,
     word: "arcdemon",
     image: new URL("../assets/enemies/ghost_samurai.png", import.meta.url).toString(),
-    scale: 2.0,
+    scale: 1.2,
     speed: 220,
     questionMode: "original",
     originalQuestions: [{
@@ -215,7 +215,7 @@ const enemies: IEnemyData[] = [
     exp: 70,
     word: "bear",
     image: new URL("../assets/enemies/bear.png", import.meta.url).toString(),
-    scale: 2.0,
+    scale: 1.5,
     speed: 50,
     luck: 10,
     questionMode: "common",

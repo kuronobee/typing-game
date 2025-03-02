@@ -90,43 +90,62 @@
   animation: spin3d 1s linear infinite;
 }
 
-/* @keyframes damageFloat {
+@keyframes damageFloat {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -10px) scale(1.2);
+    text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.8);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -20px) scale(1);
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+  }
+}
+
+.animate-damage-fade {
+  animation: damageFloat 1s ease-out forwards;
+  font-size: 2rem; /* フォントサイズを大きくする */
+  color: #ff3333; /* 鮮やかな赤色 */
+  font-weight: bold;
+  pointer-events: none;
+}
+
+/* html, body {
+    height: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
+  } */
+
+/* styles.css またはグローバルCSS */
+.no-scroll {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+@keyframes comboFloat {
   0% {
     opacity: 1;
     transform: translate(-50%, 0);
   }
   100% {
     opacity: 0;
-    transform: translate(-50%, -20px);
+    transform: translate(-50%, -50px);
   }
 }
+:root {
+    --combo-animation-duration: 1s;
+}
 
-.animate-damage-fade {
-  animation: damageFloat 1s ease-out forwards;
-} */
-
-@keyframes damageFloat {
-    0% {
-      opacity: 1;
-      transform: translate(-50%, 0) scale(1);
-      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
-    }
-    50% {
-      opacity: 1;
-      transform: translate(-50%, -10px) scale(1.2);
-      text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.8);
-    }
-    100% {
-      opacity: 0;
-      transform: translate(-50%, -20px) scale(1);
-      text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
-    }
-  }
-  
-  .animate-damage-fade {
-    animation: damageFloat 1s ease-out forwards;
-    font-size: 2rem; /* フォントサイズを大きくする */
-    color: #ff3333;  /* 鮮やかな赤色 */
-    font-weight: bold;
-    pointer-events: none;
-  }
+.animate-combo-fade {
+  animation: comboFloat var(--combo-animation-duration) ease-out forwards;
+}

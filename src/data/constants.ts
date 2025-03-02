@@ -16,6 +16,9 @@ export const PLAYER_FIREBREATH_ANIMATION_DURATION = 300;
 // レベルアップ時のメッセージ表示時間（ミリ秒）
 export const LEVEL_UP_MESSAGE_DURATION = 5000;
 
+// コンボ表示の継続時間（ミリ秒）
+export const COMBO_ANIMATION_DURATION = 1000;
+
 // 経験値獲得時の表示持続時間（ミリ秒）
 export const EXP_GAIN_DISPLAY_DURATION = 2000;
 

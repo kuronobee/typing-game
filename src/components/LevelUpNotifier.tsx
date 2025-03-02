@@ -4,9 +4,10 @@ import { Player as PlayerModel } from "../models/Player";
 
 interface LevelUpNotifierProps {
     player: PlayerModel;
+    onClose: () => void;
 }
 
-const LevelUpNotifier: React.FC<LevelUpNotifierProps> = ({ player }) => {
+const LevelUpNotifier: React.FC<LevelUpNotifierProps> = ({ player, onClose }) => {
     const [message, setMessage] = useState<React.ReactNode>(null);
     // 前回のプレイヤー状態を保持する ref
     const prevPlayerRef = useRef(player);
@@ -70,18 +71,13 @@ const LevelUpNotifier: React.FC<LevelUpNotifierProps> = ({ player }) => {
                             </tr>
                         </tbody>
                     </table>
-                    <p className="mt-4 text-sm">Enterキーまたはこの領域をクリックして閉じてください。</p>
+                    <p className="mt-4 text-sm">press Enter</p>
                 </div>
             );
 
             setMessage(msgContent);
             // 前回の状態を更新
             prevPlayerRef.current = player;
-
-            // const timer = setTimeout(() => {
-            //     setMessage(null);
-            // }, LEVEL_UP_MESSAGE_DURATION);
-            // return () => clearTimeout(timer);
         }
     }, [player]);
 
@@ -91,21 +87,25 @@ const LevelUpNotifier: React.FC<LevelUpNotifierProps> = ({ player }) => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === "Enter") {
                 setMessage(null);
+                onClose();
             }
         };
         window.addEventListener("keydown", handleKeyDown);
         return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [message]);
+    }, [message, onClose]);
 
     if (!message) return null;
 
     return (
-        <div className="fixed inset-0 flex items-center justify-center z-50">
+        <div className="absolute inset-0 flex items-center justify-center z-50">
           <div className="relative bg-black bg-opacity-75 text-white px-6 py-4 rounded-lg text-center shadow-xl border-2 border-white">
             {/* 右上の×ボタン */}
             <button
               className="absolute top-2 right-2 text-white text-xl focus:outline-none"
-              onClick={() => setMessage(null)}
+              onClick={() => {
+                setMessage(null);
+                onClose();
+            }}
             >
               ×
             </button>
