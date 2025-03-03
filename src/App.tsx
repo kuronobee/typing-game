@@ -20,7 +20,7 @@ import LevelUpNotifier from "./components/LevelUpNotifier";
 const App: React.FC = () => {
   // プレイヤーはPlayerクラスのインスタンスで管理
   const [player, setPlayer] = useState<PlayerModel>(PlayerModel.createDefault());
-
+  const [isScreenHit, setIsScreenHit] = useState<boolean>(false);
   // 敵については、初期状態をnullにしておく
   const [message, setMessage] = useState<MessageType | null>({ text: "問題に正しく回答して敵を倒せ！", sender: "system" });
   const [expGain, setExpGain] = useState<number | null>(null);
@@ -36,7 +36,7 @@ const App: React.FC = () => {
       inputRef.current.focus();
     }
   }, []);
-  
+
   const questionTimeoutRef = useRef<number | null>(null);
   // 毒の場合は毒タイマー
   const poisonTimerRef = useRef<number | null>(null);
@@ -132,7 +132,6 @@ const App: React.FC = () => {
     // 敵の攻撃を実行。performAttackは敵の特攻攻撃ロジックも含む
     // playerを直接指定して、playerを監視にするとAppコンポーネントが再レンダリングされてしまい、攻撃インジケータがリセットされる不具合発生するため、useRef取得したplayerを使う
     const attack = attackingEnemy.performAttack(playerRef.current);
-    console.log("damageaaa", attack.result.damage);
     let damageToApply: number;
     let specialMessage = "";
     // 特殊攻撃を受けた場合の処理
@@ -168,6 +167,12 @@ const App: React.FC = () => {
     }
     // ダメージを受ける処理
     setPlayer(prev => prev.takeDamage(damageToApply));
+
+    // ここで全画面をフラッシュ&シェイクするエフェクトをトリガー
+    setIsScreenHit(true);
+    setTimeout(() => {
+      setIsScreenHit(false);
+    }, 500);
   }, [currentEnemies, playerRef]);
 
   // 攻撃する敵のアニメーションフラグを更新
@@ -472,7 +477,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="w-full h-screen flex flex-col">
+    <div className={`w-full h-screen flex flex-col ${isScreenHit ? "screen-flash-shake" : ""}`}>
       <div className="relative flex-[0.45]">
         <BattleStage
           currentEnemies={currentEnemies}

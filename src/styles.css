@@ -149,3 +149,36 @@
 .animate-combo-fade {
   animation: comboFloat var(--combo-animation-duration) ease-out forwards;
 }
+
+/* 画面がフラッシュして揺れるエフェクト */
+@keyframes screenFlashShake {
+    0% {
+      opacity: 1;
+      transform: translate(0, 0);
+    }
+    10% {
+      opacity: 0.3;
+      transform: translate(-10px, 5px);
+    }
+    20% {
+      opacity: 1;
+      transform: translate(10px, -5px);
+    }
+    30% {
+      opacity: 0.3;
+      transform: translate(-10px, 5px);
+    }
+    40% {
+      opacity: 1;
+      transform: translate(10px, -5px);
+    }
+    100% {
+      opacity: 1;
+      transform: translate(0, 0);
+    }
+  }
+  
+  .screen-flash-shake {
+    animation: screenFlashShake 0.5s ease-in-out;
+  }
+  
