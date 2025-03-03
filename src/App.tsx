@@ -30,6 +30,13 @@ const App: React.FC = () => {
   const [isHintFullyRevealed, setIsHintFullyRevealed] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, []);
+  
   const questionTimeoutRef = useRef<number | null>(null);
   // 毒の場合は毒タイマー
   const poisonTimerRef = useRef<number | null>(null);

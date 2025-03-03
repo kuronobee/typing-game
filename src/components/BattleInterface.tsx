@@ -38,6 +38,7 @@ const BattleInterface: React.FC<BattleInterfaceProps> = ({
       <div>
         <input
           type="text"
+          autoFocus
           className="w-full p-2 text-lg bg-amber-200 text-black rounded"
           value={userInput}
           onChange={handleInputChange}
