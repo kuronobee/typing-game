@@ -27,7 +27,7 @@ const PlayerInfo: React.FC<PlayerInfoProps> = ({
     expGain,
 }) => {
     return (
-        <div className="flex flex-row  bg-gray-800">
+        <div className="flex flex-row bg-gray-800">
             <ExperienceBar
                 playerLevel={playerLevel}
                 playerEXP={playerEXP}

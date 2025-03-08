@@ -182,3 +182,27 @@
     animation: screenFlashShake 0.5s ease-in-out;
   }
   
+  @keyframes screenShake {
+    0% {
+      transform: translate(0, 0);
+    }
+    10% {
+      transform: translate(-5px, 3px);
+    }
+    20% {
+      transform: translate(5px, -3px);
+    }
+    30% {
+      transform: translate(-5px, 3px);
+    }
+    40% {
+      transform: translate(5px, -3px);
+    }
+    100% {
+      transform: translate(0, 0);
+    }
+  }
+  
+  .screen-shake {
+    animation: screenShake 0.5s ease-in-out;
+  }

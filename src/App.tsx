@@ -70,6 +70,8 @@ const App: React.FC = () => {
   // プレーヤーが敵に攻撃した場合を識別するフラグ
   const [enemyHitFlags, setEnemyHitFlags] = useState<boolean[]>([]);
   const [showLevelUp, setShowLevelUp] = useState(false);
+  // 攻撃を受けた時の画面エフェクトを切り替えるフラグ
+  const [isScreenShake, setIsScreenShake] = useState<boolean>(false);
 
   const [comboCount, setComboCount] = useState<number>(0);
   const [showCombo, setShowCombo] = useState<boolean>(false);
@@ -80,7 +82,7 @@ const App: React.FC = () => {
       `${COMBO_ANIMATION_DURATION}ms`
     );
   }, []);
-  
+
   useEffect(() => {
     setDamageNumbers(currentEnemies.map(() => null));
   }, [currentEnemies]);
@@ -125,7 +127,10 @@ const App: React.FC = () => {
     }, ticks * 1000);
   };
 
+  // Modified handleEnemyAttack function for App.tsx
   const handleEnemyAttack = useCallback((attackingEnemy: EnemyModel) => {
+    // isScreenShakeのステートが必要
+    // const [isScreenShake, setIsScreenShake] = useState<boolean>(false);
     if (attackingEnemy === undefined) return;
     // 敵が既に倒れているなら攻撃処理をしない
     if (attackingEnemy.currentHP <= 0) return;
@@ -134,6 +139,8 @@ const App: React.FC = () => {
     const attack = attackingEnemy.performAttack(playerRef.current);
     let damageToApply: number;
     let specialMessage = "";
+    let isCritical = false; // クリティカルヒットのフラグを追加
+
     // 特殊攻撃を受けた場合の処理
     if (attack.special) {
       // ステータス異常を付与
@@ -162,17 +169,58 @@ const App: React.FC = () => {
       // 攻撃する敵のアニメーションフラグだけを更新
       triggerEnemyAttackAnimation(setEnemyAttackFlags, attackingEnemy, PLAYER_HIT_ANIMATION_DURATION);
       damageToApply = attack.result.damage;
-      // 通常攻撃の場合のメッセージ
-      setMessage({ text: `${attackingEnemy.name} の攻撃！ ${damageToApply} のダメージ！`, sender: "enemy" });
+
+      // クリティカルヒットの判定 (敵のluck値を基に計算)
+      // 基本クリティカル率: 5% + luck値に応じたボーナス
+      const baseCritRate = 0.05;
+      const luckBonus = (attackingEnemy.luck || 0) * 0.01; // luck 1につき1%増加
+      const criticalRate = baseCritRate + luckBonus;
+
+      if (Math.random() < criticalRate) {
+        isCritical = true;
+        // クリティカルヒットの場合は、防御力を無視して攻撃力の1.5倍のダメージを計算し直す
+        // ±10%のランダム変動を追加する
+        const randomFactor = 0.9 + (Math.random() * 0.2); // 0.9～1.1のランダム値
+        const baseDamage = attackingEnemy.attackPower * 1.5;
+        damageToApply = Math.floor(baseDamage * randomFactor);
+
+        // クリティカルダメージの変動の表現を追加
+        let damageDescription = "";
+        if (randomFactor > 1.05) {
+          damageDescription = "会心の一撃！";
+        } else if (randomFactor < 0.95) {
+          damageDescription = "かすり傷！";
+        }
+
+        setMessage({ text: `${attackingEnemy.name} のクリティカル攻撃！${damageDescription} 防御を無視した ${damageToApply} のダメージ！`, sender: "enemy" });
+      } else {
+        // 通常攻撃の場合のメッセージ
+        setMessage({ text: `${attackingEnemy.name} の攻撃！ ${damageToApply} のダメージ！`, sender: "enemy" });
+      }
     }
     // ダメージを受ける処理
     setPlayer(prev => prev.takeDamage(damageToApply));
 
-    // ここで全画面をフラッシュ&シェイクするエフェクトをトリガー
-    setIsScreenHit(true);
-    setTimeout(() => {
-      setIsScreenHit(false);
-    }, 500);
+    // 画面エフェクトの処理
+    // 攻撃がミスまたはダメージが0の場合はエフェクトなし
+    if (damageToApply <= 0) {
+      // エフェクトなし
+    }
+    // クリティカルの場合はフラッシュして揺らす
+    else if (isCritical) {
+      setIsScreenHit(true);
+      setTimeout(() => {
+        setIsScreenHit(false);
+      }, 500);
+    }
+    // 通常攻撃（ダメージあり）の場合は揺らすのみ
+    else {
+      // 画面を揺らすだけのエフェクトを適用するためのstate
+      setIsScreenShake(true);
+      setTimeout(() => {
+        setIsScreenShake(false);
+      }, 500);
+    }
   }, [currentEnemies, playerRef]);
 
   // 攻撃する敵のアニメーションフラグを更新
@@ -280,7 +328,7 @@ const App: React.FC = () => {
         });
       }, ENEMY_HIT_ANIMATION_DURATION);
       if (damage === 0) {
-        setMessage({text: "正解！しかし、攻撃を外してしまった！", sender: "player"});
+        setMessage({ text: "正解！しかし、攻撃を外してしまった！", sender: "player" });
       }
       else {
         setMessage({ text: `正解！${specialMessage} ${damage} のダメージを与えた！`, sender: "player" });
@@ -325,15 +373,15 @@ const App: React.FC = () => {
   // ダメージ計算関数
   function calculateEffectiveDamage(currentQuestion: Question, combo: number) {
     const targetEnemy = currentEnemies[targetIndex];
-    
+
     // 基本ダメージ：プレイヤーの攻撃力から敵の防御力を差し引いた値（最低5）
     const baseDamage = Math.max(5, player.attack - targetEnemy.defense);
     console.log("baseDamage: ", baseDamage);
-    
+
     // ランダムな変動（+-10%）
     const randomFactor = 0.9 + Math.random() * 0.2; // 0.9〜1.1
     let damage = baseDamage * randomFactor;
-    
+
     // ヒントに基づく補正
     const answerNoSpaces = currentQuestion.answer.replace(/\s/g, "");
     const maxHints = answerNoSpaces.length;
@@ -342,24 +390,24 @@ const App: React.FC = () => {
     // ヒントが全て表示されているときは倍率が0.5、表示されていなければ1.0
     const multiplier = 1 - (hintFraction / 2);
     damage *= multiplier;
-    
+
     // プレイヤーと敵のパラメータを取得（存在しなければ0とする）
     const playerLuck = player.luck || 0;
     const playerPower = player.power || 0;
     const enemyLuck = targetEnemy.luck || 0;
     const enemySpeed = targetEnemy.speed || 0;
-    
+
     // クリティカルとミスの確率を計算
     // 例として、基本ミス確率5%に敵のluckとspeedによる影響、クリティカルは基本5%にプレイヤーのluckとpowerの影響
-    const missProbability = Math.min(0.01 + (enemyLuck + enemySpeed) * 0.005, 0.1);  
+    const missProbability = Math.min(0.01 + (enemyLuck + enemySpeed) * 0.005, 0.1);
     const critProbability = Math.min(0.01 + (playerLuck + playerPower) * 0.005, 0.15);
-    
+
     // ヒントが完全に開かれている場合、クリティカル発生は無効にする。
     const effectiveCritProbability = isHintFullyRevealed ? 0 : critProbability;
 
     const rand = Math.random();
     let specialMessage = "";
-    
+
     // 攻撃ミスをまずチェック
     if (rand < missProbability) {
       damage = 0;
@@ -371,13 +419,13 @@ const App: React.FC = () => {
     } else {
       damage = Math.floor(damage);
     }
-    
+
     // コンボによる攻撃力アップ（毎回1.1%アップ）
     damage = Math.floor(damage * (1 + combo * 0.011));
 
     return { damage, effectiveWrongAttempts, multiplier, specialMessage };
   }
-  
+
   const gainEXP = (amount: number) => {
     setExpGain(amount);
     setTimeout(() => setExpGain(null), EXP_GAIN_DISPLAY_DURATION);
@@ -477,42 +525,41 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className={`w-full h-screen flex flex-col ${isScreenHit ? "screen-flash-shake" : ""}`}>
-      <div className="relative flex-[0.45]">
-        <BattleStage
-          currentEnemies={currentEnemies}
-          targetIndex={targetIndex}
-          player={player} // player オブジェクトを渡す
-          onEnemyAttack={handleEnemyAttack}
-          message={message}
-          currentQuestion={currentQuestion}
-          wrongAttempts={wrongAttempts}
-          enemyHitFlags={enemyHitFlags}
-          enemyAttackFlags={enemyAttackFlags}
-          enemyFireFlags={enemyFireFlags}
-          damageNumbers={damageNumbers}
-          onFullRevealChange={setIsHintFullyRevealed}
-          onSelectTarget={handleSelectTarget}
-          comboCount={comboCount}
-          showCombo={showCombo}
-        />
-        {/* levelUpNotifierを表示 */}
-        <LevelUpNotifier player={player} onClose={() => setShowLevelUp(false)}/>
-        {/* 「次の敵に進む」ボタンはLevelUpNotifierが閉じられてから表示 */}
-        {readyForNextStage && !showLevelUp && (
-          <div className="absolute bottom-50 left-1/2 transform -translate-x-1/2 z-50">
-            <button
-              onClick={() => {
-                spawnNewStage();
-                setReadyForNextStage(false);
-              }}
-              className="px-4 py-2 bg-red-600 text-white rounded shadow hover:bg-blue-700 transition-colors"
-            >
-              次の敵に進む
-            </button>
-          </div>
-        )}
-      </div>
+    <div className={`w-full h-screen flex flex-col ${isScreenHit ? "screen-flash-shake" : isScreenShake ? "screen-shake" : ""}`}>      <div className="relative flex-[0.45]">
+      <BattleStage
+        currentEnemies={currentEnemies}
+        targetIndex={targetIndex}
+        player={player} // player オブジェクトを渡す
+        onEnemyAttack={handleEnemyAttack}
+        message={message}
+        currentQuestion={currentQuestion}
+        wrongAttempts={wrongAttempts}
+        enemyHitFlags={enemyHitFlags}
+        enemyAttackFlags={enemyAttackFlags}
+        enemyFireFlags={enemyFireFlags}
+        damageNumbers={damageNumbers}
+        onFullRevealChange={setIsHintFullyRevealed}
+        onSelectTarget={handleSelectTarget}
+        comboCount={comboCount}
+        showCombo={showCombo}
+      />
+      {/* levelUpNotifierを表示 */}
+      <LevelUpNotifier player={player} onClose={() => setShowLevelUp(false)} />
+      {/* 「次の敵に進む」ボタンはLevelUpNotifierが閉じられてから表示 */}
+      {readyForNextStage && !showLevelUp && (
+        <div className="absolute bottom-50 left-1/2 transform -translate-x-1/2 z-50">
+          <button
+            onClick={() => {
+              spawnNewStage();
+              setReadyForNextStage(false);
+            }}
+            className="px-4 py-2 bg-red-600 text-white rounded shadow hover:bg-blue-700 transition-colors"
+          >
+            次の敵に進む
+          </button>
+        </div>
+      )}
+    </div>
       <div className="flex-[0.55] bg-gray-900">
         <BattleInterface
           player={player} // playerオブジェクトを渡す
