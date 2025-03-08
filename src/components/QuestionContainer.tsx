@@ -1,4 +1,4 @@
-// src/components/QuestionContainer.tsx
+// src/components/QuestionContainer.tsx - 最適化版
 import React, { useState, useEffect } from "react";
 import { Question } from "../data/questions";
 
@@ -7,13 +7,16 @@ interface QuestionContainerProps {
   wrongAttempts: number;
   attackProgress: number; // 0～1 の値（例: 0.5なら50%進捗）
   onFullRevealChange: (fullReveal: boolean) => void;
+  isCompact?: boolean; // コンパクト表示モード
 }
 
 const QuestionContainer: React.FC<QuestionContainerProps> = ({ 
     question, 
     wrongAttempts, 
     attackProgress, 
-    onFullRevealChange, }) => {
+    onFullRevealChange,
+    isCompact = false,
+}) => {
   // fullReveal が true の場合、ヒントは完全に開かれる
   const [fullReveal, setFullReveal] = useState(false);
 
@@ -21,12 +24,13 @@ const QuestionContainer: React.FC<QuestionContainerProps> = ({
   useEffect(() => {
     setFullReveal(false);
   }, [question]);
-    // fullRevealの変化を上位コンポーネントへ通知
-    useEffect(() => {
-        if (onFullRevealChange) {
-            onFullRevealChange(fullReveal);
-        }
-    }, [fullReveal, onFullRevealChange]);
+  
+  // fullRevealの変化を上位コンポーネントへ通知
+  useEffect(() => {
+    if (onFullRevealChange) {
+      onFullRevealChange(fullReveal);
+    }
+  }, [fullReveal, onFullRevealChange]);
     
   // Escキーで fullReveal を true にするイベントリスナー
   useEffect(() => {
@@ -74,24 +78,62 @@ const QuestionContainer: React.FC<QuestionContainerProps> = ({
     return hintArray.join("\u2009");
   };
 
+  // コンパクトモード用のスタイルとレイアウト
+  const containerClasses = `
+    relative 
+    question-container
+    bg-black/50 
+    border-white 
+    ${isCompact ? 'border-[1px] py-1 px-2' : 'border-2 px-4 py-2'} 
+    text-white
+    rounded
+    transition-all 
+    duration-300
+  `;
+  
+  // 極限まで省スペース化したコンパクトデザイン
+  if (isCompact) {
     return (
-        <div className="relative bg-black/50 border-white border-2 text-white px-4 py-2 rounded">
-            {/* 攻撃インジケータ */}
-            <div className="absolute top-2 left-1/2 transform -translate-x-1/2 z-30 w-64">
-                <div className="w-full h-2 bg-gray-300 rounded">
-                    <div
-                    className="h-full bg-red-500 rounded"
-                        style={{ width: `${Math.min(attackProgress * 100, 100)}%` }}
-                    ></div>
-                </div>
-            </div>
-            {/* ゲージと重ならないように上部にパディング */}
-            <div className="pt-4">
-                <p className="font-bold">問題: {question?.prompt}</p>
-                <p className="mt-2">ヒント: {getHint(question?.answer ?? "", wrongAttempts)}</p>
-            </div>
+      <div className={containerClasses}>
+        {/* 攻撃ゲージを小さく上部に表示 */}
+        <div className="absolute top-1 left-1/2 transform -translate-x-1/2 z-30 w-100 h-[4px]">
+          <div className="w-full h-full bg-gray-300 rounded-sm">
+            <div
+              className="h-full bg-red-500 rounded-sm"
+              style={{ width: `${Math.min(attackProgress * 100, 100)}%` }}
+            ></div>
+          </div>
         </div>
+        
+        {/* 内容を一行に集約 */}
+        <div className="flex flex-col pt-1">
+          <div className="flex-1 p-1 pl-5 text-sm">{question?.prompt}</div>
+          <div className="flex-1 pl-5 text-sm">{getHint(question?.answer ?? "", wrongAttempts)}</div>
+        </div>
+      </div>
     );
+  }
+
+  // 通常モード
+  return (
+    <div className={containerClasses}>
+      {/* 攻撃インジケータ */}
+      <div className="absolute top-2 left-1/2 transform -translate-x-1/2 z-30 w-64">
+        <div className="w-full h-2 bg-gray-300 rounded">
+          <div
+            className="h-full bg-red-500 rounded"
+            style={{ width: `${Math.min(attackProgress * 100, 100)}%` }}
+          ></div>
+        </div>
+      </div>
+      
+      {/* ゲージと重ならないようにコンテンツにパディング */}
+      <div className="pt-4">
+        <p className="font-bold">問題: {question?.prompt}</p>
+        <p className="mt-2">ヒント: {getHint(question?.answer ?? "", wrongAttempts)}</p>
+      </div>
+    </div>
+  );
 };
 
 export default QuestionContainer;

@@ -206,3 +206,123 @@
   .screen-shake {
     animation: screenShake 0.5s ease-in-out;
   }
+
+  /* キーボード表示時のスタイル */
+.keyboard-open {
+  position: fixed;
+  width: 100%;
+  height: var(--window-height, 100%);
+  overflow: hidden;
+}
+
+/* iOS用のオーバースクロール動作を無効化 */
+html, body {
+  position: fixed;
+  height: 100%;
+  overflow: auto;
+  width: 100%;
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* キーボード表示時に高さを調整するためのカスタムプロパティ */
+:root {
+  --window-height: 100vh;
+}
+
+/* バトルインターフェースの入力欄をキーボード表示時にもスクロールさせない */
+.input-wrapper {
+  position: relative;
+  z-index: 1000;
+}
+
+/* src/styles.css に追加 - コンパクトモード最適化用CSS */
+
+/* コンパクトモード時のBattleStage最適化 */
+.compact-battle-stage {
+  /* 余白を最小化 */
+  margin: 0;
+  padding: 0;
+  
+  /* コンテンツをより効率的に表示 */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background-color: #111111;
+}
+
+/* キーボード表示時のQuestion Container最適化 */
+.compact-battle-stage .question-container {
+  margin-top: 3px;
+  margin-bottom: 3px;
+  border-width: 1px;
+}
+
+/* キーボード表示時のコンボ表示最適化 */
+.compact-battle-stage .combo-display {
+  font-size: 0.875rem;
+  transform: translateY(-5px);
+}
+
+/* キーボード表示時のエネミー表示最適化 */
+.compact-battle-stage .enemy-container {
+  transform-origin: bottom center;
+}
+
+/* コンパクトモードでの攻撃ゲージ */
+.compact-battle-stage .attack-gauge {
+  height: 4px;
+  width: 50px;
+}
+
+/* コンパクトモード時の余白調整 */
+@media (max-height: 600px) {
+  .compact-battle-stage {
+    /* 非常に小さい画面での追加最適化 */
+    transform: scale(0.95);
+    transform-origin: center top;
+  }
+}
+
+/* 敵の体力ゲージ表示を最適化 */
+.compact-battle-stage .enemy-health-bar {
+  /* 体力ゲージの位置を調整 */
+  position: absolute;
+  bottom: -8px !important; /* !importantで他のスタイルを上書き */
+  left: 50%;
+  /*transform: translateX(-50%);*/
+  
+  /* サイズと表示を最適化 */
+  width: 50px !important;
+  height: 8px !important;
+  background-color: rgba(200, 200, 200, 0.7) !important;
+  border-width: 1px !important;
+}
+
+/* 体力ゲージの内部バー */
+.compact-battle-stage .enemy-health-bar > div {
+  height: 100%;
+}
+
+/* コンパクトモード時のBattleStage-BattleInterface間のギャップを確保 */
+.keyboard-open .flex-[0.3] {
+  padding-bottom: 10px;
+}
+
+/* キーボード表示時にBattleInterfaceの上部にスペースを作る */
+.keyboard-open .battle-interface-container {
+  margin-top: 10px;
+}
+
+/* ヘルスゲージのボーダーを調整 */
+.enemy-health-bar {
+  border: 2px solid rgba(255, 255, 255, 0.5);
+}
+
+/* キーボード表示時のみのスタイル */
+@media (max-height: 580px) {
+  .compact-battle-stage .enemy-container {
+    /* 非常に小さい画面でさらに上方に配置 */
+    transform: translateY(-15px);
+  }
+}

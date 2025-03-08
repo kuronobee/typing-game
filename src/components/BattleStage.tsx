@@ -1,4 +1,4 @@
-// src/components/BattleStage.tsx
+// src/components/BattleStage.tsx - 余白最小化版
 import React, { useEffect, useState, useRef } from "react";
 import bg from "../assets/bg/background.png";
 import Enemy from "./Enemy";
@@ -34,6 +34,7 @@ interface BattleStageProps {
   onSelectTarget: (index: number) => void;
   comboCount: number;
   showCombo: boolean;
+  isKeyboardVisible?: boolean;
 }
 
 const BattleStage: React.FC<BattleStageProps> = ({
@@ -52,6 +53,7 @@ const BattleStage: React.FC<BattleStageProps> = ({
   onSelectTarget,
   comboCount,
   showCombo,
+  isKeyboardVisible = false,
 }) => {
   // 各敵毎の攻撃ゲージ進捗を管理する配列(0〜1)
   const [attackProgresses, setAttackProgresses] = useState<number[]>([]);
@@ -75,29 +77,32 @@ const BattleStage: React.FC<BattleStageProps> = ({
         return updated;
       });
     }
-  }, [enemyHitFlags, targetIndex])
+  }, [enemyHitFlags, targetIndex]);
 
   // 各敵のゲージをバックグラウンドで進行させるタイマー
   useEffect(() => {
     const timerId = setInterval(() => {
-      setAttackProgresses((prevProgresses) => prevProgresses.map((progress, i) => {
-        const enemy = currentEnemies[i];
-        // 敵が存在しない、または敵が倒れている場合はタイマーを起動しない
-        if (!enemy || enemy.defeated) return 0;
-        const effectiveSpeed = enemy.speed - playerRef.current.speed;
-        if (effectiveSpeed <= 0) return progress;
-        const attackInterval = (MAX_EFFECTIVE_SPEED / effectiveSpeed) * MS_IN_SECOND;
-        let newProgress = progress + TICK_INTERVAL / attackInterval;
-        if (newProgress >= 1) {
-          // ゲージが万端になったらその敵の攻撃を実行し、進捗をリセット
-          // 非同期に onEnemyAttack を呼ぶことで、レンダリング中の更新を回避
-          setTimeout(() => {
-            onEnemyAttack(enemy);
-          }, 0);
-          newProgress = 0;
-        }
-        return newProgress;
-      }));
+      setAttackProgresses((prevProgresses) =>
+        prevProgresses.map((progress, i) => {
+          const enemy = currentEnemies[i];
+          // 敵が存在しない、または敵が倒れている場合はタイマーを起動しない
+          if (!enemy || enemy.defeated) return 0;
+          const effectiveSpeed = enemy.speed - playerRef.current.speed;
+          if (effectiveSpeed <= 0) return progress;
+          const attackInterval =
+            (MAX_EFFECTIVE_SPEED / effectiveSpeed) * MS_IN_SECOND;
+          let newProgress = progress + TICK_INTERVAL / attackInterval;
+          if (newProgress >= 1) {
+            // ゲージが万端になったらその敵の攻撃を実行し、進捗をリセット
+            // 非同期に onEnemyAttack を呼ぶことで、レンダリング中の更新を回避
+            setTimeout(() => {
+              onEnemyAttack(enemy);
+            }, 0);
+            newProgress = 0;
+          }
+          return newProgress;
+        })
+      );
     }, TICK_INTERVAL);
     return () => clearInterval(timerId);
   }, [currentEnemies, onEnemyAttack]);
@@ -105,30 +110,65 @@ const BattleStage: React.FC<BattleStageProps> = ({
   // ターゲット敵の攻撃ゲージ進捗
   const targetProgress = attackProgresses[targetIndex] || 0;
 
+  // コンパクトモード用のクラス調整
+  const containerClasses = `
+    relative w-full h-full z-50
+    ${isKeyboardVisible ? "compact-battle-stage p-0" : "p-2"}
+    transition-all duration-300
+  `;
+
+  // 敵の配置調整用の値計算
+  const getEnemyPosition = (enemy: EnemyModel) => {
+    // 基本位置
+    let baseY = enemy.positionOffset?.y || 0;
+    let baseX = enemy.positionOffset?.x || 0;
+
+    // キーボード表示時の位置調整
+    if (isKeyboardVisible) {
+      // 上に60px移動（より上方に配置）
+      baseY -= 60;
+
+      // 複数の敵がいる場合は横に少し圧縮して全体を表示
+      if (currentEnemies.length > 1) {
+        baseX = baseX * 0.85; // 横方向を85%に縮小
+      }
+    }
+    return { x: baseX, y: baseY };
+  };
+
   return (
-    <div className="top-1/4 z-50 relative w-full h-full">
-      {/* 背景画像 */}
+    <div className={containerClasses}>
+      {/* 背景画像 - コンパクトモード時に位置調整 */}
       <div
         className="absolute inset-0"
         style={{
           backgroundImage: `url(${bg})`,
           backgroundRepeat: "no-repeat",
-          backgroundPosition: "bottom center",
-          backgroundSize: "100% 100%",
+          backgroundPosition: isKeyboardVisible
+            ? "center 70%"
+            : "bottom center", // 背景位置調整
+          backgroundSize: isKeyboardVisible ? "90% auto" : "100% 100%", // サイズ調整
         }}
       />
+
       {/* 複数の敵を表示 */}
       {currentEnemies.map((enemy, index) => {
         const isTarget = index === targetIndex;
-        // 各敵の進捗はattackProgresses[index]に入っている
         const enemyProgress = attackProgresses[index] || 0;
+
+        // 位置計算
+        const position = getEnemyPosition(enemy);
+
         return (
           <div
             key={index}
-            className="absolute z-10 transition-all duration-1000 ease-out"
+            className="absolute z-10 transition-all duration-300 ease-out"
             style={{
-              bottom: `calc(70px + ${enemy.positionOffset?.y || 0}px)`,
-              left: `calc(50% + ${enemy.positionOffset?.x || 0}px)`,
+              // 敵のベース位置をより高くする（70px→50px）
+              bottom: `calc(${isKeyboardVisible ? "80px" : "70px"} + ${
+                position.y
+              }px)`,
+              left: `calc(50% + ${position.x}px)`,
               transform: "translateX(-50%)",
               opacity: enemy.currentHP > 0 ? 1 : 0,
             }}
@@ -143,38 +183,58 @@ const BattleStage: React.FC<BattleStageProps> = ({
               enemyHit={enemyHitFlags[index]}
               playerHit={enemyAttackFlags[index]}
               playerFire={enemyFireFlags[index]}
-              // 他のアニメーション用フラグも必要に応じて
               enemyDefeated={enemy.currentHP <= 0}
               showHealth={isTarget}
               showTargetIndicator={isTarget}
               progress={enemyProgress}
               damage={damageNumbers[index]}
+              scaleAdjustment={isKeyboardVisible ? 0.80 : 1} // キーボード表示時は65%に縮小
             />
             {/* コンボ表示: ターゲットかつコンボ数が2以上なら表示 */}
             {isTarget && comboCount > 1 && showCombo && (
-              <div 
+              <div
                 key={comboCount}
-                className="absolute top-[-30px] left-1/2 transform -translate-x-1/2 text-yellow-400 font-bold text-xl animate-combo-fade">
+                className={`absolute left-1/2 transform -translate-x-1/2 text-yellow-400 font-bold 
+                  ${
+                    isKeyboardVisible
+                      ? "text-sm top-[-20px]"
+                      : "text-xl top-[-30px]"
+                  } 
+                  animate-combo-fade`}
+              >
                 {comboCount}Combo
               </div>
             )}
           </div>
         );
       })}
-      {/* ターゲット敵の質問コンテナのみ表示 */}
+
+      {/* ターゲット敵の質問コンテナ - コンパクトモード時に上部に固定 */}
       {currentEnemies[targetIndex] &&
         currentEnemies[targetIndex].currentHP > 0 && (
-          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 w-[90%] z-30">
+          <div
+            className={`absolute left-1/2 transform -translate-x-1/2 
+              ${isKeyboardVisible ? "top-0 w-[99%]" : "top-4 w-[90%]"} 
+              z-30 transition-all duration-300`}
+          >
             <QuestionContainer
               question={currentQuestion}
               wrongAttempts={wrongAttempts}
               attackProgress={targetProgress}
               onFullRevealChange={onFullRevealChange}
+              isCompact={isKeyboardVisible}
             />
           </div>
         )}
-      {/* メッセージ表示 */}
-      <MessageDisplay newMessage={message} />
+
+      {/* メッセージ表示 - コンパクトモード時に位置調整 */}
+      <div className={`transition-all duration-300`}>
+        <MessageDisplay
+          newMessage={message}
+          isCompact={isKeyboardVisible}
+          position={isKeyboardVisible ? "bottom-6" : "bottom-20"} // 位置を動的に調整
+        />
+      </div>
     </div>
   );
 };

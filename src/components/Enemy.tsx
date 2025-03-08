@@ -1,4 +1,5 @@
-// src/components/Enemy.tsx
+// src/components/Enemy.tsx - 体力ゲージにクラス名を追加
+
 import React from "react";
 import { Enemy as EnemyModel } from "../models/EnemyModel";
 
@@ -8,15 +9,16 @@ type DamageDisplay = {
 };
 
 interface EnemyProps {
-    enemy: EnemyModel;  // Enemy クラスのインスタンスをそのまま受け取る
+    enemy: EnemyModel;
     enemyHit?: boolean;
     playerHit?: boolean;
     playerFire?: boolean;
     enemyDefeated?: boolean;
-    showHealth?: boolean; // 体力ゲージ表示用フラグ
-    showTargetIndicator?: boolean; // ターゲット指定用フラグ
-    progress: number; // 攻撃ゲージの進捗
+    showHealth?: boolean;
+    showTargetIndicator?: boolean;
+    progress: number;
     damage?: DamageDisplay | null;
+    scaleAdjustment?: number;
 }
 
 const Enemy: React.FC<EnemyProps> = ({
@@ -28,11 +30,12 @@ const Enemy: React.FC<EnemyProps> = ({
     showHealth = false,
     showTargetIndicator = false,
     progress,
-    damage }) => {
+    damage,
+    scaleAdjustment = 1
+}) => {
     const hpPercentage = (enemy.currentHP / enemy.maxHP) * 100;
     const baseScale = enemy.scale || 1;
-    const effectiveScale = enemyDefeated ? 0 : baseScale;
-    // 敵が攻撃するアニメーション
+    const effectiveScale = enemyDefeated ? 0 : (baseScale * scaleAdjustment);
     const enemyClass = `
     ${enemyHit ? "animate-hit" : ""}
     ${playerHit ? "animate-phit" : ""}
@@ -40,7 +43,7 @@ const Enemy: React.FC<EnemyProps> = ({
 
     const gaugeOffset = 96 * (1 - effectiveScale);
     return (
-        <div className="relative inline-block">
+        <div className="relative inline-block enemy-container">
             {/* 親要素でscaleを適用 */}
             <div
                 className="transition-all duration-1000 ease-out"
@@ -56,8 +59,7 @@ const Enemy: React.FC<EnemyProps> = ({
                     className={`w-24 h-24 object-contain ${enemyClass}`}
                 />
             </div>
-            {/* ターゲットインジケーター（3D横回転） */}
-            {/* ターゲットインジケーター：固定サイズ、画像スケールに左右されずに敵の頭上に配置 */}
+            {/* ターゲットインジケーター */}
             {showTargetIndicator && (
                 <div
                     className="absolute left-1/2 transform -translate-x-1/2 target-indicator"
@@ -65,7 +67,7 @@ const Enemy: React.FC<EnemyProps> = ({
                 />
             )}
             {/* 敵の頭上に小さい攻撃ゲージを表示 */}
-            <div className="absolute top-[-12px] left-1/2 transform -translate-x-1/2 w-16 h-1 bg-gray-500 rounded"
+            <div className="absolute top-[-12px] left-1/2 transform -translate-x-1/2 w-16 h-1 bg-gray-500 rounded attack-gauge"
                 style={{ top: `${gaugeOffset - 5}px` }}
             >
                 <div
@@ -73,9 +75,9 @@ const Enemy: React.FC<EnemyProps> = ({
                     style={{ width: `${Math.min(progress * 100, 100)}%` }}
                 ></div>
             </div>
-            {/* showHealth フラグが true の場合のみ表示 */}
+            {/* showHealth フラグが true の場合のみ表示 - クラス名追加 */}
             {showHealth && !enemyDefeated && (
-                <div className="absolute bottom-[-10px] left-1/2 transform -translate-x-1/2 w-28 h-3 bg-gray-300 rounded-full border-2 border-blue-50">
+                <div className="absolute bottom-[-10px] left-1/2 transform -translate-x-1/2 w-28 h-3 bg-gray-300 rounded-full border-2 border-blue-50 enemy-health-bar">
                     <div
                         className="h-full bg-green-500 rounded-full transition-all duration-300"
                         style={{ width: `${hpPercentage}%` }} />
