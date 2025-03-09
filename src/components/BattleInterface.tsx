@@ -1,5 +1,4 @@
-// src/components/BattleInterface.tsx - 余白を追加
-
+// src/components/BattleInterface.tsx - 入力フィールドの処理を改善
 import React, { useState, useEffect } from "react";
 import { Player } from "../models/Player";
 import PlayerInfo from "./PlayerInfo";
@@ -28,6 +27,14 @@ const BattleInterface: React.FC<BattleInterfaceProps> = ({
       setShouldSelectInput(false);
     }
   }, [shouldSelectInput, inputRef]);
+
+  // コンポーネントがマウントされたら、入力フィールドにフォーカスする
+  useEffect(() => {
+    if (inputRef.current) {
+      // 初期表示時にフォーカスする
+      inputRef.current.focus();
+    }
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUserInput(e.target.value);
@@ -68,10 +75,10 @@ const BattleInterface: React.FC<BattleInterfaceProps> = ({
   return (
     <div 
       className={`
-        w-full h-full flex flex-col
+        w-full flex flex-col
         ${isKeyboardVisible 
           ? 'justify-start mt-6' // キーボード表示時に上部に余白を追加
-          : 'justify-between p-2'} 
+          : 'justify-centor p-2'} 
         bg-gray-900 text-white border-t border-gray-700 
         transition-all duration-300
       `}
@@ -93,6 +100,16 @@ const BattleInterface: React.FC<BattleInterfaceProps> = ({
             autoCorrect="off"
             autoCapitalize="none"
             spellCheck="false"
+            // onBlurを無効化して、フォーカスが失われないようにする
+            onBlur={() => {
+              // スマホでの操作時にフォーカスを失わないようにする
+              // タイマーを使用して非同期で再フォーカス
+              setTimeout(() => {
+                if (inputRef.current) {
+                  inputRef.current.focus();
+                }
+              }, 10);
+            }}
           />
           <button
             className="px-4 bg-blue-600 text-white rounded-r"
@@ -105,7 +122,7 @@ const BattleInterface: React.FC<BattleInterfaceProps> = ({
       </div>
       
       {/* PlayerInfo */}
-      <div className={`${isKeyboardVisible ? 'opacity-50 scale-90 px-2' : 'opacity-100'} transition-all duration-300 transform origin-top`}>
+      <div className={`transition-all duration-300 transform origin-top`}>
         <PlayerInfo
           playerHP={player.hp}
           maxHP={player.maxHP}

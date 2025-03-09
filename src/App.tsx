@@ -143,6 +143,43 @@ const App: React.FC = () => {
     );
   }, []);
 
+  // キーボード表示状態を検出
+  useEffect(() => {
+    const detectKeyboard = () => {
+      // モバイルデバイスでのキーボード検出
+      // キーボードが表示されるとビューポートの高さが小さくなる
+      if (window.innerHeight < lastViewportHeight.current * 0.8) {
+        setIsKeyboardVisible(true);
+      }
+      // キーボードが非表示になっても常に表示されたままにする場合は
+      // 以下のelse節をコメントアウトする
+      // else {
+      //   setIsKeyboardVisible(false);
+      // }
+      lastViewportHeight.current = window.innerHeight;
+    };
+
+    window.addEventListener("resize", detectKeyboard);
+    return () => window.removeEventListener("resize", detectKeyboard);
+  }, []);
+
+  // 入力フィールドのフォーカス検出 - フォーカス時に常にキーボードを表示する
+  useEffect(() => {
+    const handleFocus = () => setIsKeyboardVisible(true);
+    // blurイベントを無視して、キーボードを常に表示したままにする
+
+    if (inputRef.current) {
+      inputRef.current.addEventListener("focus", handleFocus);
+      // blurイベントリスナーを追加しない
+    }
+
+    return () => {
+      if (inputRef.current) {
+        inputRef.current.removeEventListener("focus", handleFocus);
+      }
+    };
+  }, [inputRef.current]);
+
   useEffect(() => {
     setDamageNumbers(currentEnemies.map(() => null));
   }, [currentEnemies]);
@@ -687,17 +724,39 @@ const App: React.FC = () => {
     setTargetIndex(index);
     if (inputRef.current) {
       inputRef.current.focus();
+      setIsKeyboardVisible(true);
     }
   };
 
   return (
-    <div className={`w-full h-screen flex flex-col ${isScreenHit ? "screen-flash-shake" : isScreenShake ? "screen-shake" : ""}`}>
+    <div
+      className={`w-full flex flex-col ${
+        isScreenHit ? "screen-flash-shake" : isScreenShake ? "screen-shake" : ""
+      }`}
+    >
+      {/* BattleInterface - キーボード表示時の比率をさらに調整 */}
+      <div
+        className={`${
+          isKeyboardVisible
+            ? "flex-[0.7]" // キーボード表示時は70%に調整（以前は75%）
+            : "flex-[0.55]" // 通常は変更なし
+        } bg-gray-900 transition-all duration-300`}
+      >
+        <BattleInterface
+          player={player}
+          onSubmit={handlePlayerAttack}
+          expGain={expGain}
+          inputRef={inputRef}
+          isKeyboardVisible={isKeyboardVisible}
+        />
+      </div>
+
       {/* BattleStage - キーボード表示時の比率をさらに調整 */}
-      <div 
+      <div
         className={`relative ${
-          isKeyboardVisible 
-            ? 'flex-[0.4]' // キーボード表示時は30%に調整（以前は25%）
-            : 'flex-[0.45]' // 通常は変更なし
+          isKeyboardVisible
+            ? "flex-[0.4]" // キーボード表示時は30%に調整（以前は25%）
+            : "flex-[0.45]" // 通常は変更なし
         } overflow-hidden transition-all duration-300`}
       >
         <BattleStage
@@ -718,12 +777,15 @@ const App: React.FC = () => {
           showCombo={showCombo}
           isKeyboardVisible={isKeyboardVisible}
         />
-        
+
         {/* LevelUp Notifier */}
         {showLevelUp && (
-          <LevelUpNotifier player={player} onClose={() => setShowLevelUp(false)} />
+          <LevelUpNotifier
+            player={player}
+            onClose={() => setShowLevelUp(false)}
+          />
         )}
-        
+
         {/* Next Stage Button */}
         {readyForNextStage && !showLevelUp && (
           <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 z-50">
@@ -733,30 +795,15 @@ const App: React.FC = () => {
                 setReadyForNextStage(false);
               }}
               className={`${
-                isKeyboardVisible 
-                  ? 'px-2 py-1 text-sm' // キーボード表示時は小さく
-                  : 'px-4 py-2'
+                isKeyboardVisible
+                  ? "px-2 py-1 text-sm" // キーボード表示時は小さく
+                  : "px-4 py-2"
               } bg-red-600 text-white rounded shadow hover:bg-blue-700 transition-colors`}
             >
               次の敵に進む
             </button>
           </div>
         )}
-      </div>
-      
-      {/* BattleInterface - キーボード表示時の比率をさらに調整 */}
-      <div className={`${
-        isKeyboardVisible 
-          ? 'flex-[0.7]' // キーボード表示時は70%に調整（以前は75%）
-          : 'flex-[0.55]' // 通常は変更なし
-      } bg-gray-900 transition-all duration-300`}>
-        <BattleInterface
-          player={player}
-          onSubmit={handlePlayerAttack}
-          expGain={expGain}
-          inputRef={inputRef}
-          isKeyboardVisible={isKeyboardVisible}
-        />
       </div>
     </div>
   );

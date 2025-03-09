@@ -112,7 +112,7 @@ const BattleStage: React.FC<BattleStageProps> = ({
 
   // コンパクトモード用のクラス調整
   const containerClasses = `
-    relative w-full h-full z-50
+    relative w-full h-80 z-50
     ${isKeyboardVisible ? "compact-battle-stage p-0" : "p-2"}
     transition-all duration-300
   `;
@@ -172,7 +172,9 @@ const BattleStage: React.FC<BattleStageProps> = ({
               transform: "translateX(-50%)",
               opacity: enemy.currentHP > 0 ? 1 : 0,
             }}
-            onClick={() => {
+            onClick={(e) => {
+              // デフォルトの動作を抑制してフォーカスが失われるのを防ぐ
+              e.preventDefault();
               if (!enemy.defeated) {
                 onSelectTarget(index);
               }

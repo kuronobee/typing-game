@@ -326,3 +326,36 @@ html, body {
     transform: translateY(-15px);
   }
 }
+
+/* キーボード表示時のスタイル - 画面ぶれ防止 */
+.keyboard-open {
+  position: fixed;
+  width: 100%;
+  height: var(--window-height, 100%);
+  overflow: hidden;
+  transition: none !important; /* 遷移アニメーションをオフにして画面のぶれを防止 */
+}
+
+/* iOS用のオーバースクロール動作を無効化 - 追加対策 */
+html, body {
+  position: fixed;
+  height: 100%;
+  overflow: auto;
+  width: 100%;
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+  touch-action: manipulation; /* タッチでのダブルタップズームなどを防止 */
+}
+
+/* タップ時の青いハイライトを非表示 */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 入力フィールドタップ時の挙動を安定化 */
+input {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  outline: none;
+}
