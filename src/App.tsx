@@ -494,7 +494,41 @@ const App: React.FC = () => {
       });
     }
   };
-
+  
+  const handleContinueGame = () => {
+    // Revive player with half health
+    setPlayer((prev) => {
+      const revivedHP = Math.ceil(prev.maxHP * 0.5); // 50% of max HP
+      return new PlayerModel(
+        revivedHP,
+        prev.maxHP,
+        prev.maxMP,
+        prev.maxMP,
+        prev.defense,
+        prev.magicDefense,
+        prev.level,
+        prev.exp,
+        prev.totalExp,
+        prev.speed,
+        prev.attack,
+        prev.luck,
+        prev.power,
+        [] // Clear status effects on continue
+      );
+    });
+  
+    // Display a revival message
+    setMessage({
+      text: "力を取り戻した！戦いを続ける！",
+      sender: "system",
+    });
+  
+    // Generate a new stage if all enemies are defeated
+    if (currentEnemies.every(enemy => enemy.defeated)) {
+      spawnNewStage();
+    }
+  };
+  
   // 全ての敵が倒されたかどうかチェックする関数
   const checkStageCompletion = () => {
     const allDefeated = currentEnemies.every((enemy) => enemy.defeated);
@@ -714,12 +748,6 @@ const App: React.FC = () => {
     };
   }, []);
 
-  if (player.hp <= 0) {
-    return <GameOver totalEXP={player.totalExp} />;
-  }
-  if (currentEnemies.length === 0) {
-    return <div>Loading...</div>;
-  }
   const handleSelectTarget = (index: number) => {
     setTargetIndex(index);
     if (inputRef.current) {
@@ -727,6 +755,15 @@ const App: React.FC = () => {
       setIsKeyboardVisible(true);
     }
   };
+  
+  if (player.hp <= 0) {
+    return (
+      <GameOver 
+        totalEXP={player.totalExp} 
+        onContinue={handleContinueGame}
+      />
+    );
+  }
 
   return (
     <div
