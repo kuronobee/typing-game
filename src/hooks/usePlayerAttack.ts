@@ -11,7 +11,6 @@ import { COMBO_ANIMATION_DURATION } from "../data/constants";
  */
 export function usePlayerAttack(
   player: PlayerModel,
-  currentEnemies: EnemyModel[],
   setComboCount: React.Dispatch<React.SetStateAction<number>>,
   setShowCombo: React.Dispatch<React.SetStateAction<boolean>>,
   setWrongAttempts: React.Dispatch<React.SetStateAction<number>>,

@@ -6,7 +6,7 @@ const enemies: IEnemyData[] = [
   {
     name: "スライム",
     level: 1,
-    maxHP: 20,
+    maxHP: 10,
     attackPower: 5,
     defense: 2,
     exp: 50,
@@ -36,7 +36,7 @@ const enemies: IEnemyData[] = [
   {
     name: "ゴブリン",
     level: 1,
-    maxHP: 30,
+    maxHP: 10,
     attackPower: 7,
     defense: 3,
     exp: 80,
@@ -66,7 +66,7 @@ const enemies: IEnemyData[] = [
   {
     name: "グレートオーガ",
     level: 4,
-    maxHP: 80,
+    maxHP: 15,
     attackPower: 14,
     defense: 5,
     exp: 120,
@@ -86,7 +86,7 @@ const enemies: IEnemyData[] = [
   {
     name: "ゴーレム",
     level: 4,
-    maxHP: 90,
+    maxHP: 15,
     attackPower: 18,
     defense: 12,
     exp: 200,
@@ -106,7 +106,7 @@ const enemies: IEnemyData[] = [
   {
     name: "ドラゴン",
     level: 5,
-    maxHP: 100,
+    maxHP: 15,
     attackPower: 20,
     defense: 10,
     exp: 300,
@@ -189,7 +189,7 @@ const enemies: IEnemyData[] = [
   {
     name: "幽霊剣士",
     level: 3,
-    maxHP: 150,
+    maxHP: 15,
     attackPower: 12,
     defense: 3,
     exp: 50,
@@ -209,7 +209,7 @@ const enemies: IEnemyData[] = [
   {
     name: "グリズリー",
     level: 3,
-    maxHP: 50,
+    maxHP: 15,
     attackPower: 12,
     defense: 5,
     exp: 70,

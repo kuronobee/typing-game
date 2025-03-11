@@ -1,5 +1,5 @@
 // src/App.tsx
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import BattleStage from "./components/BattleStage";
 import BattleInterface from "./components/BattleInterface";
 import GameOver from "./components/GameOver";
@@ -18,7 +18,7 @@ import useKeyboardVisibility from "./hooks/useKeyboardVisibility";
 import useIOSScrollPrevention from "./hooks/useIOSScrollPrevention";
 import { useCombatSystem } from "./hooks/useCombatSystem";
 import { usePlayerAttack } from "./hooks/usePlayerAttack";
-import { useLevelTracking } from "./hooks/useLevelTracking";
+//import { useLevelTracking } from "./hooks/useLevelTracking";
 
 // マネージャークラスのインポート
 import { StageManager } from "./managers/StageManager";
@@ -64,7 +64,7 @@ const App: React.FC = () => {
   const questionTimeoutRef = useRef<number | null>(null);
 
   // レベルアップ追跡フック
-  const { showLevelUp, setShowLevelUp } = useLevelTracking(player);
+  const [showLevelUp, setShowLevelUp] = useState(false);
 
   // 戦闘システムフック
   const combat = useCombatSystem(player, setPlayer, currentEnemies, setMessage);
@@ -99,7 +99,6 @@ const App: React.FC = () => {
   // プレイヤー攻撃フック
   const playerAttack = usePlayerAttack(
     player,
-    currentEnemies,
     setComboCount,
     setShowCombo,
     setWrongAttempts,
@@ -240,9 +239,21 @@ const App: React.FC = () => {
 
   // プレイヤーに経験値を付与
   const gainEXP = (amount: number) => {
-    ExperienceManager.gainExperience(amount, player, setPlayer, setExpGain);
+    console.log(`経験値獲得: ${amount}EXP`);
+    
+    // ExperienceManager から setShowLevelUp も渡すように変更
+    const lvu = ExperienceManager.gainExperience(
+      amount,
+      player,
+      setPlayer,
+      setExpGain,
+    );
+    
+    console.log("lvu", lvu);
+    setShowLevelUp(lvu);
+    // ステージ完了メッセージを設定
+    setMessage(StageManager.createCompletionMessage(amount));
   };
-
   // 新しい戦闘ステージを生成
   const spawnNewStage = () => {
     const { enemies, message } = StageManager.createNewStage();

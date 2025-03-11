@@ -1,4 +1,4 @@
-// src/managers/ExperienceManager.ts
+// src/managers/ExperienceManager.ts 修正版
 import { Player as PlayerModel } from "../models/Player";
 import { EXP_GAIN_DISPLAY_DURATION } from "../data/constants";
 
@@ -12,13 +12,13 @@ export class ExperienceManager {
    * @param player プレイヤーインスタンス
    * @param setPlayer Playerステート更新関数
    * @param setExpGain 経験値表示ステート更新関数
-   * @returns レベルアップしたかどうか
+   * @param setShowLevelUp レベルアップ表示ステート更新関数
    */
   static gainExperience(
     amount: number,
     player: PlayerModel,
     setPlayer: React.Dispatch<React.SetStateAction<PlayerModel>>,
-    setExpGain: React.Dispatch<React.SetStateAction<number | null>>
+    setExpGain: React.Dispatch<React.SetStateAction<number | null>>,
   ): boolean {
     // 獲得経験値を表示する
     setExpGain(amount);
@@ -26,12 +26,23 @@ export class ExperienceManager {
     // 表示を一定時間後に消す
     setTimeout(() => setExpGain(null), EXP_GAIN_DISPLAY_DURATION);
     
-    // 経験値をプレイヤーに付与
+    // 経験値付与前のレベルを記録
     const oldLevel = player.level;
-    setPlayer((prev) => prev.addExp(amount));
     
-    // 経験値付与によってレベルアップしたかどうかを返す
-    return player.level > oldLevel;
+    // 新しいプレイヤーインスタンスを直接計算
+    const newPlayer = player.addExp(amount);
+    
+    // レベルアップしたか確認
+    const didLevelUp = newPlayer.level > oldLevel;
+    
+    // プレイヤー状態を更新
+    setPlayer(newPlayer);
+    
+    // レベルアップした場合は通知を表示
+    if (didLevelUp) {
+      console.log(`レベルアップ検出: ${oldLevel} -> ${newPlayer.level}`);
+    }
+    return didLevelUp;
   }
 
   /**
