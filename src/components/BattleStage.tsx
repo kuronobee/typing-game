@@ -160,7 +160,7 @@ const BattleStage: React.FC<BattleStageProps> = ({
         return (
           <div
             key={index}
-            className="absolute z-10 transition-all duration-2000 ease-out"
+            className="absolute z-10"
             style={{
               // 敵のベース位置をより高くする（70px→50px）
               bottom: `calc(${isKeyboardVisible ? "80px" : "70px"} + ${
