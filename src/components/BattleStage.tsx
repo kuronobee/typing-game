@@ -33,7 +33,6 @@ interface BattleStageProps {
   onFullRevealChange: (fullReveal: boolean) => void;
   onSelectTarget: (index: number) => void;
   comboCount: number;
-  showCombo: boolean;
   isKeyboardVisible?: boolean;
 }
 
@@ -52,7 +51,6 @@ const BattleStage: React.FC<BattleStageProps> = ({
   onFullRevealChange,
   onSelectTarget,
   comboCount,
-  showCombo,
   isKeyboardVisible = false,
 }) => {
   // 各敵毎の攻撃ゲージ進捗を管理する配列(0〜1)
@@ -162,7 +160,7 @@ const BattleStage: React.FC<BattleStageProps> = ({
         return (
           <div
             key={index}
-            className="absolute z-10 transition-all duration-300 ease-out"
+            className="absolute z-10 transition-all duration-2000 ease-out"
             style={{
               // 敵のベース位置をより高くする（70px→50px）
               bottom: `calc(${isKeyboardVisible ? "80px" : "70px"} + ${
@@ -170,7 +168,7 @@ const BattleStage: React.FC<BattleStageProps> = ({
               }px)`,
               left: `calc(50% + ${position.x}px)`,
               transform: "translateX(-50%)",
-              opacity: enemy.currentHP > 0 ? 1 : 0,
+              //opacity: enemy.currentHP > 0 ? 1 : 0,
             }}
             onClick={(e) => {
               // デフォルトの動作を抑制してフォーカスが失われるのを防ぐ
@@ -190,23 +188,9 @@ const BattleStage: React.FC<BattleStageProps> = ({
               showTargetIndicator={isTarget}
               progress={enemyProgress}
               damage={damageNumbers[index]}
+              comboCount={comboCount}
               scaleAdjustment={isKeyboardVisible ? 0.80 : 1} // キーボード表示時は65%に縮小
             />
-            {/* コンボ表示: ターゲットかつコンボ数が2以上なら表示 */}
-            {isTarget && comboCount > 1 && showCombo && (
-              <div
-                key={comboCount}
-                className={`absolute left-1/2 transform -translate-x-1/2 text-yellow-400 font-bold 
-                  ${
-                    isKeyboardVisible
-                      ? "text-sm top-[-20px]"
-                      : "text-xl top-[-30px]"
-                  } 
-                  animate-combo-fade`}
-              >
-                {comboCount}Combo
-              </div>
-            )}
           </div>
         );
       })}

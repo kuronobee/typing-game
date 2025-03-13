@@ -12,7 +12,6 @@ import { COMBO_ANIMATION_DURATION } from "../data/constants";
 export function usePlayerAttack(
   player: PlayerModel,
   setComboCount: React.Dispatch<React.SetStateAction<number>>,
-  setShowCombo: React.Dispatch<React.SetStateAction<boolean>>,
   setWrongAttempts: React.Dispatch<React.SetStateAction<number>>,
   setMessage: React.Dispatch<React.SetStateAction<MessageType | null>>,
   isHintFullyRevealed: boolean
@@ -113,10 +112,8 @@ export function usePlayerAttack(
   const handleComboUpdate = useCallback(
     (newCombo: number) => {
       setComboCount(newCombo);
-      setShowCombo(true);
-      setTimeout(() => setShowCombo(false), COMBO_ANIMATION_DURATION);
     },
-    [setComboCount, setShowCombo]
+    [setComboCount]
   );
 
   // 攻撃結果に基づくメッセージ設定

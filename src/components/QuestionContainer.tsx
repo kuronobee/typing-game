@@ -52,20 +52,20 @@ const QuestionContainer: React.FC<QuestionContainerProps> = ({
     // 部分的にヒントを開く処理
     const n = answer.length;
     const hintArray: string[] = answer.split("").map(ch => (ch === " " ? " " : "_"));
-    let nonSpaceIndices: number[] = [];
+    const nonSpaceIndices: number[] = [];
     for (let i = 0; i < n; i++) {
       if (answer[i] !== " ") {
         nonSpaceIndices.push(i);
       }
     }
-    let orderList: number[] = [];
+    const orderList: number[] = [];
     if (nonSpaceIndices.length > 1) {
       orderList.push(nonSpaceIndices[1]);
     }
     if (nonSpaceIndices.length > 3) {
       orderList.push(nonSpaceIndices[3]);
     }
-    for (let idx of nonSpaceIndices) {
+    for (const idx of nonSpaceIndices) {
       if (!orderList.includes(idx)) {
         orderList.push(idx);
       }

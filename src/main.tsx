@@ -36,12 +36,12 @@ if (window.visualViewport) {
 }
 
 // iOS向けのフォーカス問題修正
-document.addEventListener('touchstart', function(e) {
-  // キーボードが表示されているとき、入力フィールド以外のタッチでブラーさせる
-  if (document.activeElement && 
-      document.activeElement.tagName === 'INPUT' && 
-      e.target !== document.activeElement) {
-    // @ts-ignore
-    document.activeElement.blur();
-  }
-}, { passive: true });
+// document.addEventListener('touchstart', function(e) {
+//   // キーボードが表示されているとき、入力フィールド以外のタッチでブラーさせる
+//   if (document.activeElement && 
+//       document.activeElement.tagName === 'INPUT' && 
+//       e.target !== document.activeElement) {
+//     // @ts-ignore
+//     document.activeElement.blur();
+//   }
+// }, { passive: true });

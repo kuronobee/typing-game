@@ -18,6 +18,7 @@ interface EnemyProps {
     showTargetIndicator?: boolean;
     progress: number;
     damage?: DamageDisplay | null;
+    comboCount?: number;
     scaleAdjustment?: number;
 }
 
@@ -31,6 +32,7 @@ const Enemy: React.FC<EnemyProps> = ({
     showTargetIndicator = false,
     progress,
     damage,
+    comboCount,
     scaleAdjustment = 1
 }) => {
     const hpPercentage = (enemy.currentHP / enemy.maxHP) * 100;
@@ -40,17 +42,18 @@ const Enemy: React.FC<EnemyProps> = ({
     ${enemyHit ? "animate-hit" : ""}
     ${playerHit ? "animate-phit" : ""}
     ${playerFire ? "animate-fire" : ""}`;
-
+    console.log("enemyDefeated", enemyDefeated);
     const gaugeOffset = 96 * (1 - effectiveScale);
     return (
         <div className="relative inline-block enemy-container">
             {/* 親要素でscaleを適用 */}
             <div
-                className="transition-all duration-1000 ease-out"
+                className="transition-all duration-2000 ease-out"
                 style={{
-                    transform: `scale(${effectiveScale})`,
+                    transform: `scale(${enemyDefeated ? 0 : effectiveScale})`,
                     transformOrigin: "bottom",
                     opacity: enemyDefeated ? 0 : 1,
+                    transition: enemyDefeated ? 'opacity 2s ease-out, transform 2s ease-out' : 'none',
                 }}>
                 {/* 子要素でアニメーションを適用 */}
                 <img
@@ -63,7 +66,7 @@ const Enemy: React.FC<EnemyProps> = ({
             {showTargetIndicator && (
                 <div
                     className="absolute left-1/2 transform -translate-x-1/2 target-indicator"
-                    style={{ top: `${gaugeOffset - 25}px` }}
+                    style={{ top: `${gaugeOffset - 25}px`, opacity: `${enemyDefeated ? 0 : 1}` }}
                 />
             )}
             {/* 敵の頭上に小さい攻撃ゲージを表示 */}
@@ -85,13 +88,25 @@ const Enemy: React.FC<EnemyProps> = ({
             )}
             {/* ダメージ数値の表示 */}
             {damage && (
-                <div 
-                key={damage.id}
-                className="absolute top-0 left-1/2 transform -translate-x-1/2 text-red-500 font-bold text-2xl animate-damage-fade"
-                style={{ top: `${gaugeOffset + 5}px`}}>
+                <div
+                    key={damage.id}
+                    className="absolute top-0 left-1/2 transform -translate-x-1/2 text-red-500 font-bold text-2xl animate-damage-fade"
+                    style={{ top: "30px" }}>
                     {damage.value}
                 </div>
             )}
+            {/* コンボ表示: ターゲットかつコンボ数が2以上なら表示 */}
+            {damage && comboCount && comboCount > 1 && (
+                <div
+                    key={comboCount}
+                    className={`absolute left-1/2 transform -translate-x-1/2 text-yellow-400 font-bold 
+                  ${"text-xl top-[20px]"}
+                  animate-combo-fade`}
+                >
+                    {comboCount}Combo
+                </div>
+            )}
+
         </div>
     );
 };
