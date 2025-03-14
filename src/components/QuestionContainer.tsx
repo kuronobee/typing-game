@@ -1,4 +1,4 @@
-// src/components/QuestionContainer.tsx - 最適化版
+// src/components/QuestionContainer.tsx - with hint button
 import React, { useState, useEffect } from "react";
 import { Question } from "../data/questions";
 
@@ -42,6 +42,12 @@ const QuestionContainer: React.FC<QuestionContainerProps> = ({
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
+
+  // ヒント全開示ボタンのクリックハンドラー
+  const handleRevealHint = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setFullReveal(true);
+  };
 
   // ヒント生成関数
   const getHint = (answer: string, wrongAttempts: number): string => {
@@ -91,6 +97,18 @@ const QuestionContainer: React.FC<QuestionContainerProps> = ({
     duration-300
   `;
   
+  // ヒントボタンのスタイル
+  const hintButtonClass = `
+    ${isCompact ? 'w-5 h-5 text-xs mr-1' : 'w-6 h-6 text-sm mr-2'}
+    bg-blue-500 
+    rounded-full 
+    flex 
+    items-center 
+    justify-center 
+    hover:bg-blue-600 
+    cursor-pointer
+  `;
+  
   // 極限まで省スペース化したコンパクトデザイン
   if (isCompact) {
     return (
@@ -108,7 +126,15 @@ const QuestionContainer: React.FC<QuestionContainerProps> = ({
         {/* 内容を一行に集約 */}
         <div className="flex flex-col pt-1">
           <div className="flex-1 p-1 pl-5 text-sm">{question?.prompt}</div>
-          <div className="flex-1 pl-5 text-sm">{getHint(question?.answer ?? "", wrongAttempts)}</div>
+          <div className="flex-1 pl-5 text-sm flex items-center">
+            <span 
+              className={hintButtonClass}
+              onClick={handleRevealHint}
+            >
+              ?
+            </span>
+            {getHint(question?.answer ?? "", wrongAttempts)}
+          </div>
         </div>
       </div>
     );
@@ -130,7 +156,15 @@ const QuestionContainer: React.FC<QuestionContainerProps> = ({
       {/* ゲージと重ならないようにコンテンツにパディング */}
       <div className="pt-4">
         <p className="font-bold">問題: {question?.prompt}</p>
-        <p className="mt-2">ヒント: {getHint(question?.answer ?? "", wrongAttempts)}</p>
+        <div className="mt-2 flex items-center">
+          <div 
+            className={hintButtonClass}
+            onClick={handleRevealHint}
+          >
+            ?
+          </div>
+          <span>ヒント: {getHint(question?.answer ?? "", wrongAttempts)}</span>
+        </div>
       </div>
     </div>
   );

@@ -42,7 +42,6 @@ const Enemy: React.FC<EnemyProps> = ({
     ${enemyHit ? "animate-hit" : ""}
     ${playerHit ? "animate-phit" : ""}
     ${playerFire ? "animate-fire" : ""}`;
-    console.log("enemyDefeated", enemyDefeated);
     const gaugeOffset = 96 * (1 - effectiveScale);
     return (
         <div className="relative inline-block enemy-container">
