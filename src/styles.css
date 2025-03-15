@@ -1,5 +1,29 @@
 /* src/styles.css */
 @import "tailwindcss";
+/* 全体の背景色を黒に設定 */
+html,
+body,
+#root {
+  background-color: #000000;
+  color: white;
+}
+
+/* BattleStage 背景色を黒に */
+.compact-battle-stage,
+[class*="flex-[0.45]"],
+[class*="flex-[0.4]"] {
+  background-color: #000000;
+}
+
+/* 背景画像の下にある要素の背景色も黒に */
+.absolute.inset-0 {
+  background-color: #000000;
+}
+
+/* バトルエフェクトのコンテナ背景も黒に */
+.w-full.flex.flex-col {
+  background-color: #000000;
+}
 
 @keyframes hitAnimation {
   0% {
@@ -143,7 +167,7 @@
   }
 }
 :root {
-    --combo-animation-duration: 1s;
+  --combo-animation-duration: 1s;
 }
 
 .animate-combo-fade {
@@ -152,62 +176,62 @@
 
 /* 画面がフラッシュして揺れるエフェクト */
 @keyframes screenFlashShake {
-    0% {
-      opacity: 1;
-      transform: translate(0, 0);
-    }
-    10% {
-      opacity: 0.3;
-      transform: translate(-10px, 5px);
-    }
-    20% {
-      opacity: 1;
-      transform: translate(10px, -5px);
-    }
-    30% {
-      opacity: 0.3;
-      transform: translate(-10px, 5px);
-    }
-    40% {
-      opacity: 1;
-      transform: translate(10px, -5px);
-    }
-    100% {
-      opacity: 1;
-      transform: translate(0, 0);
-    }
+  0% {
+    opacity: 1;
+    transform: translate(0, 0);
   }
-  
-  .screen-flash-shake {
-    animation: screenFlashShake 0.5s ease-in-out;
+  10% {
+    opacity: 0.3;
+    transform: translate(-10px, 5px);
   }
-  
-  @keyframes screenShake {
-    0% {
-      transform: translate(0, 0);
-    }
-    10% {
-      transform: translate(-5px, 3px);
-    }
-    20% {
-      transform: translate(5px, -3px);
-    }
-    30% {
-      transform: translate(-5px, 3px);
-    }
-    40% {
-      transform: translate(5px, -3px);
-    }
-    100% {
-      transform: translate(0, 0);
-    }
+  20% {
+    opacity: 1;
+    transform: translate(10px, -5px);
   }
-  
-  .screen-shake {
-    animation: screenShake 0.5s ease-in-out;
+  30% {
+    opacity: 0.3;
+    transform: translate(-10px, 5px);
   }
+  40% {
+    opacity: 1;
+    transform: translate(10px, -5px);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(0, 0);
+  }
+}
 
-  /* キーボード表示時のスタイル */
+.screen-flash-shake {
+  animation: screenFlashShake 0.5s ease-in-out;
+}
+
+@keyframes screenShake {
+  0% {
+    transform: translate(0, 0);
+  }
+  10% {
+    transform: translate(-5px, 3px);
+  }
+  20% {
+    transform: translate(5px, -3px);
+  }
+  30% {
+    transform: translate(-5px, 3px);
+  }
+  40% {
+    transform: translate(5px, -3px);
+  }
+  100% {
+    transform: translate(0, 0);
+  }
+}
+
+.screen-shake {
+  animation: screenShake 0.5s ease-in-out;
+}
+
+/* キーボード表示時のスタイル */
 .keyboard-open {
   position: fixed;
   width: 100%;
@@ -216,7 +240,8 @@
 }
 
 /* iOS用のオーバースクロール動作を無効化 */
-html, body {
+html,
+body {
   position: fixed;
   height: 100%;
   overflow: auto;
@@ -243,7 +268,7 @@ html, body {
   /* 余白を最小化 */
   margin: 0;
   padding: 0;
-  
+
   /* コンテンツをより効率的に表示 */
   display: flex;
   flex-direction: column;
@@ -291,7 +316,7 @@ html, body {
   bottom: -8px !important; /* !importantで他のスタイルを上書き */
   left: 50%;
   /*transform: translateX(-50%);*/
-  
+
   /* サイズと表示を最適化 */
   width: 50px !important;
   height: 8px !important;
@@ -337,7 +362,8 @@ html, body {
 }
 
 /* iOS用のオーバースクロール動作を無効化 - 追加対策 */
-html, body {
+html,
+body {
   position: fixed;
   height: 100%;
   overflow: auto;

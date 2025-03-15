@@ -339,7 +339,7 @@ const App: React.FC = () => {
         onContinue={handleContinueGame}
       />}
       {!showGameOver && 
-      <div>
+      <div className="bg-black">
       {/* BattleInterface */}
       <div
         className={`${
