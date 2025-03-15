@@ -50,7 +50,6 @@ const App: React.FC = () => {
   const [wrongAttempts, setWrongAttempts] = useState(0);
   const [isHintFullyRevealed, setIsHintFullyRevealed] = useState(false);
   const [comboCount, setComboCount] = useState<number>(0);
-  const [showCombo, setShowCombo] = useState<boolean>(false);
   const [readyForNextStage, setReadyForNextStage] = useState(false);
   
   // UI状態
@@ -62,6 +61,9 @@ const App: React.FC = () => {
   
   // タイマーと追跡用のref
   const questionTimeoutRef = useRef<number | null>(null);
+
+  const [isDead, setIsDead] = useState(false);
+  const [showGameOver, setShowGameOver] = useState(false);
 
   // レベルアップ追跡フック
   const [showLevelUp, setShowLevelUp] = useState(false);
@@ -100,7 +102,6 @@ const App: React.FC = () => {
   const playerAttack = usePlayerAttack(
     player,
     setComboCount,
-    setShowCombo,
     setWrongAttempts,
     setMessage,
     isHintFullyRevealed
@@ -249,7 +250,6 @@ const App: React.FC = () => {
       setExpGain,
     );
     
-    console.log("lvu", lvu);
     setShowLevelUp(lvu);
     // ステージ完了メッセージを設定
     setMessage(StageManager.createCompletionMessage(amount));
@@ -272,6 +272,8 @@ const App: React.FC = () => {
   
   // 死亡後のゲーム継続処理
   const handleContinueGame = () => {
+    setIsDead(false);
+    setShowGameOver(false);
     // プレイヤーを最大HPの半分で復活
     setPlayer((prev) => {
       const revivedHP = Math.ceil(prev.maxHP * 0.5);
@@ -310,21 +312,34 @@ const App: React.FC = () => {
     setReadyForNextStage(false);
   };
 
-  // プレイヤーが死亡したらゲームオーバー画面を表示
-  if (player.hp <= 0) {
-    return (
-      <GameOver 
-        totalEXP={player.totalExp} 
-        onContinue={handleContinueGame}
-      />
-    );
-  }
+  // プレイヤーが死亡したらゲームオーバー画面を表示(戦闘不能になってから5秒後)
+  useEffect(() => {
+    if (player.hp <= 0) {
+      setIsDead(true);
+      setTimeout(() => {
+        setShowGameOver(true);
+        setIsDead(false);}, 5000
+      );
+    }
+  }, [player.hp]);
 
   return (
     <CombatEffects
       isScreenHit={combat.isScreenHit}
       isScreenShake={combat.isScreenShake}
     >
+      {isDead && 
+        <div className="absolute inset-0 bg-black opacity-70 z-100 flex items-center justify-center">
+          <span className="text-white font-bold text-xl">戦闘不能…</span>
+        </div>
+      }
+      {showGameOver && 
+      <GameOver
+        totalEXP={player.totalExp}
+        onContinue={handleContinueGame}
+      />}
+      {!showGameOver && 
+      <div>
       {/* BattleInterface */}
       <div
         className={`${
@@ -365,7 +380,6 @@ const App: React.FC = () => {
           onFullRevealChange={setIsHintFullyRevealed}
           onSelectTarget={handleSelectTarget}
           comboCount={comboCount}
-          showCombo={showCombo}
           isKeyboardVisible={isKeyboardVisible}
         />
 
@@ -385,6 +399,7 @@ const App: React.FC = () => {
           />
         )}
       </div>
+      </div>}
     </CombatEffects>
   );
 };

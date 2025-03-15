@@ -4,7 +4,6 @@ import { Player as PlayerModel } from "../models/Player";
 import { Enemy as EnemyModel } from "../models/EnemyModel";
 import { Question } from "../data/questions";
 import { MessageType } from "../components/MessageDisplay";
-import { COMBO_ANIMATION_DURATION } from "../data/constants";
 
 /**
  * プレイヤー攻撃のロジックを管理するカスタムフック
