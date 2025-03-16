@@ -1,6 +1,7 @@
-// src/components/QuestionContainer.tsx - with hint button
+// src/components/QuestionContainer.tsx - 品詞アイコンとヒントボタン統合版
 import React, { useState, useEffect } from "react";
 import { Question } from "../data/questions";
+import { parseQuestionText } from "../utils/questionTextParser";
 
 interface QuestionContainerProps {
   question: Question | null;
@@ -42,6 +43,12 @@ const QuestionContainer: React.FC<QuestionContainerProps> = ({
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
+
+  // 問題文を解析して品詞アイコンを表示
+  const renderPrompt = () => {
+    if (!question?.prompt) return null;
+    return parseQuestionText(question.prompt);
+  };
 
   // ヒント全開示ボタンのクリックハンドラー
   const handleRevealHint = (e: React.MouseEvent) => {
@@ -125,7 +132,7 @@ const QuestionContainer: React.FC<QuestionContainerProps> = ({
         
         {/* 内容を一行に集約 */}
         <div className="flex flex-col pt-1">
-          <div className="flex-1 p-1 pl-5 text-sm">{question?.prompt}</div>
+          <div className="flex-1 p-1 pl-5 text-sm">{renderPrompt()}</div>
           <div className="flex-1 pl-5 text-sm flex items-center">
             <span 
               className={hintButtonClass}
@@ -155,7 +162,7 @@ const QuestionContainer: React.FC<QuestionContainerProps> = ({
       
       {/* ゲージと重ならないようにコンテンツにパディング */}
       <div className="pt-4">
-        <p className="font-bold">問題: {question?.prompt}</p>
+        <p className="font-bold">問題: {renderPrompt()}</p>
         <div className="mt-2 flex items-center">
           <div 
             className={hintButtonClass}
