@@ -1,4 +1,4 @@
-// src/hooks/usePlayerAttack.ts
+// src/hooks/usePlayerAttack.ts の修正版
 import { useCallback } from "react";
 import { Player as PlayerModel } from "../models/Player";
 import { Enemy as EnemyModel } from "../models/EnemyModel";
@@ -74,30 +74,23 @@ export function usePlayerAttack(
         damage = Math.floor(damage);
       }
 
-      // コンボダメージボーナス
-      // コンボダメージボーナス（修正後）
-      // コンボ数に応じて1.5倍ずつダメージ増加
-      // コンボ1：基本ダメージ
-      // コンボ2：基本ダメージ×1.5
-      // コンボ3：基本ダメージ×2.25（1.5×1.5）
-      // コンボ4：基本ダメージ×3.375（1.5×1.5×1.5）など
+      // コンボダメージボーナス - 修正版
+      // コンボ数に応じて1.1倍ずつダメージ増加、最大3倍まで
       if (combo <= 1) {
         // コンボ1は通常ダメージ（倍率なし）
         damage = Math.floor(damage);
       } else {
-        // コンボ2以上は、(コンボ-1)回分だけ1.5倍する
-        // Math.pow(1.5, combo-1) は 1.5の(combo-1)乗を計算
-        const comboMultiplier = Math.pow(1.5, combo - 1);
+        // コンボ2以上は、(コンボ-1)回分だけ1.1倍する
+        // Math.pow(1.1, combo-1) は 1.1の(combo-1)乗を計算
+        const comboMultiplier = Math.min(Math.pow(1.1, combo - 1), 2.0);
         damage = Math.floor(damage * comboMultiplier);
-
-        // 非常に大きな値になりすぎないように上限を設ける（オプション）
-        // 例：ダメージ上限を9999に制限
-        damage = Math.min(damage, 9999);
       }
 
-      // コンボが高いときのメッセージを追加（オプション）
-      if (combo >= 3) {
+      // コンボが高いときのメッセージを追加
+      if (combo >= 5) {
         specialMessage += ` 超コンボ！(x${combo})`;
+      } else if (combo >= 3) {
+        specialMessage += ` 大コンボ！(x${combo})`;
       } else if (combo === 2) {
         specialMessage += ` コンボ！(x${combo})`;
       }
