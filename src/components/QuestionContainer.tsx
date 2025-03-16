@@ -9,6 +9,7 @@ interface QuestionContainerProps {
   attackProgress: number; // 0～1 の値（例: 0.5なら50%進捗）
   onFullRevealChange: (fullReveal: boolean) => void;
   isCompact?: boolean; // コンパクト表示モード
+  inputRef: React.RefObject<HTMLInputElement | null>;
 }
 
 const QuestionContainer: React.FC<QuestionContainerProps> = ({ 
@@ -17,6 +18,7 @@ const QuestionContainer: React.FC<QuestionContainerProps> = ({
     attackProgress, 
     onFullRevealChange,
     isCompact = false,
+    inputRef,
 }) => {
   // fullReveal が true の場合、ヒントは完全に開かれる
   const [fullReveal, setFullReveal] = useState(false);
@@ -53,6 +55,7 @@ const QuestionContainer: React.FC<QuestionContainerProps> = ({
   // ヒント全開示ボタンのクリックハンドラー
   const handleRevealHint = (e: React.MouseEvent) => {
     e.stopPropagation();
+    inputRef?.current?.focus();
     setFullReveal(true);
   };
 
@@ -68,10 +71,9 @@ const QuestionContainer: React.FC<QuestionContainerProps> = ({
 
     // <>で囲まれた部分を抽出して処理
     const bracketPattern = /<([^>]+)>/g;
-    const parts: { text: string; visible: boolean; isSpace: boolean }[] = [];
     
     // <>以外の部分を_に置き換えたマップを作成
-    let revealMap: boolean[] = Array(answer.length).fill(false);
+    const revealMap: boolean[] = Array(answer.length).fill(false);
     let match;
     
     // <>で囲まれた部分は最初から表示するようにマーク
@@ -87,11 +89,10 @@ const QuestionContainer: React.FC<QuestionContainerProps> = ({
     }
     
     // 部分的にヒントを開く処理 (通常のロジック)
-    const n = cleanAnswer.length;
     const nonSpaceIndices: number[] = [];
     
     // 表示するインデックスを収集（すでに表示されていないものから）
-    for (let i = 0, j = 0; i < answer.length; i++) {
+    for (let i = 0; i < answer.length; i++) {
       // タグをスキップ
       if (answer[i] === '<' || answer[i] === '>') continue;
       
@@ -99,7 +100,6 @@ const QuestionContainer: React.FC<QuestionContainerProps> = ({
       if (answer[i] !== ' ' && !revealMap[i]) {
         nonSpaceIndices.push(i);
       }
-      j++;
     }
     
     // 追加のヒントを表示するための順序リスト
@@ -131,7 +131,7 @@ const QuestionContainer: React.FC<QuestionContainerProps> = ({
     const resultChars: string[] = [];
     let isInBracket = false;
     
-    for (let i = 0, j = 0; i < answer.length; i++) {
+    for (let i = 0; i < answer.length; i++) {
       if (answer[i] === '<') {
         isInBracket = true;
         continue;
@@ -145,7 +145,6 @@ const QuestionContainer: React.FC<QuestionContainerProps> = ({
       } else {
         resultChars.push('_');
       }
-      j++;
     }
     
     // アンダースコア間に小スペースを入れて読みやすくする

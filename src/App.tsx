@@ -384,6 +384,7 @@ const App: React.FC = () => {
               onSelectTarget={handleSelectTarget}
               comboCount={comboCount}
               isKeyboardVisible={isKeyboardVisible}
+              inputRef={inputRef}
             />
 
             {/* レベルアップ通知 */}

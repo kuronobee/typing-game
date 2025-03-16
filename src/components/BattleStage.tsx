@@ -34,6 +34,7 @@ interface BattleStageProps {
   onSelectTarget: (index: number) => void;
   comboCount: number;
   isKeyboardVisible?: boolean;
+  inputRef: React.RefObject<HTMLInputElement | null>;
 }
 
 const BattleStage: React.FC<BattleStageProps> = ({
@@ -52,6 +53,7 @@ const BattleStage: React.FC<BattleStageProps> = ({
   onSelectTarget,
   comboCount,
   isKeyboardVisible = false,
+  inputRef,
 }) => {
   // 各敵毎の攻撃ゲージ進捗を管理する配列(0〜1)
   const [attackProgresses, setAttackProgresses] = useState<number[]>([]);
@@ -209,6 +211,7 @@ const BattleStage: React.FC<BattleStageProps> = ({
               attackProgress={targetProgress}
               onFullRevealChange={onFullRevealChange}
               isCompact={isKeyboardVisible}
+              inputRef={inputRef}
             />
           </div>
         )}
