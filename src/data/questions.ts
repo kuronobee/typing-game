@@ -156,7 +156,7 @@ export const commonQuestions: Question[] = [
     id: "q25",
     type: "word",
     prompt: "改革、修正[名]",
-    answer: "revision",
+    answer: "<re>vision",
   },
   {
     id: "q26",
@@ -317,13 +317,13 @@ export const commonQuestions: Question[] = [
         id: "adv1",
         type: "word",
         prompt: "最終的に[副]",
-        answer: "eventually",
+        answer: "<e>ventually",
       },
       {
         id: "adv2",
         type: "word",
         prompt: "特に[副]",
-        answer: "particularly",
+        answer: "<p>articularly",
       },
       {
         id: "adv3",

@@ -40,7 +40,7 @@ const App: React.FC = () => {
 
   // プレイヤーの状態
   const [player, setPlayer] = useState<PlayerModel>(PlayerModel.createDefault());
-  
+
   // 戦闘関連の状態
   const [currentEnemies, setCurrentEnemies] = useState<EnemyModel[]>([]);
   const [targetIndex, setTargetIndex] = useState<number>(0);
@@ -51,14 +51,14 @@ const App: React.FC = () => {
   const [isHintFullyRevealed, setIsHintFullyRevealed] = useState(false);
   const [comboCount, setComboCount] = useState<number>(0);
   const [readyForNextStage, setReadyForNextStage] = useState(false);
-  
+
   // UI状態
   const [message, setMessage] = useState<MessageType | null>({
     text: "問題に正しく回答して敵を倒せ！",
     sender: "system",
   });
   const [expGain, setExpGain] = useState<number | null>(null);
-  
+
   // タイマーと追跡用のref
   const questionTimeoutRef = useRef<number | null>(null);
 
@@ -167,9 +167,10 @@ const App: React.FC = () => {
   }, []);
 
   // プレイヤーが敵を攻撃する処理
+  // プレイヤーが敵を攻撃する処理
   const handlePlayerAttack = (input: string) => {
     if (!currentEnemies.length) return;
-    
+
     const targetEnemy = currentEnemies[targetIndex];
     if (!targetEnemy || targetEnemy.defeated) return;
 
@@ -179,7 +180,10 @@ const App: React.FC = () => {
 
     const trimmedInput = input.trim();
 
-    if (trimmedInput.toLowerCase() === currentQuestion.answer.toLowerCase()) {
+    // 問題の正解から<>タグを除去
+    const cleanedAnswer = currentQuestion.answer.replace(/<|>/g, '');
+
+    if (trimmedInput.toLowerCase() === cleanedAnswer.toLowerCase()) {
       // 正解の場合
       const newCombo = comboCount + 1;
       playerAttack.handleComboUpdate(newCombo);
@@ -198,13 +202,13 @@ const App: React.FC = () => {
 
       // ダメージメッセージを設定
       playerAttack.setAttackResultMessage(damage, specialMessage);
-      
+
       setWrongAttempts(0);
-      
+
       // 敵が倒されたかチェック
       if (targetEnemy.defeated) {
         playerAttack.setEnemyDefeatedMessage(targetEnemy.name);
-        
+
         // 次のターゲットを探す
         const nextIndex = StageManager.findNextAliveEnemyIndex(targetIndex, currentEnemies);
         if (nextIndex !== -1) {
@@ -214,7 +218,7 @@ const App: React.FC = () => {
         // 次の問題を取得
         setCurrentQuestion(targetEnemy.getNextQuestion());
       }
-      
+
       // ステージが完了したかチェック
       checkStageCompletion();
     } else {
@@ -229,9 +233,9 @@ const App: React.FC = () => {
     if (allDefeated) {
       const totalEXP = StageManager.calculateTotalExp(currentEnemies);
       gainEXP(totalEXP);
-      
+
       setMessage(StageManager.createCompletionMessage(totalEXP));
-      
+
       setTimeout(() => {
         setReadyForNextStage(true);
       }, 2000);
@@ -241,7 +245,7 @@ const App: React.FC = () => {
   // プレイヤーに経験値を付与
   const gainEXP = (amount: number) => {
     console.log(`経験値獲得: ${amount}EXP`);
-    
+
     // ExperienceManager から setShowLevelUp も渡すように変更
     const lvu = ExperienceManager.gainExperience(
       amount,
@@ -249,7 +253,7 @@ const App: React.FC = () => {
       setPlayer,
       setExpGain,
     );
-    
+
     setShowLevelUp(lvu);
     // ステージ完了メッセージを設定
     setMessage(StageManager.createCompletionMessage(amount));
@@ -269,7 +273,7 @@ const App: React.FC = () => {
       inputRef.current.focus();
     }
   };
-  
+
   // 死亡後のゲーム継続処理
   const handleContinueGame = () => {
     setIsDead(false);
@@ -294,12 +298,12 @@ const App: React.FC = () => {
         []
       );
     });
-  
+
     setMessage({
       text: "力を取り戻した！戦いを続ける！",
       sender: "system",
     });
-  
+
     // すべての敵が倒された場合は新しいステージを生成
     if (currentEnemies.every(enemy => enemy.defeated)) {
       spawnNewStage();
@@ -318,7 +322,8 @@ const App: React.FC = () => {
       setIsDead(true);
       setTimeout(() => {
         setShowGameOver(true);
-        setIsDead(false);}, 5000
+        setIsDead(false);
+      }, 5000
       );
     }
   }, [player.hp]);
@@ -328,78 +333,76 @@ const App: React.FC = () => {
       isScreenHit={combat.isScreenHit}
       isScreenShake={combat.isScreenShake}
     >
-      {isDead && 
+      {isDead &&
         <div className="absolute inset-0 bg-black opacity-70 z-100 flex items-center justify-center">
           <span className="text-white font-bold text-xl">戦闘不能…</span>
         </div>
       }
-      {showGameOver && 
-      <GameOver
-        totalEXP={player.totalExp}
-        onContinue={handleContinueGame}
-      />}
-      {!showGameOver && 
-      <div className="bg-black">
-      {/* BattleInterface */}
-      <div
-        className={`${
-          isKeyboardVisible
-            ? "flex-[0.7]" // キーボード表示時は70%の高さ
-            : "flex-[0.55]" // 通常時は55%の高さ
-        } bg-gray-900 transition-all duration-300`}
-      >
-        <BattleInterface
-          player={player}
-          onSubmit={handlePlayerAttack}
-          expGain={expGain}
-          inputRef={inputRef}
-          isKeyboardVisible={isKeyboardVisible}
-        />
-      </div>
+      {showGameOver &&
+        <GameOver
+          totalEXP={player.totalExp}
+          onContinue={handleContinueGame}
+        />}
+      {!showGameOver &&
+        <div className="bg-black">
+          {/* BattleInterface */}
+          <div
+            className={`${isKeyboardVisible
+                ? "flex-[0.7]" // キーボード表示時は70%の高さ
+                : "flex-[0.55]" // 通常時は55%の高さ
+              } bg-gray-900 transition-all duration-300`}
+          >
+            <BattleInterface
+              player={player}
+              onSubmit={handlePlayerAttack}
+              expGain={expGain}
+              inputRef={inputRef}
+              isKeyboardVisible={isKeyboardVisible}
+            />
+          </div>
 
-      {/* BattleStage */}
-      <div
-        className={`relative ${
-          isKeyboardVisible
-            ? "flex-[0.4]" // キーボード表示時は40%の高さ
-            : "flex-[0.45]" // 通常時は45%の高さ
-        } overflow-hidden transition-all duration-300`}
-      >
-        <BattleStage
-          currentEnemies={currentEnemies}
-          targetIndex={targetIndex}
-          player={player}
-          onEnemyAttack={combat.handleEnemyAttack}
-          message={message}
-          currentQuestion={currentQuestion}
-          wrongAttempts={wrongAttempts}
-          enemyHitFlags={combat.enemyHitFlags}
-          enemyAttackFlags={combat.enemyAttackFlags}
-          enemyFireFlags={combat.enemyFireFlags}
-          damageNumbers={combat.damageNumbers}
-          onFullRevealChange={setIsHintFullyRevealed}
-          onSelectTarget={handleSelectTarget}
-          comboCount={comboCount}
-          isKeyboardVisible={isKeyboardVisible}
-        />
+          {/* BattleStage */}
+          <div
+            className={`relative ${isKeyboardVisible
+                ? "flex-[0.4]" // キーボード表示時は40%の高さ
+                : "flex-[0.45]" // 通常時は45%の高さ
+              } overflow-hidden transition-all duration-300`}
+          >
+            <BattleStage
+              currentEnemies={currentEnemies}
+              targetIndex={targetIndex}
+              player={player}
+              onEnemyAttack={combat.handleEnemyAttack}
+              message={message}
+              currentQuestion={currentQuestion}
+              wrongAttempts={wrongAttempts}
+              enemyHitFlags={combat.enemyHitFlags}
+              enemyAttackFlags={combat.enemyAttackFlags}
+              enemyFireFlags={combat.enemyFireFlags}
+              damageNumbers={combat.damageNumbers}
+              onFullRevealChange={setIsHintFullyRevealed}
+              onSelectTarget={handleSelectTarget}
+              comboCount={comboCount}
+              isKeyboardVisible={isKeyboardVisible}
+            />
 
-        {/* レベルアップ通知 */}
-        {showLevelUp && (
-          <LevelUpNotifier
-            player={player}
-            onClose={() => setShowLevelUp(false)}
-          />
-        )}
+            {/* レベルアップ通知 */}
+            {showLevelUp && (
+              <LevelUpNotifier
+                player={player}
+                onClose={() => setShowLevelUp(false)}
+              />
+            )}
 
-        {/* 次のステージボタン */}
-        {readyForNextStage && !showLevelUp && (
-          <NextStageButton
-            onNext={handleNextStage}
-            isKeyboardVisible={isKeyboardVisible}
-          />
-        )}
-      </div>
-      </div>}
+            {/* 次のステージボタン */}
+            {readyForNextStage && !showLevelUp && (
+              <NextStageButton
+                onNext={handleNextStage}
+                isKeyboardVisible={isKeyboardVisible}
+              />
+            )}
+          </div>
+        </div>}
     </CombatEffects>
   );
 };

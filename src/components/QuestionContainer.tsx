@@ -1,4 +1,4 @@
-// src/components/QuestionContainer.tsx - 品詞アイコンとヒントボタン統合版
+// src/components/QuestionContainer.tsx - 品詞アイコンとヒントボタン統合版（<>対応）
 import React, { useState, useEffect } from "react";
 import { Question } from "../data/questions";
 import { parseQuestionText } from "../utils/questionTextParser";
@@ -56,21 +56,53 @@ const QuestionContainer: React.FC<QuestionContainerProps> = ({
     setFullReveal(true);
   };
 
-  // ヒント生成関数
-  const getHint = (answer: string, wrongAttempts: number): string => {
-    // fullReveal が true なら答えをそのまま返す
+  // ヒント生成関数 - <>で囲まれた部分は最初から表示
+  const getHint = (answer: string, wrongAttempts: number): React.ReactNode => {
+    // 解答から<>を削除した純粋な答え
+    const cleanAnswer = answer.replace(/<|>/g, '');
+    
+    // fullReveal が true なら答えをそのまま返す（ただし<>を除く）
     if (fullReveal) {
-      return answer;
+      return cleanAnswer;
     }
-    // 部分的にヒントを開く処理
-    const n = answer.length;
-    const hintArray: string[] = answer.split("").map(ch => (ch === " " ? " " : "_"));
-    const nonSpaceIndices: number[] = [];
-    for (let i = 0; i < n; i++) {
-      if (answer[i] !== " ") {
-        nonSpaceIndices.push(i);
+
+    // <>で囲まれた部分を抽出して処理
+    const bracketPattern = /<([^>]+)>/g;
+    const parts: { text: string; visible: boolean; isSpace: boolean }[] = [];
+    
+    // <>以外の部分を_に置き換えたマップを作成
+    let revealMap: boolean[] = Array(answer.length).fill(false);
+    let match;
+    
+    // <>で囲まれた部分は最初から表示するようにマーク
+    while ((match = bracketPattern.exec(answer)) !== null) {
+      const start = match.index + 1; // '<'の次から
+      const end = start + match[1].length; // '>'の前まで
+      
+      for (let i = start; i < end; i++) {
+        if (i < answer.length) {
+          revealMap[i] = true;
+        }
       }
     }
+    
+    // 部分的にヒントを開く処理 (通常のロジック)
+    const n = cleanAnswer.length;
+    const nonSpaceIndices: number[] = [];
+    
+    // 表示するインデックスを収集（すでに表示されていないものから）
+    for (let i = 0, j = 0; i < answer.length; i++) {
+      // タグをスキップ
+      if (answer[i] === '<' || answer[i] === '>') continue;
+      
+      // 空白でない && まだ表示されていない文字のインデックスを収集
+      if (answer[i] !== ' ' && !revealMap[i]) {
+        nonSpaceIndices.push(i);
+      }
+      j++;
+    }
+    
+    // 追加のヒントを表示するための順序リスト
     const orderList: number[] = [];
     if (nonSpaceIndices.length > 1) {
       orderList.push(nonSpaceIndices[1]);
@@ -83,12 +115,41 @@ const QuestionContainer: React.FC<QuestionContainerProps> = ({
         orderList.push(idx);
       }
     }
+    
+    // ヒントの表示数を計算
     const reveals = Math.min(wrongAttempts, orderList.length);
+    
+    // 追加のヒントを表示
     for (let i = 0; i < reveals; i++) {
-      const idx = orderList[i];
-      hintArray[idx] = answer[idx];
+      if (i < orderList.length) {
+        const idx = orderList[i];
+        revealMap[idx] = true;
+      }
     }
-    return hintArray.join("\u2009");
+    
+    // 結果の文字列を構築
+    const resultChars: string[] = [];
+    let isInBracket = false;
+    
+    for (let i = 0, j = 0; i < answer.length; i++) {
+      if (answer[i] === '<') {
+        isInBracket = true;
+        continue;
+      } else if (answer[i] === '>') {
+        isInBracket = false;
+        continue;
+      }
+      
+      if (isInBracket || revealMap[i] || answer[i] === ' ') {
+        resultChars.push(answer[i]);
+      } else {
+        resultChars.push('_');
+      }
+      j++;
+    }
+    
+    // アンダースコア間に小スペースを入れて読みやすくする
+    return resultChars.join('\u2009'); // Unicode hair space
   };
 
   // コンパクトモード用のスタイルとレイアウト
