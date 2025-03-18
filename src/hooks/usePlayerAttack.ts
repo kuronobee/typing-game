@@ -129,14 +129,13 @@ export function usePlayerAttack(
   // 敵撃破メッセージの設定
   const setEnemyDefeatedMessage = useCallback(
     (enemyName: string) => {
-      setMessage({
+      setTimeout(() => {setMessage({
         text: `${enemyName} を倒した。`,
         sender: "system",
-      });
+      })}, 100);
     },
     [setMessage]
   );
-
   // 不正解時のメッセージ設定
   const setWrongAnswerMessage = useCallback(() => {
     setComboCount(0);

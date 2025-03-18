@@ -42,3 +42,6 @@ export const PLAYER_ATTACK_LEVEL_MULTIPLIER = 2;
 
 // レベルアップに必要な経験値の倍率（例：Lv1なら100, Lv2なら200, ...）
 export const LEVEL_UP_EXP_MULTIPLIER = 100;
+
+// メッセージの集約表示時間（ms）
+export const MESSAGE_GROUP_THRESHOLD = 3000; // 3秒以内のメッセージをグループ化

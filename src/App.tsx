@@ -62,7 +62,9 @@ const App: React.FC = () => {
   const [message, setMessage] = useState<MessageType | null>({
     text: "問題に正しく回答して敵を倒せ！",
     sender: "system",
+    timestamp: Date.now()
   });
+  
   const [expGain, setExpGain] = useState<number | null>(null);
 
   // タイマーと追跡用のref
@@ -308,6 +310,7 @@ const App: React.FC = () => {
             combat.setDamageDisplay(result.targetIndex, result.damageAmount || 0);
             combat.setHitFlag(result.targetIndex, ENEMY_HIT_ANIMATION_DURATION);
           }
+          console.log(result.message);
           // スキルメッセージ表示
           setMessage({
             text: result.message,
@@ -367,11 +370,11 @@ const App: React.FC = () => {
     const allDefeated = StageManager.isStageCompleted(currentEnemies);
     if (allDefeated) {
       const totalEXP = StageManager.calculateTotalExp(currentEnemies);
-      gainEXP(totalEXP);
-
-      setMessage(StageManager.createCompletionMessage(totalEXP));
-
+      
+      
       setTimeout(() => {
+        gainEXP(totalEXP);
+        //setMessage(StageManager.createCompletionMessage(totalEXP));
         setReadyForNextStage(true);
       }, 2000);
     }
@@ -379,8 +382,6 @@ const App: React.FC = () => {
 
   // プレイヤーに経験値を付与
   const gainEXP = (amount: number) => {
-    console.log(`経験値獲得: ${amount}EXP`);
-
     // ExperienceManager から setShowLevelUp も渡すように変更
     const lvu = ExperienceManager.gainExperience(
       amount,
@@ -389,9 +390,9 @@ const App: React.FC = () => {
       setExpGain,
     );
 
-    setShowLevelUp(lvu);
     // ステージ完了メッセージを設定
     setMessage(StageManager.createCompletionMessage(amount));
+    setShowLevelUp(lvu);
   };
   // 新しい戦闘ステージを生成
   const spawnNewStage = () => {
