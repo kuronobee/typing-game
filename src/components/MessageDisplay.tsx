@@ -1,4 +1,4 @@
-// src/components/MessageDisplay.tsx - 強化版
+// src/components/MessageDisplay.tsx - sender で色分け
 import React, { useState, useEffect, useRef } from "react";
 import { MESSAGE_DISPLAY_DURATION, MESSAGE_GROUP_THRESHOLD } from "../data/constants";
 
@@ -79,12 +79,12 @@ const MessageDisplay: React.FC<MessageDisplayProps> = ({
   const getMessageClass = (sender: string) => {
     switch (sender) {
       case "enemy":
-        return "message-enemy";
+        return "text-red-500"; // 敵のメッセージは赤色
       case "player":
-        return "message-player";
+        return "text-blue-400"; // プレイヤーのメッセージは青色
       case "system":
       default:
-        return "message-system";
+        return "text-white"; // システムメッセージは白色
     }
   };
 
@@ -108,7 +108,7 @@ const MessageDisplay: React.FC<MessageDisplayProps> = ({
             {/* メッセージ間のセパレータ */}
             {index > 0 && <div className="message-separator" />}
             
-            {/* メッセージ本体 */}
+            {/* メッセージ本体 - 送信者によって色を変更 */}
             <p
               className={`${getMessageClass(message.sender)} ${isCompact ? 'text-xs' : 'text-sm'} message-fade-in`}
               style={{ whiteSpace: "normal", textAlign: "left" }}
