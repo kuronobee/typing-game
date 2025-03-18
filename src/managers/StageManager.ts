@@ -24,7 +24,7 @@ export class StageManager {
 
     // 開始メッセージを返す
     const message: MessageType = { 
-      text: `${stage.id} が始まった！`, 
+      text: `問題に正しく回答して敵を倒せ！`, 
       sender: "system" 
     };
 

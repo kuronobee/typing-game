@@ -59,11 +59,7 @@ const App: React.FC = () => {
   const [readyForNextStage, setReadyForNextStage] = useState(false);
 
   // UI状態
-  const [message, setMessage] = useState<MessageType | null>({
-    text: "問題に正しく回答して敵を倒せ！",
-    sender: "system",
-    timestamp: Date.now()
-  });
+  const [message, setMessage] = useState<MessageType | null>(null);
   
   const [expGain, setExpGain] = useState<number | null>(null);
 
