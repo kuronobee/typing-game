@@ -385,3 +385,131 @@ input {
   appearance: none;
   outline: none;
 }
+
+/* スキルアニメーション用CSS - styles.css に追加 */
+
+/* 浮き上がるアニメーション（回復など） */
+@keyframes floatUp {
+    0% {
+      opacity: 0;
+      transform: translateY(0);
+    }
+    10% {
+      opacity: 1;
+    }
+    80% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(-30px);
+    }
+  }
+  
+  .animate-float-up {
+    animation: floatUp 1s ease-out forwards;
+  }
+  
+  /* 爆発アニメーション（ダメージスキルなど） */
+  @keyframes explosion {
+    0% {
+      opacity: 0;
+      transform: scale(0.5);
+    }
+    10% {
+      opacity: 1;
+      transform: scale(1.2);
+    }
+    20% {
+      transform: scale(0.9);
+    }
+    30% {
+      transform: scale(1.1);
+    }
+    50% {
+      transform: scale(1);
+    }
+    80% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+      transform: scale(1.3);
+    }
+  }
+  
+  .animate-explosion {
+    animation: explosion 1s ease-out forwards;
+  }
+  
+  /* 回転アニメーション（バフ/デバフなど） */
+  @keyframes rotate {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+  
+  .animate-rotate {
+    animation: rotate 1s linear infinite;
+  }
+  
+  /* スキルスロットのクールダウン表示用 */
+  .cooldown-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: white;
+  }
+  
+  /* スキルがアクティブ状態のときのハイライト */
+  .skill-active {
+    border: 2px solid #ffc107;
+    box-shadow: 0 0 10px rgba(255, 193, 7, 0.5);
+  }
+  
+  /* 使用不可能なスキルの表示 */
+  .skill-disabled {
+    opacity: 0.5;
+    filter: grayscale(70%);
+  }
+  
+  /* スキル効果の光るエフェクト */
+  @keyframes glowing {
+    0% {
+      box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+    }
+    50% {
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+    }
+    100% {
+      box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+    }
+  }
+  
+  .animate-glow {
+    animation: glowing 1.5s ease-in-out infinite;
+  }
+  
+  /* MP不足警告の点滅エフェクト */
+  @keyframes mpWarning {
+    0% {
+      background-color: rgba(220, 38, 38, 0.7);
+    }
+    50% {
+      background-color: rgba(220, 38, 38, 0.4);
+    }
+    100% {
+      background-color: rgba(220, 38, 38, 0.7);
+    }
+  }
+  
+  .animate-mp-warning {
+    animation: mpWarning 1s ease-in-out infinite;
+  }

@@ -24,6 +24,12 @@ import { usePlayerAttack } from "./hooks/usePlayerAttack";
 import { StageManager } from "./managers/StageManager";
 import { ExperienceManager } from "./managers/ExperienceManager";
 
+// インポート
+import SkillManagement from "./components/SkillManagement";
+import { SkillInstance } from "./models/Skill";
+import { createSkillInstance, skillData, initialPlayerSkills } from "./data/skillData";
+import SkillEffect from "./components/SkillEffect";
+
 const App: React.FC = () => {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -64,6 +70,90 @@ const App: React.FC = () => {
 
   const [isDead, setIsDead] = useState(false);
   const [showGameOver, setShowGameOver] = useState(false);
+
+  // スキル関連の変数
+  const [activeSkill, setActiveSkill] = useState<SkillInstance | null>(null);
+  const [equippedSkills, setEquippedSkills] = useState<(SkillInstance | null)[]>([]);
+  const [availableSkillIds, setAvailableSkillIds] = useState<string[]>(initialPlayerSkills);
+  const [showSkillManagement, setShowSkillManagement] = useState(false);
+  const [skillEffect, setSkillEffect] = useState<{
+    type: 'heal' | 'damage' | 'buff' | 'debuff';
+    targetPosition?: { x: number, y: number };
+    value?: number;
+  } | null>(null);
+
+  // 初回マウント時の初期化
+  useEffect(() => {
+    // 初期スキルをセットアップ
+    const initialSkillsArray = initialPlayerSkills.map(skillId => {
+      try {
+        return createSkillInstance(skillId);
+      } catch (error) {
+        console.error(`Error creating skill instance for ${skillId}:`, error);
+        return null;
+      }
+    });
+
+    // 3スロット分のスキル配列を用意（空きスロットはnull）
+    const skillsWithEmptySlots = [...initialSkillsArray];
+    while (skillsWithEmptySlots.length < 3) {
+      skillsWithEmptySlots.push(null);
+    }
+
+    setEquippedSkills(skillsWithEmptySlots);
+  }, []);
+
+  // 新しいスキルの獲得（レベルアップなどで取得する場合）
+  const acquireNewSkill = (skillId: string) => {
+    if (!availableSkillIds.includes(skillId)) {
+      setAvailableSkillIds(prev => [...prev, skillId]);
+      setMessage({
+        text: `新しいスキル「${skillData.find(s => s.id === skillId)?.name}」を習得した！`,
+        sender: "system"
+      });
+    }
+  };
+  void acquireNewSkill;
+
+  // スキル装備の処理
+  const handleEquipSkill = (skillId: string, slotIndex: number) => {
+    try {
+      const newSkill = createSkillInstance(skillId);
+
+      setEquippedSkills(prev => {
+        const newSkills = [...prev];
+        newSkills[slotIndex] = newSkill;
+        return newSkills;
+      });
+    } catch (error) {
+      console.error(`Error equipping skill ${skillId}:`, error);
+      setMessage({
+        text: "スキルの装備に失敗しました",
+        sender: "system"
+      });
+    }
+  };
+
+  // スキル解除の処理
+  const handleUnequipSkill = (slotIndex: number) => {
+    setEquippedSkills(prev => {
+      const newSkills = [...prev];
+      newSkills[slotIndex] = null;
+      return newSkills;
+    });
+  };
+
+  // スキルエフェクトの表示処理
+  const showSkillEffectAnimation = (
+    type: 'heal' | 'damage' | 'buff' | 'debuff',
+    targetPosition?: { x: number, y: number },
+    value?: number
+  ) => {
+    setSkillEffect({ type, targetPosition, value });
+
+    // 必要に応じてここでサウンド効果や画面シェイクなども追加可能
+  };
+  void showSkillEffectAnimation;
 
   // レベルアップ追跡フック
   const [showLevelUp, setShowLevelUp] = useState(false);
@@ -167,7 +257,7 @@ const App: React.FC = () => {
   }, []);
 
   // プレイヤーが敵を攻撃する処理
-  // プレイヤーが敵を攻撃する処理
+  // プレイヤーの攻撃処理を修正（アクティブスキルの処理を追加）
   const handlePlayerAttack = (input: string) => {
     if (!currentEnemies.length) return;
 
@@ -187,21 +277,63 @@ const App: React.FC = () => {
       // 正解の場合
       const newCombo = comboCount + 1;
       playerAttack.handleComboUpdate(newCombo);
+      // アクティブなスキルがあれば実行
+      if (activeSkill && activeSkill.activationTiming === 'onCorrectAnswer') {
+        // スキルを実行
+        const result = activeSkill.execute(player, currentEnemies, targetIndex);
 
-      const { damage, specialMessage } = playerAttack.calculateEffectiveDamage(
-        currentQuestion,
-        targetEnemy,
-        newCombo,
-        wrongAttempts
-      );
-      targetEnemy.takeDamage(damage);
+        if (result.success) {
+          // MP消費処理
+          setPlayer(prev => {
+            return new PlayerModel(
+              prev.hp,
+              prev.maxHP,
+              prev.mp - activeSkill.mpCost,
+              prev.maxMP,
+              prev.defense,
+              prev.magicDefense,
+              prev.level,
+              prev.exp,
+              prev.totalExp,
+              prev.speed,
+              prev.attack,
+              prev.luck,
+              prev.power,
+              prev.statusEffects
+            );
+          });
 
-      // ダメージ表示とヒットアニメーション
-      combat.setDamageDisplay(targetIndex, damage);
-      combat.setHitFlag(targetIndex, ENEMY_HIT_ANIMATION_DURATION);
+          // スキルダメージ表示
+          if (result.targetIndex !== undefined) {
+            combat.setDamageDisplay(result.targetIndex, result.damageAmount || 0);
+            combat.setHitFlag(result.targetIndex, ENEMY_HIT_ANIMATION_DURATION);
+          }
+          // スキルメッセージ表示
+          setMessage({
+            text: result.message,
+            sender: "player"
+          });
+        }
 
-      // ダメージメッセージを設定
-      playerAttack.setAttackResultMessage(damage, specialMessage);
+        // アクティブスキルをリセット
+        setActiveSkill(null);
+      } else {
+        // 通常攻撃処理
+        const { damage, specialMessage } = playerAttack.calculateEffectiveDamage(
+          currentQuestion,
+          targetEnemy,
+          newCombo,
+          wrongAttempts
+        );
+        targetEnemy.takeDamage(damage);
+
+        // ダメージ表示とヒットアニメーション
+        combat.setDamageDisplay(targetIndex, damage);
+        combat.setHitFlag(targetIndex, ENEMY_HIT_ANIMATION_DURATION);
+
+        // ダメージメッセージを設定
+        playerAttack.setAttackResultMessage(damage, specialMessage);
+      }
 
       setWrongAttempts(0);
 
@@ -224,6 +356,9 @@ const App: React.FC = () => {
     } else {
       // 不正解の場合
       playerAttack.setWrongAnswerMessage();
+
+      // アクティブスキルも解除
+      setActiveSkill(null);
     }
   };
 
@@ -271,6 +406,121 @@ const App: React.FC = () => {
     setTargetIndex(index);
     if (inputRef.current) {
       inputRef.current.focus();
+    }
+  };
+
+  // スキル使用時の処理関数（App コンポーネント内に追加）
+  const handleSkillUse = (skill: SkillInstance, targetIndex?: number) => {
+    // スキルがコマンド型（即時発動）の場合
+    if (skill.activationTiming === 'onCommand') {
+      // 単体敵対象スキルの場合は targetIndex を確認
+      if (skill.targetType === 'singleEnemy' && targetIndex === undefined) {
+        setMessage({
+          text: "対象の敵を選択してください。",
+          sender: "system"
+        });
+        return;
+      }
+
+      // スキルが使用可能かチェック
+      if (!skill.canUse(player)) {
+        setMessage({
+          text: "MPが足りないか、クールダウン中です。",
+          sender: "system"
+        });
+        return;
+      }
+
+      // スキルタイプに応じた処理
+      if (skill.type === 'heal') {
+        // 回復スキルの場合
+        const result = skill.execute(player, currentEnemies, targetIndex);
+
+        if (result.success) {
+          // プレイヤー状態の更新（MP消費と回復）
+          setPlayer(prev => {
+            const newHP = Math.min(prev.hp + (result.healAmount || 0), prev.maxHP);
+            return new PlayerModel(
+              newHP,
+              prev.maxHP,
+              prev.mp - skill.mpCost,
+              prev.maxMP,
+              prev.defense,
+              prev.magicDefense,
+              prev.level,
+              prev.exp,
+              prev.totalExp,
+              prev.speed,
+              prev.attack,
+              prev.luck,
+              prev.power,
+              prev.statusEffects
+            );
+          });
+
+          // メッセージ表示
+          setMessage({
+            text: result.message,
+            sender: "player"
+          });
+        } else {
+          setMessage({
+            text: result.message,
+            sender: "system"
+          });
+        }
+      } else if (skill.type === 'damage') {
+        // ダメージスキルの場合
+        const result = skill.execute(player, currentEnemies, targetIndex);
+
+        if (result.success) {
+          // MP消費処理
+          setPlayer(prev => {
+            return new PlayerModel(
+              prev.hp,
+              prev.maxHP,
+              prev.mp - skill.mpCost,
+              prev.maxMP,
+              prev.defense,
+              prev.magicDefense,
+              prev.level,
+              prev.exp,
+              prev.totalExp,
+              prev.speed,
+              prev.attack,
+              prev.luck,
+              prev.power,
+              prev.statusEffects
+            );
+          });
+
+          // ダメージ表示アニメーション
+          if (result.targetIndex !== undefined) {
+            combat.setDamageDisplay(result.targetIndex, result.damageAmount || 0);
+            combat.setHitFlag(result.targetIndex, ENEMY_HIT_ANIMATION_DURATION);
+          }
+
+          // メッセージ表示
+          setMessage({
+            text: result.message,
+            sender: "player"
+          });
+
+          // 敵が倒されたかチェック
+          checkStageCompletion();
+        } else {
+          setMessage({
+            text: result.message,
+            sender: "system"
+          });
+        }
+      }
+
+      // アクティブスキルをリセット
+      setActiveSkill(null);
+    } else {
+      // コマンド型でないスキル（例：問題回答と組み合わせるスキル）の場合
+      setActiveSkill(skill);
     }
   };
 
@@ -345,27 +595,55 @@ const App: React.FC = () => {
         />}
       {!showGameOver &&
         <div className="bg-black">
+          {/* スキル管理画面 */}
+          {showSkillManagement && (
+            <SkillManagement
+              equippedSkills={equippedSkills}
+              onEquipSkill={handleEquipSkill}
+              onUnequipSkill={handleUnequipSkill}
+              playerLevel={player.level}
+              onClose={() => setShowSkillManagement(false)}
+              availableSkillIds={availableSkillIds}
+            />
+          )}
+
+          {/* スキルエフェクト表示 */}
+          {skillEffect && (
+            <SkillEffect
+              type={skillEffect.type}
+              targetPosition={skillEffect.targetPosition}
+              value={skillEffect.value}
+              onComplete={() => setSkillEffect(null)}
+              duration={1000}
+            />
+          )}
+
           {/* BattleInterface */}
           <div
             className={`${isKeyboardVisible
-                ? "flex-[0.7]" // キーボード表示時は70%の高さ
-                : "flex-[0.55]" // 通常時は55%の高さ
+              ? "flex-[0.7]" // キーボード表示時は70%の高さ
+              : "flex-[0.55]" // 通常時は55%の高さ
               } bg-gray-900 transition-all duration-300`}
           >
             <BattleInterface
               player={player}
               onSubmit={handlePlayerAttack}
+              onSkillUse={handleSkillUse}
               expGain={expGain}
               inputRef={inputRef}
               isKeyboardVisible={isKeyboardVisible}
-            />
+              currentEnemies={currentEnemies}
+              targetIndex={targetIndex}
+              equippedSkills={equippedSkills}
+              setEquippedSkills={setEquippedSkills}
+              onOpenSkillManagement={() => setShowSkillManagement(true)}            />
           </div>
 
           {/* BattleStage */}
           <div
             className={`relative ${isKeyboardVisible
-                ? "flex-[0.4]" // キーボード表示時は40%の高さ
-                : "flex-[0.45]" // 通常時は45%の高さ
+              ? "flex-[0.4]" // キーボード表示時は40%の高さ
+              : "flex-[0.45]" // 通常時は45%の高さ
               } overflow-hidden transition-all duration-300`}
           >
             <BattleStage
