@@ -69,7 +69,6 @@ export class FireSpellSkill extends Skill {
   }
   
   execute(player: Player, targets: Enemy[] | Enemy, targetIndex?: number): SkillResult {
-    console.log("fire発動");
     if (!this.canUse(player)) {
       return {
         success: false,
@@ -98,7 +97,6 @@ export class FireSpellSkill extends Skill {
       
       // 状態更新
       this.afterUse(player);
-      console.log("fire発動");
       return {
         success: true,
         message: `${target.name}に${this.name}で${damageAmount}のダメージ！`,

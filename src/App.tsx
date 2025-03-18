@@ -27,8 +27,13 @@ import { ExperienceManager } from "./managers/ExperienceManager";
 // インポート
 import SkillManagement from "./components/SkillManagement";
 import { SkillInstance } from "./models/Skill";
-import { createSkillInstance, skillData, initialPlayerSkills } from "./data/skillData";
+import {
+  createSkillInstance,
+  skillData,
+  initialPlayerSkills,
+} from "./data/skillData";
 import SkillEffect from "./components/SkillEffect";
+import FireSkillEffect from "./components/FireSkillEffect";
 
 const App: React.FC = () => {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -45,7 +50,9 @@ const App: React.FC = () => {
   useIOSScrollPrevention(inputRef);
 
   // プレイヤーの状態
-  const [player, setPlayer] = useState<PlayerModel>(PlayerModel.createDefault());
+  const [player, setPlayer] = useState<PlayerModel>(
+    PlayerModel.createDefault()
+  );
 
   // 戦闘関連の状態
   const [currentEnemies, setCurrentEnemies] = useState<EnemyModel[]>([]);
@@ -60,7 +67,7 @@ const App: React.FC = () => {
 
   // UI状態
   const [message, setMessage] = useState<MessageType | null>(null);
-  
+
   const [expGain, setExpGain] = useState<number | null>(null);
 
   // タイマーと追跡用のref
@@ -71,19 +78,72 @@ const App: React.FC = () => {
 
   // スキル関連の変数
   const [activeSkill, setActiveSkill] = useState<SkillInstance | null>(null);
-  const [equippedSkills, setEquippedSkills] = useState<(SkillInstance | null)[]>([]);
-  const [availableSkillIds, setAvailableSkillIds] = useState<string[]>(initialPlayerSkills);
+  const [equippedSkills, setEquippedSkills] = useState<
+    (SkillInstance | null)[]
+  >([]);
+  const [availableSkillIds, setAvailableSkillIds] =
+    useState<string[]>(initialPlayerSkills);
   const [showSkillManagement, setShowSkillManagement] = useState(false);
   const [skillEffect, setSkillEffect] = useState<{
-    type: 'heal' | 'damage' | 'buff' | 'debuff';
-    targetPosition?: { x: number, y: number };
+    type: "heal" | "damage" | "buff" | "debuff";
+    targetPosition?: { x: number; y: number };
     value?: number;
+    skillName?: string;
   } | null>(null);
+
+  // FireSkillEffectの状態を管理する
+  const [fireSkillEffect, setFireSkillEffect] = useState<{
+    skillName: string;
+    targetPosition: { x: number; y: number };
+    damageValue?: number;
+    power: "low" | "medium" | "high";
+  } | null>(null);
+
+  // 2. 炎系スキル表示関数を追加
+  // 炎系スキルのエフェクトを表示する関数
+  const showFireSkillEffect = (
+    skillName: string,
+    targetPosition: { x: number; y: number },
+    damageValue?: number,
+    power: "low" | "medium" | "high" = "medium"
+  ) => {
+    // 画面効果を追加（オプション）
+    document.body.classList.add("fire-skill-flash");
+    setTimeout(() => {
+      document.body.classList.remove("fire-skill-flash");
+    }, 500);
+
+    // エフェクト状態を設定
+    setFireSkillEffect({
+      skillName,
+      targetPosition,
+      damageValue,
+      power,
+    });
+
+    // 敵へのヒット後に火のオーラエフェクトを追加（オプション）
+    if (targetPosition && damageValue) {
+      setTimeout(() => {
+        // 対象の敵要素に一時的にfire-auraクラスを追加
+        const enemyElements = document.querySelectorAll(".enemy-container");
+        if (enemyElements.length > 0) {
+          // ターゲットインデックスに応じた敵要素を取得
+          const targetEnemyElement = enemyElements[targetIndex];
+          if (targetEnemyElement) {
+            targetEnemyElement.classList.add("fire-aura");
+            setTimeout(() => {
+              targetEnemyElement.classList.remove("fire-aura");
+            }, 1500);
+          }
+        }
+      }, 600); // 火球が命中した後にエフェクト追加
+    }
+  };
 
   // 初回マウント時の初期化
   useEffect(() => {
     // 初期スキルをセットアップ
-    const initialSkillsArray = initialPlayerSkills.map(skillId => {
+    const initialSkillsArray = initialPlayerSkills.map((skillId) => {
       try {
         return createSkillInstance(skillId);
       } catch (error) {
@@ -104,10 +164,12 @@ const App: React.FC = () => {
   // 新しいスキルの獲得（レベルアップなどで取得する場合）
   const acquireNewSkill = (skillId: string) => {
     if (!availableSkillIds.includes(skillId)) {
-      setAvailableSkillIds(prev => [...prev, skillId]);
+      setAvailableSkillIds((prev) => [...prev, skillId]);
       setMessage({
-        text: `新しいスキル「${skillData.find(s => s.id === skillId)?.name}」を習得した！`,
-        sender: "system"
+        text: `新しいスキル「${
+          skillData.find((s) => s.id === skillId)?.name
+        }」を習得した！`,
+        sender: "system",
       });
     }
   };
@@ -118,7 +180,7 @@ const App: React.FC = () => {
     try {
       const newSkill = createSkillInstance(skillId);
 
-      setEquippedSkills(prev => {
+      setEquippedSkills((prev) => {
         const newSkills = [...prev];
         newSkills[slotIndex] = newSkill;
         return newSkills;
@@ -127,14 +189,14 @@ const App: React.FC = () => {
       console.error(`Error equipping skill ${skillId}:`, error);
       setMessage({
         text: "スキルの装備に失敗しました",
-        sender: "system"
+        sender: "system",
       });
     }
   };
 
   // スキル解除の処理
   const handleUnequipSkill = (slotIndex: number) => {
-    setEquippedSkills(prev => {
+    setEquippedSkills((prev) => {
       const newSkills = [...prev];
       newSkills[slotIndex] = null;
       return newSkills;
@@ -143,15 +205,29 @@ const App: React.FC = () => {
 
   // スキルエフェクトの表示処理
   const showSkillEffectAnimation = (
-    type: 'heal' | 'damage' | 'buff' | 'debuff',
-    targetPosition?: { x: number, y: number },
-    value?: number
+    type: "heal" | "damage" | "buff" | "debuff",
+    targetPosition?: { x: number; y: number },
+    value?: number,
+    skillName?: string
   ) => {
-    setSkillEffect({ type, targetPosition, value });
+    setSkillEffect({ type, targetPosition, value, skillName });
 
+    // スキル使用時のスクリーンエフェクト（オプション）
+    if (type === "damage") {
+      // ダメージスキルはスクリーンシェイク
+      combat.isScreenShake = true;
+      setTimeout(() => {
+        combat.isScreenShake = false;
+      }, 500);
+    } else if (type === "heal") {
+      // 回復スキルは明るくフラッシュ（CombatEffectsに新しいメソッドが必要）
+      document.body.classList.add("heal-flash");
+      setTimeout(() => {
+        document.body.classList.remove("heal-flash");
+      }, 500);
+    }
     // 必要に応じてここでサウンド効果や画面シェイクなども追加可能
   };
-  void showSkillEffectAnimation;
 
   // レベルアップ追跡フック
   const [showLevelUp, setShowLevelUp] = useState(false);
@@ -269,61 +345,68 @@ const App: React.FC = () => {
     const trimmedInput = input.trim();
 
     // 問題の正解から<>タグを除去
-    const cleanedAnswer = currentQuestion.answer.replace(/<|>/g, '');
+    const cleanedAnswer = currentQuestion.answer.replace(/<|>/g, "");
 
     if (trimmedInput.toLowerCase() === cleanedAnswer.toLowerCase()) {
       // 正解の場合
       const newCombo = comboCount + 1;
       playerAttack.handleComboUpdate(newCombo);
       // アクティブなスキルがあれば実行
-      if (activeSkill && activeSkill.activationTiming === 'onCorrectAnswer') {
+      if (activeSkill && activeSkill.activationTiming === "onCorrectAnswer") {
         // スキルを実行
-        const result = activeSkill.execute(player, currentEnemies, targetIndex);
+        console.log("active", activeSkill);
+        activeSkill.activationTiming = "onCommand";
+        handleSkillUse(activeSkill, targetIndex);
+        // const result = activeSkill.execute(player, currentEnemies, targetIndex);
 
-        if (result.success) {
-          // MP消費処理
-          setPlayer(prev => {
-            return new PlayerModel(
-              prev.hp,
-              prev.maxHP,
-              prev.mp - activeSkill.mpCost,
-              prev.maxMP,
-              prev.defense,
-              prev.magicDefense,
-              prev.level,
-              prev.exp,
-              prev.totalExp,
-              prev.speed,
-              prev.attack,
-              prev.luck,
-              prev.power,
-              prev.statusEffects
-            );
-          });
+        // if (result.success) {
+        //   // MP消費処理
+        //   setPlayer((prev) => {
+        //     return new PlayerModel(
+        //       prev.hp,
+        //       prev.maxHP,
+        //       prev.mp - activeSkill.mpCost,
+        //       prev.maxMP,
+        //       prev.defense,
+        //       prev.magicDefense,
+        //       prev.level,
+        //       prev.exp,
+        //       prev.totalExp,
+        //       prev.speed,
+        //       prev.attack,
+        //       prev.luck,
+        //       prev.power,
+        //       prev.statusEffects
+        //     );
+        //   });
 
-          // スキルダメージ表示
-          if (result.targetIndex !== undefined) {
-            combat.setDamageDisplay(result.targetIndex, result.damageAmount || 0);
-            combat.setHitFlag(result.targetIndex, ENEMY_HIT_ANIMATION_DURATION);
-          }
-          console.log(result.message);
-          // スキルメッセージ表示
-          setMessage({
-            text: result.message,
-            sender: "player"
-          });
-        }
+        //   // スキルダメージ表示
+        //   if (result.targetIndex !== undefined) {
+        //     combat.setDamageDisplay(
+        //       result.targetIndex,
+        //       result.damageAmount || 0
+        //     );
+        //     combat.setHitFlag(result.targetIndex, ENEMY_HIT_ANIMATION_DURATION);
+        //   }
+        //   console.log(result.message);
+        //   // スキルメッセージ表示
+        //   setMessage({
+        //     text: result.message,
+        //     sender: "player",
+        //   });
+        // }
 
         // アクティブスキルをリセット
         setActiveSkill(null);
       } else {
         // 通常攻撃処理
-        const { damage, specialMessage } = playerAttack.calculateEffectiveDamage(
-          currentQuestion,
-          targetEnemy,
-          newCombo,
-          wrongAttempts
-        );
+        const { damage, specialMessage } =
+          playerAttack.calculateEffectiveDamage(
+            currentQuestion,
+            targetEnemy,
+            newCombo,
+            wrongAttempts
+          );
         targetEnemy.takeDamage(damage);
 
         // ダメージ表示とヒットアニメーション
@@ -341,7 +424,10 @@ const App: React.FC = () => {
         playerAttack.setEnemyDefeatedMessage(targetEnemy.name);
 
         // 次のターゲットを探す
-        const nextIndex = StageManager.findNextAliveEnemyIndex(targetIndex, currentEnemies);
+        const nextIndex = StageManager.findNextAliveEnemyIndex(
+          targetIndex,
+          currentEnemies
+        );
         if (nextIndex !== -1) {
           setTargetIndex(nextIndex);
         }
@@ -366,8 +452,7 @@ const App: React.FC = () => {
     const allDefeated = StageManager.isStageCompleted(currentEnemies);
     if (allDefeated) {
       const totalEXP = StageManager.calculateTotalExp(currentEnemies);
-      
-      
+
       setTimeout(() => {
         gainEXP(totalEXP);
         //setMessage(StageManager.createCompletionMessage(totalEXP));
@@ -383,7 +468,7 @@ const App: React.FC = () => {
       amount,
       player,
       setPlayer,
-      setExpGain,
+      setExpGain
     );
 
     // ステージ完了メッセージを設定
@@ -409,12 +494,12 @@ const App: React.FC = () => {
   // スキル使用時の処理関数（App コンポーネント内に追加）
   const handleSkillUse = (skill: SkillInstance, targetIndex?: number) => {
     // スキルがコマンド型（即時発動）の場合
-    if (skill.activationTiming === 'onCommand') {
+    if (skill.activationTiming === "onCommand") {
       // 単体敵対象スキルの場合は targetIndex を確認
-      if (skill.targetType === 'singleEnemy' && targetIndex === undefined) {
+      if (skill.targetType === "singleEnemy" && targetIndex === undefined) {
         setMessage({
           text: "対象の敵を選択してください。",
-          sender: "system"
+          sender: "system",
         });
         return;
       }
@@ -423,20 +508,23 @@ const App: React.FC = () => {
       if (!skill.canUse(player)) {
         setMessage({
           text: "MPが足りないか、クールダウン中です。",
-          sender: "system"
+          sender: "system",
         });
         return;
       }
-
+      console.log("skilltype", skill.type);
       // スキルタイプに応じた処理
-      if (skill.type === 'heal') {
+      if (skill.type === "heal") {
         // 回復スキルの場合
         const result = skill.execute(player, currentEnemies, targetIndex);
 
         if (result.success) {
           // プレイヤー状態の更新（MP消費と回復）
-          setPlayer(prev => {
-            const newHP = Math.min(prev.hp + (result.healAmount || 0), prev.maxHP);
+          setPlayer((prev) => {
+            const newHP = Math.min(
+              prev.hp + (result.healAmount || 0),
+              prev.maxHP
+            );
             return new PlayerModel(
               newHP,
               prev.maxHP,
@@ -455,61 +543,91 @@ const App: React.FC = () => {
             );
           });
 
+          // 回復エフェクトを表示 - プレイヤー位置に表示
+          showSkillEffectAnimation(
+            "heal",
+            { x: window.innerWidth / 2, y: window.innerHeight / 2 - 50 },
+            result.healAmount,
+            skill.name
+          );
           // メッセージ表示
           setMessage({
             text: result.message,
-            sender: "player"
+            sender: "player",
           });
         } else {
           setMessage({
             text: result.message,
-            sender: "system"
+            sender: "system",
           });
         }
-      } else if (skill.type === 'damage') {
+      } else if (skill.type === "damage") {
         // ダメージスキルの場合
         const result = skill.execute(player, currentEnemies, targetIndex);
+        if (skill.id === "fire_bolt") {
+          if (result.success) {
+            // MP消費処理
+            setPlayer((prev) => {
+              return new PlayerModel(
+                prev.hp,
+                prev.maxHP,
+                prev.mp - skill.mpCost,
+                prev.maxMP,
+                prev.defense,
+                prev.magicDefense,
+                prev.level,
+                prev.exp,
+                prev.totalExp,
+                prev.speed,
+                prev.attack,
+                prev.luck,
+                prev.power,
+                prev.statusEffects
+              );
+            });
 
-        if (result.success) {
-          // MP消費処理
-          setPlayer(prev => {
-            return new PlayerModel(
-              prev.hp,
-              prev.maxHP,
-              prev.mp - skill.mpCost,
-              prev.maxMP,
-              prev.defense,
-              prev.magicDefense,
-              prev.level,
-              prev.exp,
-              prev.totalExp,
-              prev.speed,
-              prev.attack,
-              prev.luck,
-              prev.power,
-              prev.statusEffects
-            );
-          });
+            // ダメージ表示アニメーション
+            if (result.targetIndex !== undefined) {
+              combat.setDamageDisplay(
+                result.targetIndex,
+                result.damageAmount || 0
+              );
+              combat.setHitFlag(
+                result.targetIndex,
+                ENEMY_HIT_ANIMATION_DURATION
+              );
 
-          // ダメージ表示アニメーション
-          if (result.targetIndex !== undefined) {
-            combat.setDamageDisplay(result.targetIndex, result.damageAmount || 0);
-            combat.setHitFlag(result.targetIndex, ENEMY_HIT_ANIMATION_DURATION);
+              // 対象の敵の位置にファイアボルトエフェクトを表示
+              const targetEnemy = currentEnemies[result.targetIndex];
+              const enemyPosition = targetEnemy.positionOffset || {
+                x: 0,
+                y: 0,
+              };
+
+              // 画面中央を基準に、敵の位置にエフェクトを表示
+              const centerX = window.innerWidth / 2;
+              const centerY = window.innerHeight / 2;
+
+              showFireSkillEffect(
+                "ファイアボルト",
+                {
+                  x: centerX + enemyPosition.x,
+                  y: centerY - 100 + enemyPosition.y,
+                },
+                result.damageAmount,
+                "low" // 低威力設定
+              );
+            }
+
+            // メッセージ表示
+            setMessage({
+              text: result.message,
+              sender: "player",
+            });
+
+            // 敵が倒されたかチェック
+            checkStageCompletion();
           }
-
-          // メッセージ表示
-          setMessage({
-            text: result.message,
-            sender: "player"
-          });
-
-          // 敵が倒されたかチェック
-          checkStageCompletion();
-        } else {
-          setMessage({
-            text: result.message,
-            sender: "system"
-          });
         }
       }
 
@@ -552,7 +670,7 @@ const App: React.FC = () => {
     });
 
     // すべての敵が倒された場合は新しいステージを生成
-    if (currentEnemies.every(enemy => enemy.defeated)) {
+    if (currentEnemies.every((enemy) => enemy.defeated)) {
       spawnNewStage();
     }
   };
@@ -570,8 +688,7 @@ const App: React.FC = () => {
       setTimeout(() => {
         setShowGameOver(true);
         setIsDead(false);
-      }, 5000
-      );
+      }, 5000);
     }
   }, [player.hp]);
 
@@ -580,17 +697,29 @@ const App: React.FC = () => {
       isScreenHit={combat.isScreenHit}
       isScreenShake={combat.isScreenShake}
     >
-      {isDead &&
+      {isDead && (
         <div className="absolute inset-0 bg-black opacity-70 z-100 flex items-center justify-center">
           <span className="text-white font-bold text-xl">戦闘不能…</span>
         </div>
-      }
-      {showGameOver &&
-        <GameOver
-          totalEXP={player.totalExp}
-          onContinue={handleContinueGame}
-        />}
-      {!showGameOver &&
+      )}
+
+      {showGameOver && (
+        <GameOver totalEXP={player.totalExp} onContinue={handleContinueGame} />
+      )}
+      {/* ファイヤースキル発動 */}
+      {fireSkillEffect && (
+        <div className="z-500 opacity-80">
+          <FireSkillEffect
+            skillName={fireSkillEffect.skillName}
+            targetPosition={fireSkillEffect.targetPosition}
+            damageValue={fireSkillEffect.damageValue}
+            power={fireSkillEffect.power}
+            onComplete={() => setFireSkillEffect(null)}
+            duration={1500}
+          />
+        </div>
+      )}
+      {!showGameOver && (
         <div className="bg-black">
           {/* スキル管理画面 */}
           {showSkillManagement && (
@@ -610,17 +739,18 @@ const App: React.FC = () => {
               type={skillEffect.type}
               targetPosition={skillEffect.targetPosition}
               value={skillEffect.value}
+              skillName={skillEffect.skillName}
               onComplete={() => setSkillEffect(null)}
               duration={1000}
             />
           )}
-
           {/* BattleInterface */}
           <div
-            className={`${isKeyboardVisible
-              ? "flex-[0.7]" // キーボード表示時は70%の高さ
-              : "flex-[0.55]" // 通常時は55%の高さ
-              } bg-gray-900 transition-all duration-300`}
+            className={`${
+              isKeyboardVisible
+                ? "flex-[0.7]" // キーボード表示時は70%の高さ
+                : "flex-[0.55]" // 通常時は55%の高さ
+            } bg-gray-900 transition-all duration-300`}
           >
             <BattleInterface
               player={player}
@@ -633,15 +763,17 @@ const App: React.FC = () => {
               targetIndex={targetIndex}
               equippedSkills={equippedSkills}
               setEquippedSkills={setEquippedSkills}
-              onOpenSkillManagement={() => setShowSkillManagement(true)}            />
+              onOpenSkillManagement={() => setShowSkillManagement(true)}
+            />
           </div>
 
           {/* BattleStage */}
           <div
-            className={`relative ${isKeyboardVisible
-              ? "flex-[0.4]" // キーボード表示時は40%の高さ
-              : "flex-[0.45]" // 通常時は45%の高さ
-              } overflow-hidden transition-all duration-300`}
+            className={`relative ${
+              isKeyboardVisible
+                ? "flex-[0.4]" // キーボード表示時は40%の高さ
+                : "flex-[0.45]" // 通常時は45%の高さ
+            } overflow-hidden transition-all duration-300`}
           >
             <BattleStage
               currentEnemies={currentEnemies}
@@ -678,7 +810,8 @@ const App: React.FC = () => {
               />
             )}
           </div>
-        </div>}
+        </div>
+      )}
     </CombatEffects>
   );
 };

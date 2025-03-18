@@ -78,39 +78,39 @@ export const skillData: ISkill[] = [
   },
   
   // バフ/デバフスキル例
-  {
-    id: 'defense_up',
-    name: '防御強化',
-    description: '3ターンの間、防御力が30%上昇する',
-    type: 'buff',
-    mpCost: 8,
-    cooldown: 4,
-    icon: new URL("../assets/icons/defense_up.png", import.meta.url).toString(),
-    activationTiming: 'onCommand',
-    targetType: 'self'
-  },
-  {
-    id: 'attack_up',
-    name: '攻撃強化',
-    description: '3ターンの間、攻撃力が30%上昇する',
-    type: 'buff',
-    mpCost: 10,
-    cooldown: 4,
-    icon: new URL("../assets/icons/attack_up.png", import.meta.url).toString(),
-    activationTiming: 'onCommand',
-    targetType: 'self'
-  },
-  {
-    id: 'mp_recovery',
-    name: 'MP回復',
-    description: 'MPを15回復する',
-    type: 'heal',
-    mpCost: 0,
-    cooldown: 5,
-    icon: new URL("../assets/icons/mp_recovery.png", import.meta.url).toString(),
-    activationTiming: 'onCommand',
-    targetType: 'self'
-  }
+  // {
+  //   id: 'defense_up',
+  //   name: '防御強化',
+  //   description: '3ターンの間、防御力が30%上昇する',
+  //   type: 'buff',
+  //   mpCost: 8,
+  //   cooldown: 4,
+  //   icon: new URL("../assets/icons/defense_up.png", import.meta.url).toString(),
+  //   activationTiming: 'onCommand',
+  //   targetType: 'self'
+  // },
+  // {
+  //   id: 'attack_up',
+  //   name: '攻撃強化',
+  //   description: '3ターンの間、攻撃力が30%上昇する',
+  //   type: 'buff',
+  //   mpCost: 10,
+  //   cooldown: 4,
+  //   icon: new URL("../assets/icons/attack_up.png", import.meta.url).toString(),
+  //   activationTiming: 'onCommand',
+  //   targetType: 'self'
+  // },
+  // {
+  //   id: 'mp_recovery',
+  //   name: 'MP回復',
+  //   description: 'MPを15回復する',
+  //   type: 'heal',
+  //   mpCost: 0,
+  //   cooldown: 5,
+  //   icon: new URL("../assets/icons/mp_recovery.png", import.meta.url).toString(),
+  //   activationTiming: 'onCommand',
+  //   targetType: 'self'
+  // }
 ];
 
 // スキルインスタンス生成ヘルパー関数
@@ -148,5 +148,5 @@ export function createSkillInstance(skillId: string): SkillInstance {
 export const initialPlayerSkills = [
   'heal_minor',
   'fire_bolt',
-  'defense_up'
+  //'defense_up'
 ];
