@@ -97,6 +97,7 @@ const App: React.FC = () => {
     targetPosition: { x: number; y: number };
     damageValue?: number;
     power: "low" | "medium" | "high";
+    onComplete?: () => void; // コールバック関数を追加
   } | null>(null);
 
   // 2. 炎系スキル表示関数を追加
@@ -105,7 +106,8 @@ const App: React.FC = () => {
     skillName: string,
     targetPosition: { x: number; y: number },
     damageValue?: number,
-    power: "low" | "medium" | "high" = "medium"
+    power: "low" | "medium" | "high" = "medium",
+    onComplete?: () => void
   ) => {
     // 画面効果を追加（オプション）
     document.body.classList.add("fire-skill-flash");
@@ -119,6 +121,7 @@ const App: React.FC = () => {
       targetPosition,
       damageValue,
       power,
+      onComplete // コールバック関数をステートに保存
     });
 
     // 敵へのヒット後に火のオーラエフェクトを追加（オプション）
@@ -166,9 +169,8 @@ const App: React.FC = () => {
     if (!availableSkillIds.includes(skillId)) {
       setAvailableSkillIds((prev) => [...prev, skillId]);
       setMessage({
-        text: `新しいスキル「${
-          skillData.find((s) => s.id === skillId)?.name
-        }」を習得した！`,
+        text: `新しいスキル「${skillData.find((s) => s.id === skillId)?.name
+          }」を習得した！`,
         sender: "system",
       });
     }
@@ -512,7 +514,7 @@ const App: React.FC = () => {
         });
         return;
       }
-      console.log("skilltype", skill.type);
+
       // スキルタイプに応じた処理
       if (skill.type === "heal") {
         // 回復スキルの場合
@@ -562,71 +564,80 @@ const App: React.FC = () => {
           });
         }
       } else if (skill.type === "damage") {
-        // ダメージスキルの場合
-        const result = skill.execute(player, currentEnemies, targetIndex);
+        // ダメージスキル（炎系等）の場合
         if (skill.id === "fire_bolt") {
-          if (result.success) {
-            // MP消費処理
-            setPlayer((prev) => {
-              return new PlayerModel(
-                prev.hp,
-                prev.maxHP,
-                prev.mp - skill.mpCost,
-                prev.maxMP,
-                prev.defense,
-                prev.magicDefense,
-                prev.level,
-                prev.exp,
-                prev.totalExp,
-                prev.speed,
-                prev.attack,
-                prev.luck,
-                prev.power,
-                prev.statusEffects
-              );
-            });
+          // MP消費処理（先に消費する）
+          setPlayer((prev) => {
+            return new PlayerModel(
+              prev.hp,
+              prev.maxHP,
+              prev.mp - skill.mpCost,
+              prev.maxMP,
+              prev.defense,
+              prev.magicDefense,
+              prev.level,
+              prev.exp,
+              prev.totalExp,
+              prev.speed,
+              prev.attack,
+              prev.luck,
+              prev.power,
+              prev.statusEffects
+            );
+          });
 
-            // ダメージ表示アニメーション
-            if (result.targetIndex !== undefined) {
-              combat.setDamageDisplay(
-                result.targetIndex,
-                result.damageAmount || 0
-              );
-              combat.setHitFlag(
-                result.targetIndex,
-                ENEMY_HIT_ANIMATION_DURATION
-              );
+          // 事前にスキル結果を計算（画面に表示するだけで、まだ適用はしない）
+          const result = skill.execute(player, currentEnemies, targetIndex);
 
-              // 対象の敵の位置にファイアボルトエフェクトを表示
-              const targetEnemy = currentEnemies[result.targetIndex];
-              const enemyPosition = targetEnemy.positionOffset || {
-                x: 0,
-                y: 0,
-              };
+          if (result.success && targetIndex !== undefined) {
+            // 対象の敵の位置にファイアボルトエフェクトを表示
+            const targetEnemy = currentEnemies[targetIndex];
+            const enemyPosition = targetEnemy.positionOffset || {
+              x: 0,
+              y: 0,
+            };
 
-              // 画面中央を基準に、敵の位置にエフェクトを表示
-              const centerX = window.innerWidth / 2;
-              const centerY = window.innerHeight / 2;
+            // 画面中央を基準に、敵の位置にエフェクトを表示
+            const centerX = window.innerWidth / 2;
+            const centerY = window.innerHeight / 2;
 
-              showFireSkillEffect(
-                "ファイアボルト",
-                {
-                  x: centerX + enemyPosition.x,
-                  y: centerY - 100 + enemyPosition.y,
-                },
-                result.damageAmount,
-                "low" // 低威力設定
-              );
-            }
+            // アニメーション表示、onComplete時にダメージを適用する
+            showFireSkillEffect(
+              "ファイアボルト",
+              {
+                x: centerX + enemyPosition.x,
+                y: centerY - 100 + enemyPosition.y,
+              },
+              result.damageAmount,
+              "low", // 低威力設定
+              () => {
+                // アニメーション完了後にダメージを適用する
+                if (result.targetIndex !== undefined) {
+                  // 対象の敵にダメージを適用
+                  const targetEnemy = currentEnemies[result.targetIndex];
+                  targetEnemy.takeDamage(result.damageAmount || 0);
 
-            // メッセージ表示
-            setMessage({
-              text: result.message,
-              sender: "player",
-            });
+                  // ダメージ表示とヒットアニメーション
+                  combat.setDamageDisplay(
+                    result.targetIndex,
+                    result.damageAmount || 0
+                  );
+                  combat.setHitFlag(
+                    result.targetIndex,
+                    ENEMY_HIT_ANIMATION_DURATION
+                  );
 
-            // 敵が倒されたかチェック
-            checkStageCompletion();
+                  // メッセージ表示
+                  setMessage({
+                    text: result.message,
+                    sender: "player",
+                  });
+
+                  // 敵が倒されたかチェック
+                  checkStageCompletion();
+                }
+              }
+            );
           }
         }
       }
@@ -714,7 +725,14 @@ const App: React.FC = () => {
             targetPosition={fireSkillEffect.targetPosition}
             damageValue={fireSkillEffect.damageValue}
             power={fireSkillEffect.power}
-            onComplete={() => setFireSkillEffect(null)}
+            onComplete={() => {
+              // 保存されたコールバックがあれば実行
+              if (fireSkillEffect.onComplete) {
+                fireSkillEffect.onComplete();
+              }
+              // エフェクト表示をクリア
+              setFireSkillEffect(null);
+            }}
             duration={1500}
           />
         </div>
@@ -746,11 +764,10 @@ const App: React.FC = () => {
           )}
           {/* BattleInterface */}
           <div
-            className={`${
-              isKeyboardVisible
-                ? "flex-[0.7]" // キーボード表示時は70%の高さ
-                : "flex-[0.55]" // 通常時は55%の高さ
-            } bg-gray-900 transition-all duration-300`}
+            className={`${isKeyboardVisible
+              ? "flex-[0.7]" // キーボード表示時は70%の高さ
+              : "flex-[0.55]" // 通常時は55%の高さ
+              } bg-gray-900 transition-all duration-300`}
           >
             <BattleInterface
               player={player}
@@ -769,11 +786,10 @@ const App: React.FC = () => {
 
           {/* BattleStage */}
           <div
-            className={`relative ${
-              isKeyboardVisible
-                ? "flex-[0.4]" // キーボード表示時は40%の高さ
-                : "flex-[0.45]" // 通常時は45%の高さ
-            } overflow-hidden transition-all duration-300`}
+            className={`relative ${isKeyboardVisible
+              ? "flex-[0.4]" // キーボード表示時は40%の高さ
+              : "flex-[0.45]" // 通常時は45%の高さ
+              } overflow-hidden transition-all duration-300`}
           >
             <BattleStage
               currentEnemies={currentEnemies}

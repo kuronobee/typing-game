@@ -1,11 +1,11 @@
-// src/components/FireSkillEffect.tsx
+// src/components/FireSkillEffect.tsx の修正
 import React, { useEffect, useState, useMemo } from 'react';
 
 interface FireSkillEffectProps {
   skillName: string;
   targetPosition: { x: number, y: number };
   damageValue?: number;
-  onComplete: () => void;
+  onComplete: () => void; // コールバック関数を必須にする
   duration?: number;
   power?: 'low' | 'medium' | 'high'; // スキルの威力に応じてエフェクトを変更
 }
@@ -104,8 +104,9 @@ const FireSkillEffect: React.FC<FireSkillEffectProps> = ({
       setAnimationStage('completed');
     }, powerSettings.chargeDuration + 400 + 700);
     
-    // エフェクト終了
+    // エフェクト終了 - ここでコールバックを実行する
     const completionTimer = setTimeout(() => {
+      // アニメーション終了時にonCompleteコールバックを実行
       onComplete();
     }, duration);
     
