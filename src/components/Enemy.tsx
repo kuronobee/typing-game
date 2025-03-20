@@ -65,26 +65,27 @@ const Enemy: React.FC<EnemyProps> = ({
             {showTargetIndicator && (
                 <div
                     className="absolute left-1/2 transform -translate-x-1/2 target-indicator"
-                    style={{ top: `${gaugeOffset - 25}px`, opacity: `${enemyDefeated ? 0 : 1}` }}
+                    style={{ top: `${gaugeOffset - 30}px`, opacity: `${enemyDefeated ? 0 : 1}` }}
                 />
+            )}
+            {/* showHealth フラグが true の場合のみ表示 - クラス名追加 */}
+            {showHealth && !enemyDefeated && (
+                <div className="absolute top-[-12px] left-1/2 transform -translate-x-1/2 w-28 h-3 bg-gray-300 rounded-full border-2 border-blue-50 enemy-health-bar"
+                    style={{ top: `${gaugeOffset - 7}px` }}>
+                    <div
+                        className="h-full bg-green-500 rounded-full transition-all duration-300"
+                        style={{ width: `${hpPercentage}%` }} />
+                </div>
             )}
             {/* 敵の頭上に小さい攻撃ゲージを表示 */}
             <div className="absolute top-[-12px] left-1/2 transform -translate-x-1/2 w-16 h-1 bg-gray-500 rounded attack-gauge"
-                style={{ top: `${gaugeOffset - 5}px` }}
+                style={{ top: `${gaugeOffset - 12}px` }}
             >
                 <div
                     className="h-full bg-red-500 rounded"
                     style={{ width: `${Math.min(progress * 100, 100)}%` }}
                 ></div>
             </div>
-            {/* showHealth フラグが true の場合のみ表示 - クラス名追加 */}
-            {showHealth && !enemyDefeated && (
-                <div className="absolute bottom-[-10px] left-1/2 transform -translate-x-1/2 w-28 h-3 bg-gray-300 rounded-full border-2 border-blue-50 enemy-health-bar">
-                    <div
-                        className="h-full bg-green-500 rounded-full transition-all duration-300"
-                        style={{ width: `${hpPercentage}%` }} />
-                </div>
-            )}
             {/* ダメージ数値の表示 */}
             {damage && (
                 <div
