@@ -132,6 +132,16 @@ const App: React.FC = () => {
     }
   };
 
+  const [playerHitEffect, setPlayerHitEffect] = useState<boolean>(false);
+
+  // ダメージを受けたときのプレイヤーエフェクトを表示
+  const showPlayerHitEffect = () => {
+    setPlayerHitEffect(true);
+    setTimeout(() => {
+      setPlayerHitEffect(false);
+    }, 600);
+  };
+
   // 初回マウント時の初期化
   useEffect(() => {
     // 初期スキルをセットアップ
@@ -195,7 +205,7 @@ const App: React.FC = () => {
   };
 
   // スキルエフェクトの表示処理
-  const showSkillEffectAnimation = (props: SkillEffectProps)=> {
+  const showSkillEffectAnimation = (props: SkillEffectProps) => {
     setSkillEffect(props);
 
     // スキル使用時のスクリーンエフェクト（オプション）
@@ -221,7 +231,7 @@ const App: React.FC = () => {
   const [showLevelUp, setShowLevelUp] = useState(false);
 
   // 戦闘システムフック
-  const combat = useCombatSystem(player, setPlayer, currentEnemies, setMessage);
+  const combat = useCombatSystem(player, setPlayer, currentEnemies, setMessage, showPlayerHitEffect);
 
   // プレイヤー更新時のrefを更新
   useEffect(() => {
@@ -396,7 +406,6 @@ const App: React.FC = () => {
 
       // 敵が倒されたかチェック
       if (targetEnemy.defeated) {
-        console.log("target_defeated");
         playerAttack.setEnemyDefeatedMessage(targetEnemy.name);
 
         // 次のターゲットを探す
@@ -423,18 +432,26 @@ const App: React.FC = () => {
     }
   };
 
-  // すべての敵が倒されたかチェック
-  const checkStageCompletion = () => {
-    const allDefeated = StageManager.isStageCompleted(currentEnemies);
-    if (allDefeated) {
-      const totalEXP = StageManager.calculateTotalExp(currentEnemies);
+  // // すべての敵が倒されたかチェック
+  // const checkStageCompletion = () => {
+  //   const allDefeated = StageManager.isStageCompleted(currentEnemies);
+  //   if (allDefeated) {
+  //     const totalEXP = StageManager.calculateTotalExp(currentEnemies);
 
-      setTimeout(() => {
-        gainEXP(totalEXP);
-        //setMessage(StageManager.createCompletionMessage(totalEXP));
-        setReadyForNextStage(true);
-      }, 2000);
-    }
+  //     setTimeout(() => {
+  //       gainEXP(totalEXP);
+  //       setReadyForNextStage(true);
+  //     }, 2000);
+  //   }
+  // };
+  // ステージクリア判定と経験値獲得の関数 - StageManagerを使用
+  const checkStageCompletion = (enemies = currentEnemies) => {
+    return StageManager.handleStageCompletion(
+      enemies,
+      gainEXP,
+      setMessage,
+      setReadyForNextStage
+    );
   };
 
   // プレイヤーに経験値を付与
@@ -592,12 +609,13 @@ const App: React.FC = () => {
               duration={1000}
             />
           )}
-          {/* BattleInterface */}
+
+          {/* BattleInterface - 上部に配置 */}
           <div
             className={`${isKeyboardVisible
-              ? "flex-[0.7]" // キーボード表示時は70%の高さ
-              : "flex-[0.55]" // 通常時は55%の高さ
-              } bg-gray-900 transition-all duration-300`}
+              ? "flex-1" // キーボード表示時は適切な高さに
+              : "flex-1"} // 通常時も同じ
+        bg-gray-900 transition-all duration-300`}
           >
             <BattleInterface
               player={player}
@@ -614,12 +632,12 @@ const App: React.FC = () => {
             />
           </div>
 
-          {/* BattleStage */}
+          {/* BattleStage - 下部に配置 (完全高さ指定) */}
           <div
-            className={`relative ${isKeyboardVisible
-              ? "flex-[0.4]" // キーボード表示時は40%の高さ
-              : "flex-[0.45]" // 通常時は45%の高さ
-              } overflow-hidden transition-all duration-300`}
+            className="relative overflow-hidden"
+            style={{
+              minHeight: `${isKeyboardVisible ? '400px' : '440px'}`
+            }}
           >
             <BattleStage
               currentEnemies={currentEnemies}
@@ -638,6 +656,7 @@ const App: React.FC = () => {
               comboCount={comboCount}
               isKeyboardVisible={isKeyboardVisible}
               inputRef={inputRef}
+              playerHitEffect={playerHitEffect} // プレイヤーダメージエフェクト用
             />
 
             {/* レベルアップ通知 */}

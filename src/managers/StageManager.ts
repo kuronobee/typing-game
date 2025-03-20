@@ -1,7 +1,9 @@
-// src/managers/StageManager.ts
+// src/managers/StageManager.ts の拡張バージョン
+
 import { Enemy as EnemyModel } from "../models/EnemyModel";
 import { stages } from "../data/stages";
 import { MessageType } from "../components/MessageDisplay";
+import { Player } from "../models/Player";
 
 /**
  * ステージの管理とステージ関連の機能を提供するクラス
@@ -59,7 +61,7 @@ export class StageManager {
    * @returns すべての敵が倒されたかどうか
    */
   static isStageCompleted(enemies: EnemyModel[]): boolean {
-    return enemies.every((enemy) => enemy.defeated);
+    return enemies.length > 0 && enemies.every((enemy) => enemy.defeated);
   }
 
   /**
@@ -81,5 +83,41 @@ export class StageManager {
       text: `全ての敵を倒した！${totalExp} EXPを獲得しました。Enterキーで次のステージに進む。`,
       sender: "system",
     };
+  }
+
+  /**
+   * ステージクリア判定と経験値獲得処理を実行
+   * @param enemies 敵の配列
+   * @param gainEXP 経験値獲得処理関数
+   * @param setMessage メッセージ表示関数
+   * @param setReadyForNextStage 次のステージ準備関数
+   * @returns ステージがクリアされたかどうか
+   */
+  static handleStageCompletion(
+    enemies: EnemyModel[],
+    gainEXP: (amount: number) => void,
+    setMessage: (message: MessageType) => void,
+    setReadyForNextStage: (ready: boolean) => void
+  ): boolean {
+    // ステージクリア判定
+    const isCompleted = this.isStageCompleted(enemies);
+    
+    if (isCompleted) {
+      // 経験値計算
+      const totalEXP = this.calculateTotalExp(enemies);
+      
+      setTimeout(() => {
+        // 経験値獲得
+        gainEXP(totalEXP);
+        
+        // クリアメッセージ表示
+        setMessage(this.createCompletionMessage(totalEXP));
+        
+        // 次のステージへの準備
+        setReadyForNextStage(true);
+      }, 2000);
+    }
+    
+    return isCompleted;
   }
 }

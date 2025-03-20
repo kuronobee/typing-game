@@ -1,5 +1,5 @@
 // src/handlers/SkillHandler.ts
-import { SkillInstance, SkillResult } from '../models/Skill';
+import { SkillInstance } from '../models/Skill';
 import { Player } from '../models/Player';
 import { Enemy } from '../models/EnemyModel';
 import { MessageType } from '../components/MessageDisplay';
@@ -34,7 +34,7 @@ export class SkillHandler {
   private setHitFlag: (targetIndex: number, duration: number) => void;
   private showSkillEffect: (props: SkillEffectProps) => void;
   private showFireSkillEffect: (props: FireSkillEffectProps) => void;
-  private checkStageCompletion: () => void;
+  private checkStageCompletion: (enemies: Enemy[]) => void;
   private setEnemyDefeatedMessage: (enemyName: string) => void;
   private findNextAliveEnemyIndex: (startIndex: number, enemies: Enemy[]) => number;
   private setTargetIndex: React.Dispatch<React.SetStateAction<number>>;
@@ -52,7 +52,7 @@ export class SkillHandler {
     setHitFlag: (targetIndex: number, duration: number) => void,
     showSkillEffect: (props: SkillEffectProps) => void,
     showFireSkillEffect: (props: FireSkillEffectProps) => void,
-    checkStageCompletion: () => void,
+    checkStageCompletion: (enemies: Enemy[]) => void,
     setEnemyDefeatedMessage: (enemyName: string) => void,
     findNextAliveEnemyIndex: (startIndex: number, enemies: Enemy[]) => number,
     setTargetIndex: React.Dispatch<React.SetStateAction<number>>,
@@ -202,7 +202,7 @@ export class SkillHandler {
     } else if (skill.id === "fire_ball") {
       this.handleFireBallSkill(skill, targetIndex);
     } else if (skill.id === "fire_storm") {
-      this.handleFireStormSkill(skill);
+      this.handleFireStormSkill(skill, targetIndex || 0);
     } else {
       // 一般的なダメージスキル処理
       this.handleGenericDamageSkill(skill, targetIndex);
@@ -304,7 +304,7 @@ export class SkillHandler {
                 
                 if (allDefeated) {
                   console.log("ステージクリア処理を実行");
-                  this.checkStageCompletion();
+                  this.checkStageCompletion(this.currentEnemies);
                 }
               }, 2000);
             }
@@ -396,7 +396,7 @@ export class SkillHandler {
   /**
    * ファイアストーム（全体攻撃）スキル処理
    */
-  private handleFireStormSkill(skill: SkillInstance): void {
+  private handleFireStormSkill(skill: SkillInstance,  targetIndex: number): void {
     // MP消費処理
     this.setPlayer((prev) => {
       return new Player(

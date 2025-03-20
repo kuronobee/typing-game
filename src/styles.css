@@ -928,3 +928,208 @@ input {
     transform: scale(1.05);
   }
 }
+
+/* src/styles.css に追加するプレイヤーキャラクター関連のスタイル */
+
+/* プレイヤーキャラクター基本スタイル */
+.player-character {
+    position: absolute;
+    bottom: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    opacity: 0.7;
+    transition: all 0.3s ease;
+    pointer-events: none;
+    z-index: 15;
+  }
+  
+  /* HP状態に応じたプレイヤー表示スタイル */
+  .player-healthy {
+    filter: brightness(1.1);
+  }
+  
+  .player-damaged {
+    filter: brightness(0.9) sepia(0.2);
+  }
+  
+  .player-critical {
+    filter: grayscale(50%) brightness(0.7);
+    animation: player-pulse 1.5s infinite;
+  }
+  
+  /* ダメージを受けた時のプレイヤーエフェクト */
+  .player-hit {
+    animation: player-damage-flash 0.5s;
+  }
+  
+  @keyframes player-pulse {
+    0%, 100% {
+      opacity: 0.7;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+  
+  @keyframes player-damage-flash {
+    0% {
+      filter: brightness(1);
+      transform: translateX(-50%) scale(1);
+    }
+    50% {
+      filter: brightness(2) saturate(1.5);
+      transform: translateX(-50%) scale(1.05);
+    }
+    100% {
+      filter: brightness(1);
+      transform: translateX(-50%) scale(1);
+    }
+  }
+  
+  /* 戦闘アクション時のプレイヤーエフェクト */
+  .player-action {
+    animation: player-attack 0.3s;
+  }
+  
+  @keyframes player-attack {
+    0% {
+      transform: translateX(-50%) translateY(0);
+    }
+    50% {
+      transform: translateX(-50%) translateY(-10px);
+    }
+    100% {
+      transform: translateX(-50%) translateY(0);
+    }
+  }
+  
+  /* HPが低い時の画面エフェクト */
+  .low-health-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 20;
+    border-radius: 0.5rem;
+    box-shadow: inset 0 0 40px 20px rgba(255, 0, 0, 0.3);
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+
+  /* src/styles.css に追加するプレイヤーキャラクターアニメーション */
+
+/* プレイヤーがダメージを受けた時のアニメーション */
+@keyframes player-damage-flash {
+    0% {
+      filter: brightness(1);
+      transform: translateX(-50%) scale(1);
+    }
+    50% {
+      filter: brightness(2) saturate(1.5);
+      transform: translateX(-50%) scale(1.05);
+    }
+    100% {
+      filter: brightness(1);
+      transform: translateX(-50%) scale(1);
+    }
+  }
+  
+  .player-hit {
+    animation: player-damage-flash 0.5s ease-in-out;
+  }
+  
+  /* プレイヤーがスキルを使用する時のアニメーション */
+  @keyframes player-skill-cast {
+    0% {
+      transform: translateX(-50%) translateY(0);
+    }
+    25% {
+      transform: translateX(-50%) translateY(-5px);
+    }
+    50% {
+      transform: translateX(-50%) translateY(0);
+    }
+    75% {
+      transform: translateX(-55%) translateY(0);
+    }
+    100% {
+      transform: translateX(-50%) translateY(0);
+    }
+  }
+  
+  .player-casting {
+    animation: player-skill-cast 0.5s ease-in-out;
+  }
+
+  /* src/styles.css に追加する瀕死状態用のCSS */
+
+/* 瀕死状態の境界線をゆっくりと点滅させるアニメーション */
+@keyframes low-health-pulse {
+    0% {
+      border-color: rgba(220, 38, 38, 0.5); /* red-600 with 50% opacity */
+      box-shadow: inset 0 0 5px 2px rgba(220, 38, 38, 0.2);
+    }
+    50% {
+      border-color: rgba(239, 68, 68, 0.8); /* red-500 with 80% opacity */
+      box-shadow: inset 0 0 8px 3px rgba(239, 68, 68, 0.4);
+    }
+    100% {
+      border-color: rgba(220, 38, 38, 0.5); /* red-600 with 50% opacity */
+      box-shadow: inset 0 0 5px 2px rgba(220, 38, 38, 0.2);
+    }
+  }
+  
+  .low-health-border {
+    animation: low-health-pulse 2s infinite ease-in-out;
+    border-width: 2px;
+    border-style: solid;
+  }
+  
+  /* プレイヤーキャラクターの瀕死状態アニメーション */
+  @keyframes player-low-health {
+    0%, 100% {
+      filter: brightness(0.9) grayscale(20%);
+    }
+    50% {
+      filter: brightness(0.8) grayscale(30%) sepia(0.2);
+    }
+  }
+  
+  .player-critical {
+    animation: player-low-health 3s infinite ease-in-out;
+  }
+
+  /* src/styles.css に追加 - プレイヤー攻撃アニメーション */
+
+@keyframes player-shake {
+    0%, 100% {
+      transform: translateX(-50%) rotate(0deg);
+    }
+    10% {
+      transform: translateX(-52%) rotate(-2deg);
+    }
+    20% {
+      transform: translateX(-48%) rotate(2deg);
+    }
+    30% {
+      transform: translateX(-52%) rotate(-2deg);
+    }
+    40% {
+      transform: translateX(-48%) rotate(2deg);
+    }
+    50% {
+      transform: translateX(-51%) rotate(-1deg);
+    }
+    60% {
+      transform: translateX(-49%) rotate(1deg);
+    }
+    70% {
+      transform: translateX(-50.5%) rotate(-0.5deg);
+    }
+    80% {
+      transform: translateX(-49.5%) rotate(0.5deg);
+    }
+  }
+  
+  .player-shake {
+    animation: player-shake 0.6s ease;
+  }

@@ -20,6 +20,8 @@ const BuffEffect: React.FC<BuffEffectProps> = ({
   onComplete,
   skillName
 }) => {
+  void targetIndex;
+  
   const [visible, setVisible] = useState(true);
   
   // エフェクト表示時間のタイマー

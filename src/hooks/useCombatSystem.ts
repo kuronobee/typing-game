@@ -1,4 +1,4 @@
-// src/hooks/useCombatSystem.ts
+// src/hooks/useCombatSystem.ts の修正
 import { useState, useRef, useCallback } from 'react';
 import { Player as PlayerModel, StatusEffect } from "../models/Player";
 import { Enemy as EnemyModel } from "../models/EnemyModel";
@@ -12,12 +12,14 @@ type DamageDisplay = { value: number; id: number };
 
 /**
  * 戦闘システムを管理するカスタムフック
+ * @param showPlayerHitEffect プレイヤーが攻撃を受けた時に呼び出す関数
  */
 export function useCombatSystem(
   player: PlayerModel, 
   setPlayer: React.Dispatch<React.SetStateAction<PlayerModel>>,
   currentEnemies: EnemyModel[],
-  setMessage: React.Dispatch<React.SetStateAction<MessageType | null>>
+  setMessage: React.Dispatch<React.SetStateAction<MessageType | null>>,
+  showPlayerHitEffect?: () => void // 追加: プレイヤーヒットエフェクト表示関数
 ) {
   // 視覚効果の状態
   const [isScreenHit, setIsScreenHit] = useState<boolean>(false);
@@ -50,6 +52,8 @@ export function useCombatSystem(
     // 毎秒毒ダメージを与えるためのインターバル設定
     poisonTimerRef.current = setInterval(() => {
       setPlayer((prev) => prev.takeDamage(poisonEffect.damagePerTick));
+      // プレイヤーヒットエフェクト表示（オプション）
+      if (showPlayerHitEffect) showPlayerHitEffect();
     }, 1000);
 
     // 指定された期間後に毒効果をクリア
@@ -60,7 +64,7 @@ export function useCombatSystem(
         poisonTimerRef.current = null;
       }
     }, poisonEffect.ticks * 1000);
-  }, [setPlayer]);
+  }, [setPlayer, showPlayerHitEffect]);
 
   // 敵の攻撃アニメーションをトリガー
   const triggerEnemyAttackAnimation = useCallback((
@@ -169,6 +173,9 @@ export function useCombatSystem(
       // プレイヤーにダメージを適用
       setPlayer((prev) => prev.takeDamage(damageToApply));
 
+      // プレイヤーヒットエフェクト表示
+      if (showPlayerHitEffect) showPlayerHitEffect();
+
       // 攻撃タイプに応じた画面エフェクトを適用
       if (damageToApply > 0) {
         if (isCritical) {
@@ -184,7 +191,7 @@ export function useCombatSystem(
         }
       }
     },
-    [currentEnemies, playerRef, setPlayer, setMessage, handlePoisonAttack, triggerEnemyAttackAnimation]
+    [currentEnemies, playerRef, setPlayer, setMessage, handlePoisonAttack, triggerEnemyAttackAnimation, showPlayerHitEffect]
   );
 
   // プレイヤーの参照を更新

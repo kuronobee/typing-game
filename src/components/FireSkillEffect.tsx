@@ -30,6 +30,8 @@ const FireSkillEffect: React.FC<FireSkillEffectProps> = ({
   duration = 1500,
   power = 'medium'
 }) => {
+  void skillName;
+  
   const [animationStage, setAnimationStage] = useState<'charging' | 'firing' | 'impact' | 'completed'>('charging');
   
   // パワーに応じてパラメータを調整
