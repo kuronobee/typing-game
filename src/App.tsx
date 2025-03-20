@@ -119,7 +119,6 @@ const App: React.FC = () => {
     setFireSkillEffect({
       skillName,
       targetPosition,
-      damageValue,
       power,
       onComplete // コールバック関数をステートに保存
     });
@@ -128,7 +127,7 @@ const App: React.FC = () => {
     if (targetPosition && damageValue) {
       setTimeout(() => {
         // 対象の敵要素に一時的にfire-auraクラスを追加
-        const enemyElements = document.querySelectorAll(".enemy-container");
+        const enemyElements = document.querySelectorAll(".compact-battle-stage");
         if (enemyElements.length > 0) {
           // ターゲットインデックスに応じた敵要素を取得
           const targetEnemyElement = enemyElements[targetIndex];
@@ -357,46 +356,9 @@ const App: React.FC = () => {
       if (activeSkill && activeSkill.activationTiming === "onCorrectAnswer") {
         // スキルを実行
         console.log("active", activeSkill);
-        activeSkill.activationTiming = "onCommand";
+        activeSkill.activationTiming = "onCommand"; // handleSkillUseでスキルを発動させるため、一時的にonCommandへ。
         handleSkillUse(activeSkill, targetIndex);
-        // const result = activeSkill.execute(player, currentEnemies, targetIndex);
-
-        // if (result.success) {
-        //   // MP消費処理
-        //   setPlayer((prev) => {
-        //     return new PlayerModel(
-        //       prev.hp,
-        //       prev.maxHP,
-        //       prev.mp - activeSkill.mpCost,
-        //       prev.maxMP,
-        //       prev.defense,
-        //       prev.magicDefense,
-        //       prev.level,
-        //       prev.exp,
-        //       prev.totalExp,
-        //       prev.speed,
-        //       prev.attack,
-        //       prev.luck,
-        //       prev.power,
-        //       prev.statusEffects
-        //     );
-        //   });
-
-        //   // スキルダメージ表示
-        //   if (result.targetIndex !== undefined) {
-        //     combat.setDamageDisplay(
-        //       result.targetIndex,
-        //       result.damageAmount || 0
-        //     );
-        //     combat.setHitFlag(result.targetIndex, ENEMY_HIT_ANIMATION_DURATION);
-        //   }
-        //   console.log(result.message);
-        //   // スキルメッセージ表示
-        //   setMessage({
-        //     text: result.message,
-        //     sender: "player",
-        //   });
-        // }
+        activeSkill.activationTiming = "onCorrectAnswer";
 
         // アクティブスキルをリセット
         setActiveSkill(null);
@@ -423,6 +385,7 @@ const App: React.FC = () => {
 
       // 敵が倒されたかチェック
       if (targetEnemy.defeated) {
+        console.log("target_defeated");
         playerAttack.setEnemyDefeatedMessage(targetEnemy.name);
 
         // 次のターゲットを探す
@@ -566,6 +529,10 @@ const App: React.FC = () => {
       } else if (skill.type === "damage") {
         // ダメージスキル（炎系等）の場合
         if (skill.id === "fire_bolt") {
+          if (targetIndex === undefined) {
+            setMessage({ text: "攻撃対象が定まっていない！", sender: "system" });
+            return;
+          }
           // MP消費処理（先に消費する）
           setPlayer((prev) => {
             return new PlayerModel(
@@ -588,7 +555,6 @@ const App: React.FC = () => {
 
           // 事前にスキル結果を計算（画面に表示するだけで、まだ適用はしない）
           const result = skill.execute(player, currentEnemies, targetIndex);
-
           if (result.success && targetIndex !== undefined) {
             // 対象の敵の位置にファイアボルトエフェクトを表示
             const targetEnemy = currentEnemies[targetIndex];
@@ -613,9 +579,6 @@ const App: React.FC = () => {
               () => {
                 // アニメーション完了後にダメージを適用する
                 if (result.targetIndex !== undefined) {
-                  // 対象の敵にダメージを適用
-                  const targetEnemy = currentEnemies[result.targetIndex];
-                  targetEnemy.takeDamage(result.damageAmount || 0);
 
                   // ダメージ表示とヒットアニメーション
                   combat.setDamageDisplay(
@@ -632,7 +595,25 @@ const App: React.FC = () => {
                     text: result.message,
                     sender: "player",
                   });
+                  // 対象の敵にダメージを適用
+                  const targetEnemy = currentEnemies[result.targetIndex];
+                  targetEnemy.takeDamage(result.damageAmount || 0);
 
+                  if (targetEnemy.currentHP - (result.damageAmount || 0) <= 0) {
+                    playerAttack.setEnemyDefeatedMessage(targetEnemy.name);
+
+                    // 次のターゲットを探す
+                    setTimeout(() => {
+                      const nextIndex = StageManager.findNextAliveEnemyIndex(
+                        targetIndex,
+                        currentEnemies
+                      );
+                      if (nextIndex !== -1) {
+                        setTargetIndex(nextIndex);
+                      }
+
+                    } , 2000);
+                  }
                   // 敵が倒されたかチェック
                   checkStageCompletion();
                 }

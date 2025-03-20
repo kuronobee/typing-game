@@ -93,8 +93,8 @@ export class FireSpellSkill extends Skill {
       const damageAmount = Math.floor((this.basePower + magicPower * 0.5) * randomFactor);
       
       // 実際のダメージ処理はターゲットのメソッドで行う
-      target.takeDamage(damageAmount);
-      
+      //target.takeDamage(damageAmount);
+      console.log("target_defeated", target.defeated);
       // 状態更新
       this.afterUse(player);
       return {

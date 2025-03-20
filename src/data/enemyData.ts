@@ -209,7 +209,7 @@ const enemies: IEnemyData[] = [
   {
     name: "グリズリー",
     level: 3,
-    maxHP: 150,
+    maxHP: 30,
     attackPower: 12,
     defense: 5,
     exp: 70,

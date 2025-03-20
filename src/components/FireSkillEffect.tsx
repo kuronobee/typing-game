@@ -26,7 +26,6 @@ interface FireParticle {
 const FireSkillEffect: React.FC<FireSkillEffectProps> = ({
   skillName,
   targetPosition,
-  damageValue,
   onComplete,
   duration = 1500,
   power = 'medium'
@@ -121,28 +120,28 @@ const FireSkillEffect: React.FC<FireSkillEffectProps> = ({
   // スキル発動源の位置（画面中央下部）
   const sourcePosition = {
     x: window.innerWidth / 2,
-    y: window.innerHeight * 0.8
+    y: window.innerHeight * 0.5
   };
   
-  // チャージエフェクト
-  const renderChargingEffect = () => {
-    if (animationStage !== 'charging') return null;
+  // // チャージエフェクト
+  // const renderChargingEffect = () => {
+  //   if (animationStage !== 'charging') return null;
     
-    return (
-      <div 
-        className="absolute w-16 h-16 rounded-full"
-        style={{
-          left: sourcePosition.x - 32,
-          top: sourcePosition.y - 32,
-          background: `radial-gradient(circle, ${powerSettings.colors[1]}, ${powerSettings.colors[0]})`,
-          boxShadow: `0 0 20px ${powerSettings.colors[0]}`,
-          animation: 'pulseGrow 0.5s ease-in-out infinite alternate',
-          zIndex: 100
-        }}
-      />
-    );
-  };
-  
+  //   return (
+  //     <div 
+  //       className="absolute w-16 h-16 rounded-full"
+  //       style={{
+  //         left: sourcePosition.x - 32,
+  //         top: sourcePosition.y - 32,
+  //         background: `radial-gradient(circle, ${powerSettings.colors[1]}, ${powerSettings.colors[0]})`,
+  //         boxShadow: `0 0 20px ${powerSettings.colors[0]}`,
+  //         animation: 'pulseGrow 0.5s ease-in-out infinite alternate',
+  //         zIndex: 100
+  //       }}
+  //     />
+  //   );
+  // };
+
   // 発射エフェクト
   const renderFiringEffect = () => {
     if (animationStage !== 'firing') return null;
@@ -262,7 +261,7 @@ const FireSkillEffect: React.FC<FireSkillEffectProps> = ({
           />
         ))}
         
-        {/* ダメージ表示 */}
+        {/* ダメージ表示
         {damageValue && (
           <div
             className="absolute text-3xl font-bold text-center"
@@ -277,9 +276,9 @@ const FireSkillEffect: React.FC<FireSkillEffectProps> = ({
           >
             {damageValue}
           </div>
-        )}
+        )} */}
         
-        {/* スキル名表示 */}
+        {/* スキル名表示 
         <div
           className="absolute whitespace-nowrap"
           style={{
@@ -294,14 +293,14 @@ const FireSkillEffect: React.FC<FireSkillEffectProps> = ({
           }}
         >
           {skillName}
-        </div>
+        </div>*/}
       </div>
     );
   };
 
   return (
     <div className="fixed inset-0 pointer-events-none z-50">
-      {renderChargingEffect()}
+      {/*{renderChargingEffect()}*/}
       {renderFiringEffect()}
       {renderImpactEffect()}
     </div>

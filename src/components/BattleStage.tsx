@@ -185,7 +185,7 @@ const BattleStage: React.FC<BattleStageProps> = ({
               enemyHit={enemyHitFlags[index]}
               playerHit={enemyAttackFlags[index]}
               playerFire={enemyFireFlags[index]}
-              enemyDefeated={enemy.currentHP <= 0}
+              enemyDefeated={enemy.defeated}
               showHealth={isTarget}
               showTargetIndicator={isTarget}
               progress={enemyProgress}

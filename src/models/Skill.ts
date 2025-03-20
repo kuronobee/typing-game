@@ -103,7 +103,7 @@ export class Skill implements ISkill {
 
   // スキル使用後の処理
   afterUse(player: Player): void {
-    this.state.remainingCooldown = this.cooldown;
+    this.state.remainingCooldown = 0; //this.cooldown;
     player.mp = Math.max(0, player.mp - this.mpCost);
   }
 
