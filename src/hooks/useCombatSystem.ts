@@ -1,5 +1,5 @@
 // src/hooks/useCombatSystem.ts の修正
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback } from "react";
 import { Player as PlayerModel, StatusEffect } from "../models/Player";
 import { Enemy as EnemyModel } from "../models/EnemyModel";
 import { MessageType } from "../components/MessageDisplay";
@@ -15,7 +15,7 @@ type DamageDisplay = { value: number; id: number };
  * @param showPlayerHitEffect プレイヤーが攻撃を受けた時に呼び出す関数
  */
 export function useCombatSystem(
-  player: PlayerModel, 
+  player: PlayerModel,
   setPlayer: React.Dispatch<React.SetStateAction<PlayerModel>>,
   currentEnemies: EnemyModel[],
   setMessage: React.Dispatch<React.SetStateAction<MessageType | null>>,
@@ -27,11 +27,15 @@ export function useCombatSystem(
   const [enemyAttackFlags, setEnemyAttackFlags] = useState<boolean[]>([]);
   const [enemyFireFlags, setEnemyFireFlags] = useState<boolean[]>([]);
   const [enemyHitFlags, setEnemyHitFlags] = useState<boolean[]>([]);
-  const [damageNumbers, setDamageNumbers] = useState<(DamageDisplay | null)[]>([]);
-  
+  const [damageNumbers, setDamageNumbers] = useState<(DamageDisplay | null)[]>(
+    []
+  );
+  // プレイヤーダメージ表示用の状態を追加
+  const [playerDamageDisplay, setPlayerDamageDisplay] = useState<{value: number, id: number} | null>(null);
+
   // プレイヤーの最新情報を保持するためのref
   const playerRef = useRef(player);
-  
+
   // 毒の場合は毒タイマー
   const poisonTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -44,50 +48,56 @@ export function useCombatSystem(
   }, [currentEnemies]);
 
   // 毒状態効果の処理
-  const handlePoisonAttack = useCallback((poisonEffect: StatusEffect) => {
-    if (poisonTimerRef.current !== null) {
-      return;
-    }
-
-    // 毎秒毒ダメージを与えるためのインターバル設定
-    poisonTimerRef.current = setInterval(() => {
-      setPlayer((prev) => prev.takeDamage(poisonEffect.damagePerTick));
-      // プレイヤーヒットエフェクト表示（オプション）
-      if (showPlayerHitEffect) showPlayerHitEffect();
-    }, 1000);
-
-    // 指定された期間後に毒効果をクリア
-    setTimeout(() => {
-      if (poisonTimerRef.current) {
-        clearInterval(poisonTimerRef.current);
-        setPlayer((prev) => prev.removeStatusEffects("poison"));
-        poisonTimerRef.current = null;
+  const handlePoisonAttack = useCallback(
+    (poisonEffect: StatusEffect) => {
+      if (poisonTimerRef.current !== null) {
+        return;
       }
-    }, poisonEffect.ticks * 1000);
-  }, [setPlayer, showPlayerHitEffect]);
+
+      // 毎秒毒ダメージを与えるためのインターバル設定
+      poisonTimerRef.current = setInterval(() => {
+        setPlayer((prev) => prev.takeDamage(poisonEffect.damagePerTick));
+        // プレイヤーヒットエフェクト表示（オプション）
+        if (showPlayerHitEffect) showPlayerHitEffect();
+      }, 1000);
+
+      // 指定された期間後に毒効果をクリア
+      setTimeout(() => {
+        if (poisonTimerRef.current) {
+          clearInterval(poisonTimerRef.current);
+          setPlayer((prev) => prev.removeStatusEffects("poison"));
+          poisonTimerRef.current = null;
+        }
+      }, poisonEffect.ticks * 1000);
+    },
+    [setPlayer, showPlayerHitEffect]
+  );
 
   // 敵の攻撃アニメーションをトリガー
-  const triggerEnemyAttackAnimation = useCallback((
-    setFunction: React.Dispatch<React.SetStateAction<boolean[]>>,
-    attackingEnemy: EnemyModel,
-    duration: number
-  ) => {
-    const index = currentEnemies.findIndex((e) => e === attackingEnemy);
-    
-    setFunction((prev) => {
-      const newFlags = [...prev];
-      newFlags[index] = true;
-      return newFlags;
-    });
-    
-    setTimeout(() => {
+  const triggerEnemyAttackAnimation = useCallback(
+    (
+      setFunction: React.Dispatch<React.SetStateAction<boolean[]>>,
+      attackingEnemy: EnemyModel,
+      duration: number
+    ) => {
+      const index = currentEnemies.findIndex((e) => e === attackingEnemy);
+
       setFunction((prev) => {
         const newFlags = [...prev];
-        newFlags[index] = false;
+        newFlags[index] = true;
         return newFlags;
       });
-    }, duration);
-  }, [currentEnemies]);
+
+      setTimeout(() => {
+        setFunction((prev) => {
+          const newFlags = [...prev];
+          newFlags[index] = false;
+          return newFlags;
+        });
+      }, duration);
+    },
+    [currentEnemies]
+  );
 
   // 敵がプレイヤーを攻撃する処理
   const handleEnemyAttack = useCallback(
@@ -105,7 +115,7 @@ export function useCombatSystem(
         setPlayer((prev) =>
           prev.applyStatusEffects(attack.result.statusEffects)
         );
-        
+
         // 毒効果の処理
         const poisonEffect = attack.result.statusEffects.find(
           (e) => e.type === "poison"
@@ -113,7 +123,7 @@ export function useCombatSystem(
         if (poisonEffect) {
           handlePoisonAttack(poisonEffect);
         }
-        
+
         // 炎の息の処理
         if (attack.special === "fire breath") {
           triggerEnemyAttackAnimation(
@@ -122,10 +132,10 @@ export function useCombatSystem(
             PLAYER_FIREBREATH_ANIMATION_DURATION
           );
         }
-        
+
         specialMessage = `${attack.result.message}`;
         damageToApply = attack.result.damage;
-        
+
         const effect_message = `${specialMessage}`;
         const damage_message =
           damageToApply !== 0 ? `${damageToApply}のダメージ！` : "";
@@ -137,7 +147,7 @@ export function useCombatSystem(
           attackingEnemy,
           PLAYER_HIT_ANIMATION_DURATION
         );
-        
+
         damageToApply = attack.result.damage;
 
         // クリティカルヒット判定
@@ -169,7 +179,7 @@ export function useCombatSystem(
           });
         }
       }
-      
+
       // プレイヤーにダメージを適用
       setPlayer((prev) => prev.takeDamage(damageToApply));
 
@@ -178,6 +188,17 @@ export function useCombatSystem(
 
       // 攻撃タイプに応じた画面エフェクトを適用
       if (damageToApply > 0) {
+        // プレイヤーダメージ表示を設定
+        setPlayerDamageDisplay({
+          value: damageToApply,
+          id: Date.now(),
+        });
+
+        // 一定時間後に表示をクリア
+        setTimeout(() => {
+          setPlayerDamageDisplay(null);
+        }, 1500);
+
         if (isCritical) {
           setIsScreenHit(true);
           setTimeout(() => {
@@ -191,7 +212,15 @@ export function useCombatSystem(
         }
       }
     },
-    [currentEnemies, playerRef, setPlayer, setMessage, handlePoisonAttack, triggerEnemyAttackAnimation, showPlayerHitEffect]
+    [
+      currentEnemies,
+      playerRef,
+      setPlayer,
+      setMessage,
+      handlePoisonAttack,
+      triggerEnemyAttackAnimation,
+      showPlayerHitEffect,
+    ]
   );
 
   // プレイヤーの参照を更新
@@ -200,23 +229,26 @@ export function useCombatSystem(
   }, [player]);
 
   // ダメージ表示の設定
-  const setDamageDisplay = useCallback((targetIndex: number, damage: number) => {
-    const newDamage: DamageDisplay = { value: damage, id: Date.now() };
-    
-    setDamageNumbers((prev) => {
-      const newArr = [...prev];
-      newArr[targetIndex] = newDamage;
-      return newArr;
-    });
-    
-    setTimeout(() => {
+  const setDamageDisplay = useCallback(
+    (targetIndex: number, damage: number) => {
+      const newDamage: DamageDisplay = { value: damage, id: Date.now() };
+
       setDamageNumbers((prev) => {
         const newArr = [...prev];
-        newArr[targetIndex] = null;
+        newArr[targetIndex] = newDamage;
         return newArr;
       });
-    }, 1000);
-  }, []);
+
+      setTimeout(() => {
+        setDamageNumbers((prev) => {
+          const newArr = [...prev];
+          newArr[targetIndex] = null;
+          return newArr;
+        });
+      }, 1000);
+    },
+    []
+  );
 
   // ヒットフラグの設定
   const setHitFlag = useCallback((targetIndex: number, duration: number) => {
@@ -225,7 +257,7 @@ export function useCombatSystem(
       newFlags[targetIndex] = true;
       return newFlags;
     });
-    
+
     setTimeout(() => {
       setEnemyHitFlags((prev) => {
         const newFlags = [...prev];
@@ -244,12 +276,13 @@ export function useCombatSystem(
     enemyHitFlags,
     damageNumbers,
     playerRef,
-    
+    playerDamageDisplay,
+
     // 関数
     initializeAnimations,
     handleEnemyAttack,
     updatePlayerRef,
     setDamageDisplay,
-    setHitFlag
+    setHitFlag,
   };
 }

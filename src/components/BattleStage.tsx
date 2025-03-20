@@ -37,6 +37,7 @@ interface BattleStageProps {
   isKeyboardVisible?: boolean;
   inputRef: React.RefObject<HTMLInputElement | null>;
   playerHitEffect?: boolean;
+  playerDamageDisplay?: { value: number; id: number } | null;
 }
 
 const BattleStage: React.FC<BattleStageProps> = ({
@@ -57,6 +58,7 @@ const BattleStage: React.FC<BattleStageProps> = ({
   isKeyboardVisible = false,
   inputRef,
   playerHitEffect = false,
+  playerDamageDisplay = null,
 }) => {
   // 各敵毎の攻撃ゲージ進捗を管理する配列(0〜1)
   const [attackProgresses, setAttackProgresses] = useState<number[]>([]);
@@ -308,6 +310,19 @@ const BattleStage: React.FC<BattleStageProps> = ({
               transition: "filter 0.5s ease"
             }}
           />
+          {/* プレイヤーダメージ表示を追加 */}
+          {playerDamageDisplay && (
+            <div
+              key={playerDamageDisplay.id}
+              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-red-500 font-bold text-3xl animate-damage-fade"
+              style={{
+                textShadow: '2px 2px 4px rgba(0, 0, 0, 0.7)',
+                zIndex: 30 // プレイヤー画像の上に表示されるようにzIndexを高く設定
+              }}
+            >
+              {playerDamageDisplay.value}
+            </div>
+          )}
         </div>
       </div>
     </div>

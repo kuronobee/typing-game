@@ -657,6 +657,7 @@ const App: React.FC = () => {
               isKeyboardVisible={isKeyboardVisible}
               inputRef={inputRef}
               playerHitEffect={playerHitEffect} // プレイヤーダメージエフェクト用
+              playerDamageDisplay={combat.playerDamageDisplay} // プレイヤーダメージ表示用
             />
 
             {/* レベルアップ通知 */}
