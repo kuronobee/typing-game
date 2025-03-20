@@ -599,7 +599,7 @@ const App: React.FC = () => {
                   const targetEnemy = currentEnemies[result.targetIndex];
                   targetEnemy.takeDamage(result.damageAmount || 0);
 
-                  if (targetEnemy.currentHP - (result.damageAmount || 0) <= 0) {
+                  if (targetEnemy.currentHP <= 0) {
                     playerAttack.setEnemyDefeatedMessage(targetEnemy.name);
 
                     // 次のターゲットを探す
