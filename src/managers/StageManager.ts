@@ -3,7 +3,6 @@
 import { Enemy as EnemyModel } from "../models/EnemyModel";
 import { stages } from "../data/stages";
 import { MessageType } from "../components/MessageDisplay";
-import { Player } from "../models/Player";
 
 /**
  * ステージの管理とステージ関連の機能を提供するクラス

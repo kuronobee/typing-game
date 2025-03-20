@@ -9,16 +9,19 @@ interface SkillBarProps {
   player: Player;
   onSkillUse: (skillIndex: number) => void;
   activeSkillIndex: number | null;
+  inputRef: React.RefObject<HTMLInputElement | null>;
 }
 
 const SkillBar: React.FC<SkillBarProps> = ({
   skills,
   player,
   onSkillUse,
-  activeSkillIndex
+  activeSkillIndex,
+  inputRef
 }) => {
   // スキルスロットが選択された時の処理
   const handleSkillClick = (index: number) => {
+    inputRef.current?.focus();  // 入力フィールドにフォーカスする
     const skill = skills[index];
     
     // スキルが存在し、使用可能な場合

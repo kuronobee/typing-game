@@ -386,7 +386,7 @@ export class SkillHandler {
               }, 2000);
             }
             
-            this.checkStageCompletion();
+            this.checkStageCompletion(this.currentEnemies);
           }
         }
       });
@@ -490,7 +490,7 @@ export class SkillHandler {
           }
           
           // ステージクリア判定
-          this.checkStageCompletion();
+          this.checkStageCompletion(this.currentEnemies);
         }
       });
     }
@@ -581,7 +581,7 @@ export class SkillHandler {
       });
       
       // ステージクリア判定
-      this.checkStageCompletion();
+      this.checkStageCompletion(this.currentEnemies);
     } else {
       this.setMessage({
         text: result.message,

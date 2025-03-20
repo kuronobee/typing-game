@@ -160,6 +160,7 @@ const BattleInterface: React.FC<BattleInterfaceProps> = ({
             player={player}
             onSkillUse={handleSkillUse}
             activeSkillIndex={activeSkillIndex}
+            inputRef={inputRef}
           />
           
           {/* スキル管理ボタン - 小さいサイズに */}
