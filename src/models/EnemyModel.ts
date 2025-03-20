@@ -87,8 +87,10 @@ export class Enemy {
   // ダメージを受ける処理（内部ロジック）
   takeDamage(amount: number): void {
     this.currentHP = Math.max(this.currentHP - amount, 0);
-    if (this.currentHP === 0) {
+    console.log(`${this.name}のHP: ${this.currentHP}`);
+    if (this.currentHP <= 0) {
       this.defeated = true;
+      console.log(`${this.name}は倒れた！`);
     }
   }
 

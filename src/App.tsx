@@ -34,6 +34,7 @@ import {
 } from "./data/skillData";
 import SkillEffect from "./components/SkillEffect";
 import FireSkillEffect from "./components/FireSkillEffect";
+import { SkillHandler, SkillEffectProps, FireSkillEffectProps } from "./handlers/SkillHandler";
 
 const App: React.FC = () => {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -102,13 +103,7 @@ const App: React.FC = () => {
 
   // 2. 炎系スキル表示関数を追加
   // 炎系スキルのエフェクトを表示する関数
-  const showFireSkillEffect = (
-    skillName: string,
-    targetPosition: { x: number; y: number },
-    damageValue?: number,
-    power: "low" | "medium" | "high" = "medium",
-    onComplete?: () => void
-  ) => {
+  const showFireSkillEffect = (props: FireSkillEffectProps) => {
     // 画面効果を追加（オプション）
     document.body.classList.add("fire-skill-flash");
     setTimeout(() => {
@@ -116,15 +111,10 @@ const App: React.FC = () => {
     }, 500);
 
     // エフェクト状態を設定
-    setFireSkillEffect({
-      skillName,
-      targetPosition,
-      power,
-      onComplete // コールバック関数をステートに保存
-    });
+    setFireSkillEffect(props);
 
     // 敵へのヒット後に火のオーラエフェクトを追加（オプション）
-    if (targetPosition && damageValue) {
+    if (props.targetPosition && props.damageValue) {
       setTimeout(() => {
         // 対象の敵要素に一時的にfire-auraクラスを追加
         const enemyElements = document.querySelectorAll(".compact-battle-stage");
@@ -205,22 +195,17 @@ const App: React.FC = () => {
   };
 
   // スキルエフェクトの表示処理
-  const showSkillEffectAnimation = (
-    type: "heal" | "damage" | "buff" | "debuff",
-    targetPosition?: { x: number; y: number },
-    value?: number,
-    skillName?: string
-  ) => {
-    setSkillEffect({ type, targetPosition, value, skillName });
+  const showSkillEffectAnimation = (props: SkillEffectProps)=> {
+    setSkillEffect(props);
 
     // スキル使用時のスクリーンエフェクト（オプション）
-    if (type === "damage") {
+    if (props.type === "damage") {
       // ダメージスキルはスクリーンシェイク
       combat.isScreenShake = true;
       setTimeout(() => {
         combat.isScreenShake = false;
       }, 500);
-    } else if (type === "heal") {
+    } else if (props.type === "heal") {
       // 回復スキルは明るくフラッシュ（CombatEffectsに新しいメソッドが必要）
       document.body.classList.add("heal-flash");
       setTimeout(() => {
@@ -230,6 +215,8 @@ const App: React.FC = () => {
     // 必要に応じてここでサウンド効果や画面シェイクなども追加可能
   };
 
+  // スキルハンドラの状態を管理
+  const [skillHandler, setSkillHandler] = useState<SkillHandler | null>(null);
   // レベルアップ追跡フック
   const [showLevelUp, setShowLevelUp] = useState(false);
 
@@ -245,6 +232,30 @@ const App: React.FC = () => {
   useEffect(() => {
     combat.initializeAnimations();
   }, [currentEnemies, combat.initializeAnimations]);
+
+  useEffect(() => {
+    if (!skillHandler) {
+      const handler = new SkillHandler(
+        player,
+        currentEnemies,
+        setPlayer,
+        setMessage,
+        combat.setDamageDisplay,
+        combat.setHitFlag,
+        showSkillEffectAnimation,
+        showFireSkillEffect,
+        checkStageCompletion,
+        playerAttack.setEnemyDefeatedMessage,
+        StageManager.findNextAliveEnemyIndex,
+        setTargetIndex,
+        setActiveSkill
+      );
+      setSkillHandler(handler);
+    }
+    else {
+      skillHandler.updateState(player, currentEnemies);
+    }
+  }, [player, currentEnemies]);
 
   // マウント時に初期ステージを生成
   useEffect(() => {
@@ -457,177 +468,15 @@ const App: React.FC = () => {
   };
 
   // スキル使用時の処理関数（App コンポーネント内に追加）
+  // スキル使用処理の新しい実装
   const handleSkillUse = (skill: SkillInstance, targetIndex?: number) => {
-    // スキルがコマンド型（即時発動）の場合
-    if (skill.activationTiming === "onCommand") {
-      // 単体敵対象スキルの場合は targetIndex を確認
-      if (skill.targetType === "singleEnemy" && targetIndex === undefined) {
-        setMessage({
-          text: "対象の敵を選択してください。",
-          sender: "system",
-        });
-        return;
-      }
-
-      // スキルが使用可能かチェック
-      if (!skill.canUse(player)) {
-        setMessage({
-          text: "MPが足りないか、クールダウン中です。",
-          sender: "system",
-        });
-        return;
-      }
-
-      // スキルタイプに応じた処理
-      if (skill.type === "heal") {
-        // 回復スキルの場合
-        const result = skill.execute(player, currentEnemies, targetIndex);
-
-        if (result.success) {
-          // プレイヤー状態の更新（MP消費と回復）
-          setPlayer((prev) => {
-            const newHP = Math.min(
-              prev.hp + (result.healAmount || 0),
-              prev.maxHP
-            );
-            return new PlayerModel(
-              newHP,
-              prev.maxHP,
-              prev.mp - skill.mpCost,
-              prev.maxMP,
-              prev.defense,
-              prev.magicDefense,
-              prev.level,
-              prev.exp,
-              prev.totalExp,
-              prev.speed,
-              prev.attack,
-              prev.luck,
-              prev.power,
-              prev.statusEffects
-            );
-          });
-
-          // 回復エフェクトを表示 - プレイヤー位置に表示
-          showSkillEffectAnimation(
-            "heal",
-            { x: window.innerWidth / 2, y: window.innerHeight / 2 - 50 },
-            result.healAmount,
-            skill.name
-          );
-          // メッセージ表示
-          setMessage({
-            text: result.message,
-            sender: "player",
-          });
-        } else {
-          setMessage({
-            text: result.message,
-            sender: "system",
-          });
-        }
-      } else if (skill.type === "damage") {
-        // ダメージスキル（炎系等）の場合
-        if (skill.id === "fire_bolt") {
-          if (targetIndex === undefined) {
-            setMessage({ text: "攻撃対象が定まっていない！", sender: "system" });
-            return;
-          }
-          // MP消費処理（先に消費する）
-          setPlayer((prev) => {
-            return new PlayerModel(
-              prev.hp,
-              prev.maxHP,
-              prev.mp - skill.mpCost,
-              prev.maxMP,
-              prev.defense,
-              prev.magicDefense,
-              prev.level,
-              prev.exp,
-              prev.totalExp,
-              prev.speed,
-              prev.attack,
-              prev.luck,
-              prev.power,
-              prev.statusEffects
-            );
-          });
-
-          // 事前にスキル結果を計算（画面に表示するだけで、まだ適用はしない）
-          const result = skill.execute(player, currentEnemies, targetIndex);
-          if (result.success && targetIndex !== undefined) {
-            // 対象の敵の位置にファイアボルトエフェクトを表示
-            const targetEnemy = currentEnemies[targetIndex];
-            const enemyPosition = targetEnemy.positionOffset || {
-              x: 0,
-              y: 0,
-            };
-
-            // 画面中央を基準に、敵の位置にエフェクトを表示
-            const centerX = window.innerWidth / 2;
-            const centerY = window.innerHeight / 2;
-
-            // アニメーション表示、onComplete時にダメージを適用する
-            showFireSkillEffect(
-              "ファイアボルト",
-              {
-                x: centerX + enemyPosition.x,
-                y: centerY - 100 + enemyPosition.y,
-              },
-              result.damageAmount,
-              "low", // 低威力設定
-              () => {
-                // アニメーション完了後にダメージを適用する
-                if (result.targetIndex !== undefined) {
-
-                  // ダメージ表示とヒットアニメーション
-                  combat.setDamageDisplay(
-                    result.targetIndex,
-                    result.damageAmount || 0
-                  );
-                  combat.setHitFlag(
-                    result.targetIndex,
-                    ENEMY_HIT_ANIMATION_DURATION
-                  );
-
-                  // メッセージ表示
-                  setMessage({
-                    text: result.message,
-                    sender: "player",
-                  });
-                  // 対象の敵にダメージを適用
-                  const targetEnemy = currentEnemies[result.targetIndex];
-                  targetEnemy.takeDamage(result.damageAmount || 0);
-
-                  if (targetEnemy.currentHP <= 0) {
-                    playerAttack.setEnemyDefeatedMessage(targetEnemy.name);
-
-                    // 次のターゲットを探す
-                    setTimeout(() => {
-                      const nextIndex = StageManager.findNextAliveEnemyIndex(
-                        targetIndex,
-                        currentEnemies
-                      );
-                      if (nextIndex !== -1) {
-                        setTargetIndex(nextIndex);
-                      }
-
-                    } , 2000);
-                  }
-                  // 敵が倒されたかチェック
-                  checkStageCompletion();
-                }
-              }
-            );
-          }
-        }
-      }
-
-      // アクティブスキルをリセット
-      setActiveSkill(null);
+    if (skillHandler) {
+      skillHandler.handleSkillUse(skill, targetIndex);
     } else {
-      // コマンド型でないスキル（例：問題回答と組み合わせるスキル）の場合
-      setActiveSkill(skill);
+      setMessage({
+        text: "スキルシステムの初期化中...",
+        sender: "system",
+      });
     }
   };
 
