@@ -1,4 +1,4 @@
-// src/components/QuestionContainer.tsx - 品詞アイコンとヒントボタン統合版（<>対応）
+// src/components/QuestionContainer.tsx の修正版 - 攻撃ゲージ警告追加
 import React, { useState, useEffect } from "react";
 import { Question } from "../data/questions";
 import { parseQuestionText } from "../utils/questionTextParser";
@@ -151,6 +151,24 @@ const QuestionContainer: React.FC<QuestionContainerProps> = ({
     return resultChars.join('\u2009'); // Unicode hair space
   };
 
+  // 攻撃ゲージの警告閾値
+  const warningThreshold = 0.8;  // 80%で警告開始
+  const criticalThreshold = 0.95; // 95%で危険警告
+  
+  // 攻撃ゲージのクラス判定
+  let attackGaugeClass = "";
+  let attackBarClass = "bg-red-500";
+  
+  if (attackProgress >= criticalThreshold) {
+    // 95%以上：危険警告
+    attackGaugeClass = "attack-gauge-warning attack-gauge-critical";
+    attackBarClass = "bg-red-500 animate-attack-ready-flash";
+  } else if (attackProgress >= warningThreshold) {
+    // 80%以上：通常警告
+    attackGaugeClass = "attack-gauge-warning";
+    attackBarClass = "bg-red-500 animate-attack-warning";
+  }
+
   // コンパクトモード用のスタイルとレイアウト
   const containerClasses = `
     relative 
@@ -180,15 +198,24 @@ const QuestionContainer: React.FC<QuestionContainerProps> = ({
   if (isCompact) {
     return (
       <div className={containerClasses}>
-        {/* 攻撃ゲージを小さく上部に表示 */}
+        {/* 攻撃ゲージを小さく上部に表示 - 警告クラスを追加 */}
         <div className="absolute top-1 left-1/2 transform -translate-x-1/2 z-30 w-100 h-[4px]">
-          <div className="w-full h-full bg-gray-300 rounded-sm">
+          <div className={`w-full h-full bg-gray-300 rounded-sm ${attackGaugeClass}`}>
             <div
-              className="h-full bg-red-500 rounded-sm"
+              className={`h-full ${attackBarClass} rounded-sm`}
               style={{ width: `${Math.min(attackProgress * 100, 100)}%` }}
             ></div>
           </div>
         </div>
+        
+        {/* 危険警告アイコンを表示（95%以上の場合） */}
+        {attackProgress >= criticalThreshold && (
+          <div 
+            className="absolute top-0 right-1 text-red-500 animate-pulse z-40 text-xs"
+          >
+            ⚠️
+          </div>
+        )}
         
         {/* 内容を一行に集約 */}
         <div className="flex flex-col pt-1">
@@ -210,15 +237,24 @@ const QuestionContainer: React.FC<QuestionContainerProps> = ({
   // 通常モード
   return (
     <div className={containerClasses}>
-      {/* 攻撃インジケータ */}
+      {/* 攻撃インジケータ - 警告クラスを追加 */}
       <div className="absolute top-2 left-1/2 transform -translate-x-1/2 z-30 w-64">
-        <div className="w-full h-2 bg-gray-300 rounded">
+        <div className={`w-full h-2 bg-gray-300 rounded ${attackGaugeClass}`}>
           <div
-            className="h-full bg-red-500 rounded"
+            className={`h-full ${attackBarClass} rounded`}
             style={{ width: `${Math.min(attackProgress * 100, 100)}%` }}
           ></div>
         </div>
       </div>
+      
+      {/* 危険警告アイコンを表示（95%以上の場合） */}
+      {attackProgress >= criticalThreshold && (
+        <div 
+          className="absolute top-2 right-4 text-red-500 animate-pulse z-40"
+        >
+          ⚠️
+        </div>
+      )}
       
       {/* ゲージと重ならないようにコンテンツにパディング */}
       <div className="pt-4">
