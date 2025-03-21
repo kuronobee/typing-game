@@ -1133,3 +1133,56 @@ input {
   .player-shake {
     animation: player-shake 0.6s ease;
   }
+
+/* src/styles.css に追加するレスポンシブスタイル */
+
+/* プレイヤーステータスパネル用のスタイル */
+.player-status-panel {
+    backdrop-filter: blur(2px);
+    transition: all 0.3s ease;
+  }
+  
+  /* 小さい画面での表示調整 */
+  @media (max-width: 640px) {
+    .player-status-panel {
+      min-width: 110px !important;
+      padding: 0.5rem !important;
+      font-size: 0.875rem !important;
+    }
+    
+    .player-status-panel .text-xl {
+      font-size: 1rem !important;
+    }
+    
+    .player-status-panel .text-xs {
+      font-size: 0.7rem !important;
+    }
+  }
+  
+  /* 中くらいの画面での表示調整 */
+  @media (min-width: 641px) and (max-width: 768px) {
+    .player-status-panel {
+      min-width: 120px !important;
+      padding: 0.75rem !important;
+    }
+  }
+  
+  /* 極端に小さい画面での調整 */
+  @media (max-width: 360px) {
+    .player-status-panel {
+      min-width: 90px !important;
+      padding: 0.375rem !important;
+      top: 20% !important;
+      height: 120px !important; /* 高さを少し増やす */
+    }
+    
+    /* ゲージの高さを小さく */
+    .player-status-panel .h-3 {
+      height: 0.5rem !important;
+    }
+    
+    /* トータルEXP表示を小さく */
+    .player-status-panel .text-gray-300 {
+      font-size: 0.65rem !important;
+    }
+  }

@@ -658,6 +658,7 @@ const App: React.FC = () => {
               inputRef={inputRef}
               playerHitEffect={playerHitEffect} // プレイヤーダメージエフェクト用
               playerDamageDisplay={combat.playerDamageDisplay} // プレイヤーダメージ表示用
+              expGain={expGain}
             />
 
             {/* レベルアップ通知 */}

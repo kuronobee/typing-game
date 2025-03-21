@@ -1,7 +1,6 @@
-// src/components/BattleInterface.tsx - サイズ調整版
+// src/components/BattleInterface.tsx - 修正版 (PlayerInfo部分を削除)
 import React, { useState, useEffect } from "react";
 import { Player } from "../models/Player";
-import PlayerInfo from "./PlayerInfo";
 import SkillBar from "./SkillBar";
 import { SkillInstance } from "../models/Skill";
 import { Enemy } from "../models/EnemyModel";
@@ -24,7 +23,7 @@ const BattleInterface: React.FC<BattleInterfaceProps> = ({
   player,
   onSubmit,
   onSkillUse,
-  expGain,
+  expGain: _expGain, // 使用しなくなったため、_を付けて無視する変数とする
   inputRef,
   isKeyboardVisible = false,
   currentEnemies,
@@ -35,6 +34,7 @@ const BattleInterface: React.FC<BattleInterfaceProps> = ({
 }) => {
   void currentEnemies;
   void setEquippedSkills;
+  void _expGain; // 無視する変数
 
   const [userInput, setUserInput] = useState("");
   const [shouldSelectInput, setShouldSelectInput] = useState(false);
@@ -192,22 +192,8 @@ const BattleInterface: React.FC<BattleInterfaceProps> = ({
           </div>
         </div>
       )}
-      
-      {/* PlayerInfo */}
-      <div className={`transition-all duration-300 transform origin-top`}>
-        <PlayerInfo
-          playerHP={player.hp}
-          maxHP={player.maxHP}
-          playerMP={player.mp}
-          maxMP={player.maxMP}
-          isPoisoned={player.statusEffects.some(effect => effect.type === "poison")}
-          playerLevel={player.level}
-          playerEXP={player.exp}
-          expToNextLevel={player.levelUpThreshold}
-          expGain={expGain}
-          isCompact={isKeyboardVisible}
-        />
-      </div>
+
+      {/* PlayerInfoコンポーネントを削除 - HPとMPの表示はBattleStageに移動 */}
     </div>
   );
 };

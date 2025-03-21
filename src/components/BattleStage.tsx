@@ -38,6 +38,7 @@ interface BattleStageProps {
   inputRef: React.RefObject<HTMLInputElement | null>;
   playerHitEffect?: boolean;
   playerDamageDisplay?: { value: number; id: number } | null;
+  expGain: number | null;
 }
 
 const BattleStage: React.FC<BattleStageProps> = ({
@@ -59,6 +60,7 @@ const BattleStage: React.FC<BattleStageProps> = ({
   inputRef,
   playerHitEffect = false,
   playerDamageDisplay = null,
+  expGain,
 }) => {
   // 各敵毎の攻撃ゲージ進捗を管理する配列(0〜1)
   const [attackProgresses, setAttackProgresses] = useState<number[]>([]);
@@ -289,11 +291,41 @@ const BattleStage: React.FC<BattleStageProps> = ({
           transition: 'background-color 0.5s ease'
         }}
       >
-        {/* プレイヤーキャラクター表示 */}
+        {/* レベル表示 - 左側に配置 */}
+        <div
+          className="absolute z-30 left-2 top-[25%] transform -translate-y-1/2 bg-gray-800/80 p-3 rounded-lg border border-gray-600 shadow-lg player-status-panel"
+          style={{ minWidth: '130px', maxWidth: '1000px', width: '35%', height: '80px' }}
+        >
+          <div className="text-white font-bold text-xl text-center">Lv. {player.level}</div>
+          <div className="flex flex-col justify-between h-[50px]">
+            <div>
+              <div className="flex justify-between">
+                <span className="text-xs font-bold text-white">EXP</span>
+                <span className="text-xs text-white">{player.exp}/{player.levelUpThreshold}</span>
+              </div>
+              <div className="w-full h-3 bg-gray-700 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-yellow-500 transition-all"
+                  style={{ width: `${(player.exp / player.levelUpThreshold) * 100}%` }}
+                ></div>
+              </div>
+            </div>
+            <div className="flex flex-col items-center mt-1 mb-1">
+              {expGain && (
+                <div className="text-xs text-yellow-300 text-center animate-pulse mb-1">+{expGain} EXP</div>
+              )}
+              <div className="text-xs text-gray-300 text-center">
+                Total: {player.totalExp.toLocaleString()} EXP
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* プレイヤーキャラクター表示 - 中央に */}
         <div
           className={`absolute z-20 pointer-events-none ${playerHitEffect ? 'player-shake' : ''}`}
           style={{
-            top: `-100px`,
+            top: `-90px`,
             left: "50%",
             transform: "translateX(-50%)",
             width: "160px",
@@ -310,19 +342,53 @@ const BattleStage: React.FC<BattleStageProps> = ({
               transition: "filter 0.5s ease"
             }}
           />
-          {/* プレイヤーダメージ表示を追加 */}
+
+          {/* プレイヤーダメージ表示 */}
           {playerDamageDisplay && (
             <div
               key={playerDamageDisplay.id}
               className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-red-500 font-bold text-3xl animate-damage-fade"
-              style={{
-                textShadow: '2px 2px 4px rgba(0, 0, 0, 0.7)',
-                zIndex: 30 // プレイヤー画像の上に表示されるようにzIndexを高く設定
-              }}
+              style={{ textShadow: '2px 2px 4px rgba(0, 0, 0, 0.7)', zIndex: 30 }}
             >
               {playerDamageDisplay.value}
             </div>
           )}
+        </div>
+
+        {/* HP/MP表示 - 右側に配置 */}
+        <div
+          className="absolute z-30 right-2 top-[25%] transform -translate-y-1/2 bg-gray-800/80 p-3 rounded-lg border border-gray-600 shadow-lg player-status-panel"
+          style={{ minWidth: '130px', maxWidth: '1000px', width: '35%', height: '80px' }}
+        >
+          <div className="flex flex-col justify-center h-[60px]">
+            {/* HPゲージ */}
+            <div>
+              <div className="flex justify-between">
+                <span className="text-xs font-bold text-white">HP</span>
+                <span className="text-xs text-white">{player.hp}/{player.maxHP}</span>
+              </div>
+              <div className="w-full h-3 bg-gray-700 rounded-full overflow-hidden mb-2">
+                <div
+                  className={`h-full transition-all ${player.statusEffects.some(effect => effect.type === "poison") ? "bg-purple-500" : "bg-green-500"}`}
+                  style={{ width: `${(player.hp / player.maxHP) * 100}%` }}
+                ></div>
+              </div>
+            </div>
+
+            {/* MPゲージ */}
+            <div>
+              <div className="flex justify-between">
+                <span className="text-xs font-bold text-white">MP</span>
+                <span className="text-xs text-white">{player.mp}/{player.maxMP}</span>
+              </div>
+              <div className="w-full h-3 bg-gray-700 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-blue-500 transition-all"
+                  style={{ width: `${(player.mp / player.maxMP) * 100}%` }}
+                ></div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
