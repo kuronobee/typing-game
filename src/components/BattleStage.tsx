@@ -288,7 +288,7 @@ const BattleStage: React.FC<BattleStageProps> = ({
         style={{
           height: `${playerAreaHeight}px`,
           backgroundColor: getPlayerAreaBackground(),
-          transition: 'background-color 0.5s ease'
+          transition: 'background-color 0.3s ease'
         }}
       >
         {/* レベル表示 - 左側に配置 */}

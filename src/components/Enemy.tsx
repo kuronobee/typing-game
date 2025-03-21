@@ -1,4 +1,4 @@
-// src/components/Enemy.tsx - 体力ゲージにクラス名を追加
+// src/components/Enemy.tsx を修正
 
 import React from "react";
 import { Enemy as EnemyModel } from "../models/EnemyModel";
@@ -43,6 +43,25 @@ const Enemy: React.FC<EnemyProps> = ({
     ${playerHit ? "animate-phit" : ""}
     ${playerFire ? "animate-fire" : ""}`;
     const gaugeOffset = 96 * (1 - effectiveScale);
+
+    // 攻撃ゲージの警告閾値 (80%で警告開始)
+    const warningThreshold = 0.8;
+    const criticalThreshold = 0.95; // 95%で危険警告
+
+    // 攻撃ゲージのクラス判定
+    let attackGaugeClass = "";
+    let attackBarClass = "bg-red-500";
+
+    if (progress >= criticalThreshold) {
+        // 95%以上：危険警告
+        attackGaugeClass = "attack-gauge-warning attack-gauge-critical";
+        attackBarClass = "bg-red-500 animate-attack-ready-flash";
+    } else if (progress >= warningThreshold) {
+        // 80%以上：通常警告
+        attackGaugeClass = "attack-gauge-warning";
+        attackBarClass = "bg-red-500 animate-attack-warning";
+    }
+
     return (
         <div className="relative inline-block enemy-container">
             {/* 親要素でscaleを適用 */}
@@ -77,15 +96,26 @@ const Enemy: React.FC<EnemyProps> = ({
                         style={{ width: `${hpPercentage}%` }} />
                 </div>
             )}
-            {/* 敵の頭上に小さい攻撃ゲージを表示 */}
-            <div className="absolute top-[-12px] left-1/2 transform -translate-x-1/2 w-16 h-1 bg-gray-500 rounded attack-gauge"
+            {/* 敵の頭上に小さい攻撃ゲージを表示 - 警告クラスを追加 */}
+            <div
+                className={`absolute top-[-12px] left-1/2 transform -translate-x-1/2 w-16 h-1 bg-gray-500 rounded attack-gauge ${attackGaugeClass}`}
                 style={{ top: `${gaugeOffset - 12}px` }}
             >
                 <div
-                    className="h-full bg-red-500 rounded"
+                    className={`h-full ${attackBarClass} rounded`}
                     style={{ width: `${Math.min(progress * 100, 100)}%` }}
                 ></div>
             </div>
+
+            {/* 危険警告アイコンを表示（95%以上の場合） */}
+            {progress >= criticalThreshold && !enemyDefeated && (
+                <div
+                    className="absolute top-[-20px] left-1/2 transform -translate-x-1/2 text-red-500 animate-pulse"
+                    style={{ top: `${gaugeOffset - 20}px` }}
+                >
+                    ⚠️
+                </div>
+            )}
             {/* ダメージ数値の表示 */}
             {damage && (
                 <div
@@ -106,7 +136,6 @@ const Enemy: React.FC<EnemyProps> = ({
                     {comboCount}Combo
                 </div>
             )}
-
         </div>
     );
 };
