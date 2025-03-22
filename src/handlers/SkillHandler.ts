@@ -1,13 +1,13 @@
 // src/handlers/SkillHandler.ts
-import { SkillInstance } from '../models/Skill';
-import { Player } from '../models/Player';
-import { Enemy } from '../models/EnemyModel';
-import { MessageType } from '../components/MessageDisplay';
-import { ENEMY_HIT_ANIMATION_DURATION } from '../data/constants';
+import { SkillInstance } from "../models/Skill";
+import { Player } from "../models/Player";
+import { Enemy } from "../models/EnemyModel";
+import { MessageType } from "../components/MessageDisplay";
+import { ENEMY_HIT_ANIMATION_DURATION } from "../data/constants";
 
 // スキルエフェクト表示用の型定義
 export interface SkillEffectProps {
-  type: 'heal' | 'damage' | 'buff' | 'debuff';
+  type: "heal" | "damage" | "buff" | "debuff";
   targetPosition?: { x: number; y: number };
   value?: number;
   skillName?: string;
@@ -18,7 +18,7 @@ export interface FireSkillEffectProps {
   skillName: string;
   targetPosition: { x: number; y: number };
   damageValue?: number;
-  power: 'low' | 'medium' | 'high';
+  power: "low" | "medium" | "high";
   onComplete?: () => void;
 }
 
@@ -36,9 +36,16 @@ export class SkillHandler {
   private showFireSkillEffect: (props: FireSkillEffectProps) => void;
   private checkStageCompletion: (enemies: Enemy[]) => void;
   private setEnemyDefeatedMessage: (enemyName: string) => void;
-  private findNextAliveEnemyIndex: (startIndex: number, enemies: Enemy[]) => number;
+  private findNextAliveEnemyIndex: (
+    startIndex: number,
+    enemies: Enemy[]
+  ) => number;
   private setTargetIndex: React.Dispatch<React.SetStateAction<number>>;
-  private setActiveSkill: React.Dispatch<React.SetStateAction<SkillInstance | null>>;
+  private setActiveSkill: React.Dispatch<
+    React.SetStateAction<SkillInstance | null>
+  >;
+  private showPlayerAttackEffect?: (isSkill: boolean) => void;
+  private enemyRefs: React.MutableRefObject<(HTMLDivElement | null)[]>;
 
   /**
    * コンストラクタ - 必要な状態更新関数を注入
@@ -56,7 +63,9 @@ export class SkillHandler {
     setEnemyDefeatedMessage: (enemyName: string) => void,
     findNextAliveEnemyIndex: (startIndex: number, enemies: Enemy[]) => number,
     setTargetIndex: React.Dispatch<React.SetStateAction<number>>,
-    setActiveSkill: React.Dispatch<React.SetStateAction<SkillInstance | null>>
+    setActiveSkill: React.Dispatch<React.SetStateAction<SkillInstance | null>>,
+    showPlayerAttackEffect?: (isSkill: boolean) => void,
+    enemyRefs?: React.MutableRefObject<(HTMLDivElement | null)[]> // 敵キャラの参照を受け取る
   ) {
     this.player = player;
     this.currentEnemies = currentEnemies;
@@ -71,6 +80,8 @@ export class SkillHandler {
     this.findNextAliveEnemyIndex = findNextAliveEnemyIndex;
     this.setTargetIndex = setTargetIndex;
     this.setActiveSkill = setActiveSkill;
+    this.showPlayerAttackEffect = showPlayerAttackEffect;
+    this.enemyRefs = enemyRefs || { current: [] };
   }
 
   /**
@@ -79,6 +90,42 @@ export class SkillHandler {
   updateState(player: Player, currentEnemies: Enemy[]) {
     this.player = player;
     this.currentEnemies = currentEnemies;
+  }
+
+  /**
+   * 敵キャラクターの実際の位置を計算する
+   * @param targetIndex 対象の敵インデックス
+   * @returns 敵キャラクターの中央位置
+   */
+  private getEnemyPosition(targetIndex: number): { x: number; y: number } {
+    // デフォルトの位置（enemyRefsが利用できない場合のフォールバック）
+    const centerX = window.innerWidth / 2;
+    const centerY = window.innerHeight / 2;
+    const defaultPosition = {
+      x: centerX,
+      y: centerY - 140, // おおよその位置
+    };
+
+    // ターゲットの敵が存在するか確認
+    if (targetIndex >= this.currentEnemies.length || !this.enemyRefs?.current) {
+      return defaultPosition;
+    }
+
+    // 敵要素のRefを取得
+    const enemyElement = this.enemyRefs.current[targetIndex];
+    if (!enemyElement) {
+      return defaultPosition;
+    }
+
+    // DOMの位置を取得
+    const rect = enemyElement.getBoundingClientRect();
+
+    console.log(`敵の位置: ${rect.left}, ${rect.top}`);
+    // 敵キャラクターの中央の座標を計算
+    return {
+      x: rect.left + rect.width / 2,
+      y: rect.top + rect.height / 2,
+    };
   }
 
   /**
@@ -149,10 +196,7 @@ export class SkillHandler {
     if (result.success) {
       // プレイヤー状態の更新（MP消費と回復）
       this.setPlayer((prev) => {
-        const newHP = Math.min(
-          prev.hp + (result.healAmount || 0),
-          prev.maxHP
-        );
+        const newHP = Math.min(prev.hp + (result.healAmount || 0), prev.maxHP);
         return new Player(
           newHP,
           prev.maxHP,
@@ -170,13 +214,18 @@ export class SkillHandler {
           prev.statusEffects
         );
       });
-
+      if (this.showPlayerAttackEffect) {
+        this.showPlayerAttackEffect(true);
+      }
       // 回復エフェクトを表示 - プレイヤー位置に表示
       this.showSkillEffect({
         type: "heal",
-        targetPosition: { x: window.innerWidth / 2, y: window.innerHeight / 2 - 50 },
+        targetPosition: {
+          x: window.innerWidth / 2,
+          y: window.innerHeight / 2 - 50,
+        },
         value: result.healAmount,
-        skillName: skill.name
+        skillName: skill.name,
       });
 
       // メッセージ表示
@@ -212,7 +261,10 @@ export class SkillHandler {
   /**
    * ファイアボルトスキル処理
    */
-  private handleFireBoltSkill(skill: SkillInstance, targetIndex?: number): void {
+  private handleFireBoltSkill(
+    skill: SkillInstance,
+    targetIndex?: number
+  ): void {
     if (targetIndex === undefined) {
       this.setMessage({ text: "攻撃対象が定まっていない！", sender: "system" });
       return;
@@ -238,51 +290,41 @@ export class SkillHandler {
       );
     });
 
+    if (this.showPlayerAttackEffect) {
+      this.showPlayerAttackEffect(true);
+    }
     // 事前にスキル結果を計算
     const result = skill.execute(this.player, this.currentEnemies, targetIndex);
-    
-    if (result.success && targetIndex !== undefined) {
-      // 対象の敵の位置にファイアボルトエフェクトを表示
-      const targetEnemy = this.currentEnemies[targetIndex];
-      const enemyPosition = targetEnemy.positionOffset || { x: 0, y: 0 };
 
-      // 画面中央を基準に、敵の位置にエフェクトを表示
-      const centerX = window.innerWidth / 2;
-      const centerY = window.innerHeight / 2;
+    if (result.success && targetIndex !== undefined) {
+        const enemyPosition = this.getEnemyPosition(targetIndex);
 
       // アニメーション表示、onComplete時にダメージを適用する
       this.showFireSkillEffect({
         skillName: "ファイアボルト",
-        targetPosition: {
-          x: centerX + enemyPosition.x,
-          y: centerY - 100 + enemyPosition.y,
-        },
+        targetPosition: enemyPosition,
         damageValue: result.damageAmount,
         power: "low", // 低威力設定
         onComplete: () => {
           // アニメーション完了後にダメージを適用する
           if (result.targetIndex !== undefined) {
             // ダメージ表示とヒットアニメーション
-            this.setDamageDisplay(
-              result.targetIndex,
-              result.damageAmount || 0
-            );
-            this.setHitFlag(
-              result.targetIndex,
-              ENEMY_HIT_ANIMATION_DURATION
-            );
+            this.setDamageDisplay(result.targetIndex, result.damageAmount || 0);
+            this.setHitFlag(result.targetIndex, ENEMY_HIT_ANIMATION_DURATION);
 
             // メッセージ表示
             this.setMessage({
               text: result.message,
               sender: "player",
             });
-            
+
             // 対象の敵にダメージを適用
             const targetEnemy = this.currentEnemies[result.targetIndex];
             targetEnemy.takeDamage(result.damageAmount || 0);
 
-            console.log(`敵の状態: HP=${targetEnemy.currentHP}, 倒された=${targetEnemy.defeated}`);
+            console.log(
+              `敵の状態: HP=${targetEnemy.currentHP}, 倒された=${targetEnemy.defeated}`
+            );
 
             // 敵が倒れたかチェック
             if (targetEnemy.defeated) {
@@ -297,11 +339,13 @@ export class SkillHandler {
                 if (nextAliveIndex !== -1) {
                   this.setTargetIndex(nextAliveIndex);
                 }
-                
+
                 // 全ての敵が倒されたかを確認して、ステージクリア処理
-                const allDefeated = this.currentEnemies.every(e => e.defeated);
+                const allDefeated = this.currentEnemies.every(
+                  (e) => e.defeated
+                );
                 console.log(`全ての敵が倒された: ${allDefeated}`);
-                
+
                 if (allDefeated) {
                   console.log("ステージクリア処理を実行");
                   this.checkStageCompletion(this.currentEnemies);
@@ -309,7 +353,7 @@ export class SkillHandler {
               }, 2000);
             }
           }
-        }
+        },
       });
     }
   }
@@ -317,7 +361,10 @@ export class SkillHandler {
   /**
    * ファイアボールスキル処理
    */
-  private handleFireBallSkill(skill: SkillInstance, targetIndex?: number): void {
+  private handleFireBallSkill(
+    skill: SkillInstance,
+    targetIndex?: number
+  ): void {
     if (targetIndex === undefined) {
       this.setMessage({ text: "攻撃対象が定まっていない！", sender: "system" });
       return;
@@ -345,7 +392,7 @@ export class SkillHandler {
 
     // スキル結果計算
     const result = skill.execute(this.player, this.currentEnemies, targetIndex);
-    
+
     if (result.success && targetIndex !== undefined) {
       // 対象の敵の位置を取得
       const targetEnemy = this.currentEnemies[targetIndex];
@@ -368,13 +415,13 @@ export class SkillHandler {
             this.setDamageDisplay(result.targetIndex, result.damageAmount || 0);
             this.setHitFlag(result.targetIndex, ENEMY_HIT_ANIMATION_DURATION);
             this.setMessage({ text: result.message, sender: "player" });
-            
+
             const targetEnemy = this.currentEnemies[result.targetIndex];
             targetEnemy.takeDamage(result.damageAmount || 0);
 
             if (targetEnemy.currentHP <= 0) {
               this.setEnemyDefeatedMessage(targetEnemy.name);
-              
+
               setTimeout(() => {
                 const nextAliveIndex = this.findNextAliveEnemyIndex(
                   targetIndex,
@@ -385,10 +432,10 @@ export class SkillHandler {
                 }
               }, 2000);
             }
-            
+
             this.checkStageCompletion(this.currentEnemies);
           }
-        }
+        },
       });
     }
   }
@@ -396,7 +443,10 @@ export class SkillHandler {
   /**
    * ファイアストーム（全体攻撃）スキル処理
    */
-  private handleFireStormSkill(skill: SkillInstance,  targetIndex: number): void {
+  private handleFireStormSkill(
+    skill: SkillInstance,
+    targetIndex: number
+  ): void {
     // MP消費処理
     this.setPlayer((prev) => {
       return new Player(
@@ -418,7 +468,7 @@ export class SkillHandler {
     });
 
     // 生存している敵のみを対象に
-    const aliveEnemies = this.currentEnemies.filter(enemy => !enemy.defeated);
+    const aliveEnemies = this.currentEnemies.filter((enemy) => !enemy.defeated);
     if (aliveEnemies.length === 0) {
       this.setMessage({ text: "対象となる敵がいません", sender: "system" });
       return;
@@ -426,7 +476,7 @@ export class SkillHandler {
 
     // スキル結果計算
     const result = skill.execute(this.player, this.currentEnemies);
-    
+
     if (result.success) {
       // 画面中央を基準に効果表示
       const centerX = window.innerWidth / 2;
@@ -447,16 +497,18 @@ export class SkillHandler {
             const enemyIndex = this.currentEnemies.indexOf(enemy);
             if (enemyIndex !== -1) {
               // 個別ダメージ計算（全体攻撃なので各敵に対して少し弱めのダメージ）
-              const individualDamage = Math.floor((result.damageAmount || 0) * 0.7 / aliveEnemies.length);
+              const individualDamage = Math.floor(
+                ((result.damageAmount || 0) * 0.7) / aliveEnemies.length
+              );
               totalDamage += individualDamage;
-              
+
               // ダメージエフェクト表示
               this.setDamageDisplay(enemyIndex, individualDamage);
               this.setHitFlag(enemyIndex, ENEMY_HIT_ANIMATION_DURATION);
-              
+
               // ダメージ適用
               enemy.takeDamage(individualDamage);
-              
+
               // 敵撃破判定
               if (enemy.currentHP <= 0) {
                 defeatedEnemies++;
@@ -471,11 +523,11 @@ export class SkillHandler {
           // 結果メッセージ
           this.setMessage({
             text: `ファイアストームが敵全体に${totalDamage}ダメージ！${
-              defeatedEnemies > 0 ? `${defeatedEnemies}体の敵を倒した！` : ''
+              defeatedEnemies > 0 ? `${defeatedEnemies}体の敵を倒した！` : ""
             }`,
             sender: "player",
           });
-          
+
           // ターゲット切り替え
           if (this.currentEnemies[targetIndex]?.defeated) {
             setTimeout(() => {
@@ -488,10 +540,10 @@ export class SkillHandler {
               }
             }, 2000);
           }
-          
+
           // ステージクリア判定
           this.checkStageCompletion(this.currentEnemies);
-        }
+        },
       });
     }
   }
@@ -499,7 +551,10 @@ export class SkillHandler {
   /**
    * 一般的なダメージスキル処理
    */
-  private handleGenericDamageSkill(skill: SkillInstance, targetIndex?: number): void {
+  private handleGenericDamageSkill(
+    skill: SkillInstance,
+    targetIndex?: number
+  ): void {
     if (skill.targetType === "singleEnemy" && targetIndex === undefined) {
       this.setMessage({ text: "攻撃対象が定まっていない！", sender: "system" });
       return;
@@ -527,7 +582,7 @@ export class SkillHandler {
 
     // スキル実行
     const result = skill.execute(this.player, this.currentEnemies, targetIndex);
-    
+
     if (result.success) {
       // 単体ターゲットの場合
       if (skill.targetType === "singleEnemy" && targetIndex !== undefined) {
@@ -544,20 +599,20 @@ export class SkillHandler {
             y: centerY - 100 + enemyPosition.y,
           },
           value: result.damageAmount,
-          skillName: skill.name
+          skillName: skill.name,
         });
 
         // ダメージ表示とヒットアニメーション
         this.setDamageDisplay(targetIndex, result.damageAmount || 0);
         this.setHitFlag(targetIndex, ENEMY_HIT_ANIMATION_DURATION);
-        
+
         // ダメージ適用
         targetEnemy.takeDamage(result.damageAmount || 0);
-        
+
         // 敵撃破判定
         if (targetEnemy.currentHP <= 0) {
           this.setEnemyDefeatedMessage(targetEnemy.name);
-          
+
           setTimeout(() => {
             const nextAliveIndex = this.findNextAliveEnemyIndex(
               targetIndex,
@@ -568,7 +623,7 @@ export class SkillHandler {
             }
           }, 2000);
         }
-      } 
+      }
       // 全体ターゲットの場合
       else if (skill.targetType === "allEnemies") {
         // 全体攻撃処理...
@@ -579,7 +634,7 @@ export class SkillHandler {
         text: result.message,
         sender: "player",
       });
-      
+
       // ステージクリア判定
       this.checkStageCompletion(this.currentEnemies);
     } else {

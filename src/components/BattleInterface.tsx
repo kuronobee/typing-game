@@ -1,4 +1,4 @@
-// src/components/BattleInterface.tsx - 修正版 (PlayerInfo部分を削除)
+// src/components/BattleInterface.tsx - スキル説明パネルを常に表示する版
 import React, { useState, useEffect } from "react";
 import { Player } from "../models/Player";
 import SkillBar from "./SkillBar";
@@ -11,7 +11,6 @@ interface BattleInterfaceProps {
   onSkillUse: (skill: SkillInstance, targetIndex?: number) => void;
   expGain?: number | null;
   inputRef: React.RefObject<HTMLInputElement | null>;
-  isKeyboardVisible?: boolean;
   currentEnemies: Enemy[];
   targetIndex: number;
   equippedSkills: (SkillInstance | null)[];
@@ -25,7 +24,6 @@ const BattleInterface: React.FC<BattleInterfaceProps> = ({
   onSkillUse,
   expGain: _expGain, // 使用しなくなったため、_を付けて無視する変数とする
   inputRef,
-  isKeyboardVisible = false,
   currentEnemies,
   targetIndex,
   equippedSkills,
@@ -41,6 +39,7 @@ const BattleInterface: React.FC<BattleInterfaceProps> = ({
   
   // スキル関連の状態
   const [activeSkillIndex, setActiveSkillIndex] = useState<number | null>(null);
+  const [hoveredSkillIndex, setHoveredSkillIndex] = useState<number | null>(null);
 
   useEffect(() => {
     if (shouldSelectInput && inputRef.current) {
@@ -111,16 +110,14 @@ const BattleInterface: React.FC<BattleInterfaceProps> = ({
     }
   };
 
+  // 表示するスキル情報を決定（アクティブなスキルまたはホバーしているスキル）
+  const displayedSkillIndex = activeSkillIndex !== null ? activeSkillIndex : hoveredSkillIndex;
+  const displayedSkill = displayedSkillIndex !== null ? equippedSkills[displayedSkillIndex] : null;
+
+  // 常にコンパクトモードスタイルを適用
   return (
     <div 
-      className={`
-        w-full flex flex-col
-        ${isKeyboardVisible 
-          ? 'justify-start mt-6' // キーボード表示時に上部に余白を追加
-          : 'justify-centor p-2'} 
-        bg-gray-900 text-white border-t border-gray-700 
-        transition-all duration-300
-      `}
+      className="w-full flex flex-col justify-start mt-6 bg-gray-900 text-white border-t border-gray-700 transition-all duration-300"
     >
       {/* 入力フィールドのラッパー */}
       <div className="input-wrapper px-2 mb-2 flex items-center">
@@ -161,6 +158,7 @@ const BattleInterface: React.FC<BattleInterfaceProps> = ({
             onSkillUse={handleSkillUse}
             activeSkillIndex={activeSkillIndex}
             inputRef={inputRef}
+            onSkillHover={setHoveredSkillIndex}
           />
           
           {/* スキル管理ボタン - 小さいサイズに */}
@@ -176,24 +174,30 @@ const BattleInterface: React.FC<BattleInterfaceProps> = ({
         </div>
       </div>
       
-      {/* スキル情報表示（アクティブなスキルがある場合） */}
-      {activeSkillIndex !== null && equippedSkills[activeSkillIndex] && (
-        <div className="bg-blue-900/50 mx-2 p-1 rounded-md mb-2">
-          <div className="text-xs text-center">
-            <span className="font-bold">{equippedSkills[activeSkillIndex]?.name}</span>
+      {/* スキル情報表示 - 常に表示する */}
+      <div className={`bg-blue-900/50 mx-2 p-1 rounded-md mb-2 min-h-[24px] ${displayedSkill ? 'opacity-100' : 'opacity-50'}`}>
+        {displayedSkill ? (
+          <div className="text-xs text-center relative">
+            <span className="font-bold">{displayedSkill.name}</span>
             {": "}
-            <span>{equippedSkills[activeSkillIndex]?.description}</span>
-            <button 
-              className="ml-2 bg-gray-700 px-1 text-xs rounded"
-              onClick={() => setActiveSkillIndex(null)}
-            >
-              キャンセル
-            </button>
+            <span>{displayedSkill.description}</span>
+            {/* アクティブスキルがある場合はキャンセルボタンを表示 */}
+            {activeSkillIndex !== null && (
+              <button 
+                className="absolute right-1 top-0 bg-gray-700 w-4 h-4 text-xs rounded-full flex items-center justify-center"
+                onClick={() => setActiveSkillIndex(null)}
+                title="キャンセル"
+              >
+                ×
+              </button>
+            )}
           </div>
-        </div>
-      )}
-
-      {/* PlayerInfoコンポーネントを削除 - HPとMPの表示はBattleStageに移動 */}
+        ) : (
+          <div className="text-xs text-center text-gray-400">
+            スキルを選択して説明を表示
+          </div>
+        )}
+      </div>
     </div>
   );
 };

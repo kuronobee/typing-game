@@ -1,4 +1,4 @@
-// src/components/SkillBar.tsx - サイズ調整版
+// src/components/SkillBar.tsx - ホバー機能追加版
 import React from 'react';
 import SkillSlot from './SkillSlot';
 import { Skill } from '../models/Skill';
@@ -10,6 +10,7 @@ interface SkillBarProps {
   onSkillUse: (skillIndex: number) => void;
   activeSkillIndex: number | null;
   inputRef: React.RefObject<HTMLInputElement | null>;
+  onSkillHover?: (index: number | null) => void; // ホバー機能用の新しいプロパティ
 }
 
 const SkillBar: React.FC<SkillBarProps> = ({
@@ -17,7 +18,8 @@ const SkillBar: React.FC<SkillBarProps> = ({
   player,
   onSkillUse,
   activeSkillIndex,
-  inputRef
+  inputRef,
+  onSkillHover
 }) => {
   // スキルスロットが選択された時の処理
   const handleSkillClick = (index: number) => {
@@ -29,19 +31,39 @@ const SkillBar: React.FC<SkillBarProps> = ({
       onSkillUse(index);
     }
   };
+
+  // スキルスロットへのマウスイベント処理
+  const handleMouseEnter = (index: number) => {
+    if (onSkillHover && skills[index]) {
+      onSkillHover(index);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (onSkillHover) {
+      onSkillHover(null);
+    }
+  };
   
   return (
     <div className="flex space-x-1 bg-gray-900/70 p-1 rounded-lg h-10 items-center">
       {skills.map((skill, index) => (
-        <SkillSlot
+        <div 
           key={index}
-          skill={skill}
-          index={index}
-          isActive={activeSkillIndex === index}
-          cooldown={skill?.state.remainingCooldown || 0}
-          onClick={handleSkillClick}
-          disabled={skill ? !skill.canUse(player) : true}
-        />
+          onMouseEnter={() => handleMouseEnter(index)}
+          onMouseLeave={handleMouseLeave}
+          // タッチデバイス用
+          onTouchStart={() => handleMouseEnter(index)}
+        >
+          <SkillSlot
+            skill={skill}
+            index={index}
+            isActive={activeSkillIndex === index}
+            cooldown={skill?.state.remainingCooldown || 0}
+            onClick={handleSkillClick}
+            disabled={skill ? !skill.canUse(player) : true}
+          />
+        </div>
       ))}
     </div>
   );

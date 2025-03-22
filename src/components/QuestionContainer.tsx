@@ -1,4 +1,4 @@
-// src/components/QuestionContainer.tsx の修正版 - 攻撃ゲージ警告追加
+// src/components/QuestionContainer.tsx - 常にコンパクトモード版
 import React, { useState, useEffect } from "react";
 import { Question } from "../data/questions";
 import { parseQuestionText } from "../utils/questionTextParser";
@@ -8,7 +8,6 @@ interface QuestionContainerProps {
   wrongAttempts: number;
   attackProgress: number; // 0～1 の値（例: 0.5なら50%進捗）
   onFullRevealChange: (fullReveal: boolean) => void;
-  isCompact?: boolean; // コンパクト表示モード
   inputRef: React.RefObject<HTMLInputElement | null>;
 }
 
@@ -17,7 +16,6 @@ const QuestionContainer: React.FC<QuestionContainerProps> = ({
     wrongAttempts, 
     attackProgress, 
     onFullRevealChange,
-    isCompact = false,
     inputRef,
 }) => {
   // fullReveal が true の場合、ヒントは完全に開かれる
@@ -169,13 +167,13 @@ const QuestionContainer: React.FC<QuestionContainerProps> = ({
     attackBarClass = "bg-red-500 animate-attack-warning";
   }
 
-  // コンパクトモード用のスタイルとレイアウト
+  // コンパクトモードのみのスタイルとレイアウト
   const containerClasses = `
     relative 
     question-container
     bg-black/50 
     border-white 
-    ${isCompact ? 'border-[1px] py-1 px-2' : 'border-2 px-4 py-2'} 
+    border-[1px] py-1 px-2
     text-white
     rounded
     transition-all 
@@ -184,7 +182,7 @@ const QuestionContainer: React.FC<QuestionContainerProps> = ({
   
   // ヒントボタンのスタイル
   const hintButtonClass = `
-    ${isCompact ? 'w-5 h-5 text-xs mr-1' : 'w-6 h-6 text-sm mr-2'}
+    w-5 h-5 text-xs mr-1
     bg-blue-500 
     rounded-full 
     flex 
@@ -194,54 +192,14 @@ const QuestionContainer: React.FC<QuestionContainerProps> = ({
     cursor-pointer
   `;
   
-  // 極限まで省スペース化したコンパクトデザイン
-  if (isCompact) {
-    return (
-      <div className={containerClasses}>
-        {/* 攻撃ゲージを小さく上部に表示 - 警告クラスを追加 */}
-        <div className="absolute top-1 left-1/2 transform -translate-x-1/2 z-30 w-100 h-[4px]">
-          <div className={`w-full h-full bg-gray-300 rounded-sm ${attackGaugeClass}`}>
-            <div
-              className={`h-full ${attackBarClass} rounded-sm`}
-              style={{ width: `${Math.min(attackProgress * 100, 100)}%` }}
-            ></div>
-          </div>
-        </div>
-        
-        {/* 危険警告アイコンを表示（95%以上の場合） */}
-        {attackProgress >= criticalThreshold && (
-          <div 
-            className="absolute top-0 right-1 text-red-500 animate-pulse z-40 text-xs"
-          >
-            ⚠️
-          </div>
-        )}
-        
-        {/* 内容を一行に集約 */}
-        <div className="flex flex-col pt-1">
-          <div className="flex-1 p-1 pl-5 text-sm">{renderPrompt()}</div>
-          <div className="flex-1 pl-5 text-sm flex items-center">
-            <span 
-              className={hintButtonClass}
-              onClick={handleRevealHint}
-            >
-              ?
-            </span>
-            {getHint(question?.answer ?? "", wrongAttempts)}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // 通常モード
+  // 常にコンパクトモードとして表示
   return (
     <div className={containerClasses}>
-      {/* 攻撃インジケータ - 警告クラスを追加 */}
-      <div className="absolute top-2 left-1/2 transform -translate-x-1/2 z-30 w-64">
-        <div className={`w-full h-2 bg-gray-300 rounded ${attackGaugeClass}`}>
+      {/* 攻撃ゲージを小さく上部に表示 - 警告クラスを追加 */}
+      <div className="absolute top-1 left-1/2 transform -translate-x-1/2 z-30 w-100 h-[4px]">
+        <div className={`w-full h-full bg-gray-300 rounded-sm ${attackGaugeClass}`}>
           <div
-            className={`h-full ${attackBarClass} rounded`}
+            className={`h-full ${attackBarClass} rounded-sm`}
             style={{ width: `${Math.min(attackProgress * 100, 100)}%` }}
           ></div>
         </div>
@@ -250,23 +208,23 @@ const QuestionContainer: React.FC<QuestionContainerProps> = ({
       {/* 危険警告アイコンを表示（95%以上の場合） */}
       {attackProgress >= criticalThreshold && (
         <div 
-          className="absolute top-2 right-4 text-red-500 animate-pulse z-40"
+          className="absolute top-0 right-1 text-red-500 animate-pulse z-40 text-xs"
         >
           ⚠️
         </div>
       )}
       
-      {/* ゲージと重ならないようにコンテンツにパディング */}
-      <div className="pt-4">
-        <p className="font-bold">問題: {renderPrompt()}</p>
-        <div className="mt-2 flex items-center">
-          <div 
+      {/* 内容を一行に集約 */}
+      <div className="flex flex-col pt-1">
+        <div className="flex-1 p-1 pl-5 text-sm">{renderPrompt()}</div>
+        <div className="flex-1 pl-5 text-sm flex items-center">
+          <span 
             className={hintButtonClass}
             onClick={handleRevealHint}
           >
             ?
-          </div>
-          <span>ヒント: {getHint(question?.answer ?? "", wrongAttempts)}</span>
+          </span>
+          {getHint(question?.answer ?? "", wrongAttempts)}
         </div>
       </div>
     </div>

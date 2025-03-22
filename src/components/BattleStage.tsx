@@ -1,4 +1,5 @@
-// src/components/BattleStage.tsx - 余白が点滅する版
+// src/components/BattleStage.tsx の修正版 - isCompactパラメータの削除とコンパクトモードの常時適用
+
 import React, { useEffect, useState, useRef } from "react";
 import bg from "../assets/bg/background.png";
 import playerImage from "../assets/chara/player.png"; // パスを修正
@@ -34,11 +35,12 @@ interface BattleStageProps {
   onFullRevealChange: (fullReveal: boolean) => void;
   onSelectTarget: (index: number) => void;
   comboCount: number;
-  isKeyboardVisible?: boolean;
   inputRef: React.RefObject<HTMLInputElement | null>;
   playerHitEffect?: boolean;
   playerDamageDisplay?: { value: number; id: number } | null;
   expGain: number | null;
+  playerAttackEffect?: boolean;
+  enemyRefs: React.MutableRefObject<(HTMLDivElement | null)[]>;
 }
 
 const BattleStage: React.FC<BattleStageProps> = ({
@@ -56,11 +58,12 @@ const BattleStage: React.FC<BattleStageProps> = ({
   onFullRevealChange,
   onSelectTarget,
   comboCount,
-  isKeyboardVisible = false,
   inputRef,
   playerHitEffect = false,
   playerDamageDisplay = null,
   expGain,
+  playerAttackEffect = false,
+  enemyRefs,
 }) => {
   // 各敵毎の攻撃ゲージ進捗を管理する配列(0〜1)
   const [attackProgresses, setAttackProgresses] = useState<number[]>([]);
@@ -129,7 +132,7 @@ const BattleStage: React.FC<BattleStageProps> = ({
   // ターゲット敵の攻撃ゲージ進捗
   const targetProgress = attackProgresses[targetIndex] || 0;
 
-  // コンパクトモード用のクラス調整
+  // 常にコンパクトモードとして扱う
   const mainContainerClasses = `
     relative w-full z-50 
     transition-all duration-300
@@ -138,7 +141,7 @@ const BattleStage: React.FC<BattleStageProps> = ({
   // バトルステージ部分のクラス
   const battleStageClasses = `
     relative w-full
-    ${isKeyboardVisible ? "compact-battle-stage p-0" : "p-2"}
+    compact-battle-stage p-0
     transition-all duration-300
   `;
 
@@ -147,12 +150,12 @@ const BattleStage: React.FC<BattleStageProps> = ({
     let baseY = enemy.positionOffset?.y || 0;
     let baseX = enemy.positionOffset?.x || 0;
 
-    if (isKeyboardVisible) {
-      baseY -= 60;
-      if (currentEnemies.length > 1) {
-        baseX = baseX * 0.85;
-      }
+    // 常にコンパクトモード調整を適用
+    baseY -= 60;
+    if (currentEnemies.length > 1) {
+      baseX = baseX * 0.85;
     }
+
     return { x: baseX, y: baseY };
   };
 
@@ -170,7 +173,7 @@ const BattleStage: React.FC<BattleStageProps> = ({
   };
 
   // 基本的な高さ設定
-  const battleAreaHeight = isKeyboardVisible ? "h-80" : "h-80";
+  const battleAreaHeight = "h-80";
   // プレイヤー領域の高さ
   const playerAreaHeight = 100; // px単位
 
@@ -195,10 +198,8 @@ const BattleStage: React.FC<BattleStageProps> = ({
           style={{
             backgroundImage: `url(${bg})`,
             backgroundRepeat: "no-repeat",
-            backgroundPosition: isKeyboardVisible
-              ? "center 70%"
-              : "bottom center",
-            backgroundSize: isKeyboardVisible ? "90% auto" : "100% 100%",
+            backgroundPosition: "center 70%",
+            backgroundSize: "90% auto",
           }}
         />
 
@@ -224,8 +225,7 @@ const BattleStage: React.FC<BattleStageProps> = ({
               key={index}
               className="absolute z-10"
               style={{
-                bottom: `calc(${isKeyboardVisible ? "80px" : "70px"} + ${position.y
-                  }px)`,
+                bottom: `calc(80px + ${position.y}px)`,
                 left: `calc(50% + ${position.x}px)`,
                 transform: "translateX(-50%)",
               }}
@@ -233,6 +233,12 @@ const BattleStage: React.FC<BattleStageProps> = ({
                 e.preventDefault();
                 if (!enemy.defeated) {
                   onSelectTarget(index);
+                }
+              }}
+              ref={(el) => {
+                // 敵要素のRefを設定
+                if (enemyRefs.current) {
+                  enemyRefs.current[index] = el;
                 }
               }}
             >
@@ -247,7 +253,7 @@ const BattleStage: React.FC<BattleStageProps> = ({
                 progress={enemyProgress}
                 damage={damageNumbers[index]}
                 comboCount={comboCount}
-                scaleAdjustment={isKeyboardVisible ? 0.80 : 1}
+                scaleAdjustment={0.8}
               />
             </div>
           );
@@ -257,27 +263,23 @@ const BattleStage: React.FC<BattleStageProps> = ({
         {currentEnemies[targetIndex] &&
           currentEnemies[targetIndex].currentHP > 0 && (
             <div
-              className={`absolute left-1/2 transform -translate-x-1/2 
-                ${isKeyboardVisible ? "top-0 w-[99%]" : "top-4 w-[90%]"} 
-                z-30 transition-all duration-300`}
+              className="absolute left-1/2 transform -translate-x-1/2 top-0 w-[99%] z-30 transition-all duration-300"
             >
               <QuestionContainer
                 question={currentQuestion}
                 wrongAttempts={wrongAttempts}
                 attackProgress={targetProgress}
                 onFullRevealChange={onFullRevealChange}
-                isCompact={isKeyboardVisible}
                 inputRef={inputRef}
               />
             </div>
           )}
 
         {/* メッセージ表示 */}
-        <div className={`transition-all duration-300`}>
+        <div className="transition-all duration-300">
           <MessageDisplay
             newMessage={message}
-            isCompact={isKeyboardVisible}
-            position={isKeyboardVisible ? "bottom-6" : "bottom-20"}
+            position="bottom-6"
           />
         </div>
       </div>
@@ -288,7 +290,7 @@ const BattleStage: React.FC<BattleStageProps> = ({
         style={{
           height: `${playerAreaHeight}px`,
           backgroundColor: getPlayerAreaBackground(),
-          transition: 'background-color 0.3s ease'
+          transition: 'background-color 0.5s ease'
         }}
       >
         {/* レベル表示 - 左側に配置 */}
@@ -323,7 +325,9 @@ const BattleStage: React.FC<BattleStageProps> = ({
 
         {/* プレイヤーキャラクター表示 - 中央に */}
         <div
-          className={`absolute z-20 pointer-events-none ${playerHitEffect ? 'player-shake' : ''}`}
+          className={`absolute z-20 pointer-events-none ${playerHitEffect 
+            ? 'player-shake' : playerAttackEffect ? 'player-attack-m' : ''
+            }`}
           style={{
             top: `-90px`,
             left: "50%",

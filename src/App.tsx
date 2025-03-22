@@ -14,7 +14,6 @@ import { MessageType } from "./components/MessageDisplay";
 import { ENEMY_HIT_ANIMATION_DURATION } from "./data/constants";
 
 // カスタムフックのインポート
-import useKeyboardVisibility from "./hooks/useKeyboardVisibility";
 import useIOSScrollPrevention from "./hooks/useIOSScrollPrevention";
 import { useCombatSystem } from "./hooks/useCombatSystem";
 import { usePlayerAttack } from "./hooks/usePlayerAttack";
@@ -47,7 +46,6 @@ const App: React.FC = () => {
   }, []);
 
   // カスタムフックの使用
-  const isKeyboardVisible = useKeyboardVisibility(inputRef);
   useIOSScrollPrevention(inputRef);
 
   // プレイヤーの状態
@@ -141,6 +139,27 @@ const App: React.FC = () => {
       setPlayerHitEffect(false);
     }, 600);
   };
+
+  // 状態の追加
+  const [playerAttackEffect, setPlayerAttackEffect] = useState<boolean>(false);
+
+  // プレイヤーの攻撃エフェクトを表示する関数
+  const showPlayerAttackEffect = (isSkill: boolean = false) => {
+    // アニメーションのクラス名を設定
+    setPlayerAttackEffect(true);
+
+    // アニメーション終了後にリセット
+    setTimeout(() => {
+      setPlayerAttackEffect(false);
+    }, isSkill ? 700 : 500); // スキル使用時は少し長めのアニメーション
+  };
+  // 敵キャラクターのDOM要素への参照を保持するためのRef配列
+  const enemyRefs = useRef<(HTMLDivElement | null)[]>([]);
+  // 敵の数が変わったときにRef配列を初期化
+  useEffect(() => {
+    // 配列のサイズを現在の敵の数に合わせる
+    enemyRefs.current = Array(currentEnemies.length).fill(null);
+  }, [currentEnemies.length]);
 
   // 初回マウント時の初期化
   useEffect(() => {
@@ -258,7 +277,9 @@ const App: React.FC = () => {
         playerAttack.setEnemyDefeatedMessage,
         StageManager.findNextAliveEnemyIndex,
         setTargetIndex,
-        setActiveSkill
+        setActiveSkill,
+        showPlayerAttackEffect,
+        enemyRefs
       );
       setSkillHandler(handler);
     }
@@ -373,6 +394,7 @@ const App: React.FC = () => {
       // 正解の場合
       const newCombo = comboCount + 1;
       playerAttack.handleComboUpdate(newCombo);
+
       // アクティブなスキルがあれば実行
       if (activeSkill && activeSkill.activationTiming === "onCorrectAnswer") {
         // スキルを実行
@@ -383,6 +405,9 @@ const App: React.FC = () => {
 
         // アクティブスキルをリセット
         setActiveSkill(null);
+
+        // スキル使用時のプレイヤーアニメーション
+        showPlayerAttackEffect(true);
       } else {
         // 通常攻撃処理
         const { damage, specialMessage } =
@@ -400,6 +425,9 @@ const App: React.FC = () => {
 
         // ダメージメッセージを設定
         playerAttack.setAttackResultMessage(damage, specialMessage);
+
+        // 通常攻撃時のプレイヤーアニメーション
+        showPlayerAttackEffect(false);
       }
 
       setWrongAttempts(0);
@@ -431,7 +459,6 @@ const App: React.FC = () => {
       setActiveSkill(null);
     }
   };
-
   // // すべての敵が倒されたかチェック
   // const checkStageCompletion = () => {
   //   const allDefeated = StageManager.isStageCompleted(currentEnemies);
@@ -485,9 +512,13 @@ const App: React.FC = () => {
   };
 
   // スキル使用時の処理関数（App コンポーネント内に追加）
-  // スキル使用処理の新しい実装
   const handleSkillUse = (skill: SkillInstance, targetIndex?: number) => {
     if (skillHandler) {
+      // スキル使用時のプレイヤーアニメーション
+      if (skill.activationTiming === 'onCommand') {
+        showPlayerAttackEffect(true);
+      }
+
       skillHandler.handleSkillUse(skill, targetIndex);
     } else {
       setMessage({
@@ -612,10 +643,7 @@ const App: React.FC = () => {
 
           {/* BattleInterface - 上部に配置 */}
           <div
-            className={`${isKeyboardVisible
-              ? "flex-1" // キーボード表示時は適切な高さに
-              : "flex-1"} // 通常時も同じ
-        bg-gray-900 transition-all duration-300`}
+            className="flex-1 bg-gray-900 transition-all duration-300"
           >
             <BattleInterface
               player={player}
@@ -623,7 +651,6 @@ const App: React.FC = () => {
               onSkillUse={handleSkillUse}
               expGain={expGain}
               inputRef={inputRef}
-              isKeyboardVisible={isKeyboardVisible}
               currentEnemies={currentEnemies}
               targetIndex={targetIndex}
               equippedSkills={equippedSkills}
@@ -636,7 +663,7 @@ const App: React.FC = () => {
           <div
             className="relative overflow-hidden"
             style={{
-              minHeight: `${isKeyboardVisible ? '400px' : '440px'}`
+              minHeight: '400px' // 画面の高さに合わせる
             }}
           >
             <BattleStage
@@ -654,11 +681,12 @@ const App: React.FC = () => {
               onFullRevealChange={setIsHintFullyRevealed}
               onSelectTarget={handleSelectTarget}
               comboCount={comboCount}
-              isKeyboardVisible={isKeyboardVisible}
               inputRef={inputRef}
               playerHitEffect={playerHitEffect} // プレイヤーダメージエフェクト用
               playerDamageDisplay={combat.playerDamageDisplay} // プレイヤーダメージ表示用
               expGain={expGain}
+              playerAttackEffect={playerAttackEffect} // プレイヤーアタックエフェクト用
+              enemyRefs={enemyRefs}
             />
 
             {/* レベルアップ通知 */}
@@ -673,7 +701,6 @@ const App: React.FC = () => {
             {readyForNextStage && !showLevelUp && (
               <NextStageButton
                 onNext={handleNextStage}
-                isKeyboardVisible={isKeyboardVisible}
               />
             )}
           </div>

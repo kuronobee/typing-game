@@ -22,11 +22,9 @@ export const stages: Stage[] = [
   {
     id: "stage2",
     enemies: [
-      enemiesData.find(e => e.name === "グレートオーガ")!,
       enemiesData.find(e => e.name === "ゴーレム")!,
-      enemiesData.find(e => e.name === "ドラゴン")!,
     ],
-    positions: [{ x: -150, y: -10 }, { x: 0, y: 0 }, { x: 150, y: -10 }],
+    positions: [{ x: 0, y: 0 }],
   },
   {
     id: "stage2",
@@ -57,6 +55,35 @@ export const stages: Stage[] = [
     ],
     positions: [{ x: 0, y: 0 }],
   },
+  {
+    id: "stage2",
+    enemies: [enemiesData.find(e => e.name === "ウォールゴーレム")!],
+    positions: [{ x: 0, y: 0 }],
+  },
+  {
+    id: "stage2",
+    enemies: [
+      enemiesData.find(e => e.name === "マッドグール")!,
+      enemiesData.find(e => e.name === "マッドグール")!,
+      enemiesData.find(e => e.name === "マッドグール")!,
+    ],
+    positions: [{ x: -120, y: 0 },{x: 0, y: 0}, { x: 120, y: 0 }],
+  },
+  {
+    id: "stage2",
+    enemies: [
+      enemiesData.find(e => e.name === "ギズモ")!,
+    ],
+    positions: [{ x: 0, y: 60 }],
+  },
+  {
+    id: "stage2",
+    enemies: [
+      enemiesData.find(e => e.name === "ライノブルート")!,
+    ],
+    positions: [{ x: 0, y: 0 }],
+  },
+  
 
   // 他のステージも追加可能
 ];

@@ -1,4 +1,4 @@
-// src/components/MessageDisplay.tsx - sender で色分け
+// src/components/MessageDisplay.tsx - コンパクトモードのみ対応版
 import React, { useState, useEffect, useRef } from "react";
 import { MESSAGE_DISPLAY_DURATION, MESSAGE_GROUP_THRESHOLD } from "../data/constants";
 
@@ -11,15 +11,13 @@ export type MessageType = {
 
 interface MessageDisplayProps {
   newMessage: MessageType | null;
-  isCompact?: boolean;
   position?: string; // 位置を指定するプロパティ
   maxMessages?: number; // 同時に表示する最大メッセージ数
 }
 
 const MessageDisplay: React.FC<MessageDisplayProps> = ({ 
   newMessage,
-  isCompact = false,
-  position = "bottom-20",
+  position = "bottom-6",
   maxMessages = 3 // デフォルトは3つまで表示
 }) => {
   // 複数のメッセージを管理するための状態
@@ -88,11 +86,11 @@ const MessageDisplay: React.FC<MessageDisplayProps> = ({
     }
   };
 
-  // コンパクトモード用のスタイル
+  // 常にコンパクトモード用のスタイル
   const containerClasses = `
     absolute z-20 ${position}
     bg-black/50 border-white border-2 text-white
-    ${isCompact ? 'px-2 py-1' : 'px-4 py-2'}
+    px-2 py-1
     rounded w-[95vw] max-w-xl
     left-1/2 transform -translate-x-1/2
     transition-all duration-300 ease-in-out
@@ -110,7 +108,7 @@ const MessageDisplay: React.FC<MessageDisplayProps> = ({
             
             {/* メッセージ本体 - 送信者によって色を変更 */}
             <p
-              className={`${getMessageClass(message.sender)} ${isCompact ? 'text-xs' : 'text-sm'} message-fade-in`}
+              className={`${getMessageClass(message.sender)} text-xs message-fade-in`}
               style={{ whiteSpace: "normal", textAlign: "left" }}
             >
               {message.text}

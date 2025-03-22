@@ -1,4 +1,4 @@
-// src/components/SkillSlot.tsx - サイズ調整版
+// src/components/SkillSlot.tsx - タッチイベント対応版
 import React from 'react';
 import { Skill } from '../models/Skill';
 
@@ -47,7 +47,6 @@ const SkillSlot: React.FC<SkillSlotProps> = ({
         relative overflow-hidden
       `}
       onClick={handleClick}
-      title={`${skill.name}: ${skill.description}\nMP消費: ${skill.mpCost}`}
     >
       {/* スキルアイコン（準備ができたら実際の画像を使用） */}
       <div className="w-full h-full flex items-center justify-center text-white">
