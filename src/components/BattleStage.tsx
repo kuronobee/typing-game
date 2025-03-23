@@ -41,6 +41,7 @@ interface BattleStageProps {
   expGain: number | null;
   playerAttackEffect?: boolean;
   enemyRefs: React.MutableRefObject<(HTMLDivElement | null)[]>;
+  skillAnimationInProgress?: boolean;
 }
 
 const BattleStage: React.FC<BattleStageProps> = ({
@@ -64,6 +65,7 @@ const BattleStage: React.FC<BattleStageProps> = ({
   expGain,
   playerAttackEffect = false,
   enemyRefs,
+  skillAnimationInProgress = false,
 }) => {
   // 各敵毎の攻撃ゲージ進捗を管理する配列(0〜1)
   const [attackProgresses, setAttackProgresses] = useState<number[]>([]);
@@ -105,6 +107,7 @@ const BattleStage: React.FC<BattleStageProps> = ({
   // 各敵のゲージをバックグラウンドで進行させるタイマー
   useEffect(() => {
     const timerId = setInterval(() => {
+      if (skillAnimationInProgress) return; // スキルアニメーション中は進捗を停止
       setAttackProgresses((prevProgresses) =>
         prevProgresses.map((progress, i) => {
           const enemy = currentEnemies[i];

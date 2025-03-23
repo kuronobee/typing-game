@@ -31,9 +31,9 @@ const FireSkillEffect: React.FC<FireSkillEffectProps> = ({
   power = 'medium'
 }) => {
   void skillName;
-  
+
   const [animationStage, setAnimationStage] = useState<'charging' | 'firing' | 'impact' | 'completed'>('charging');
-  
+
   // パワーに応じてパラメータを調整
   const powerSettings = useMemo(() => {
     switch (power) {
@@ -64,14 +64,14 @@ const FireSkillEffect: React.FC<FireSkillEffectProps> = ({
         };
     }
   }, [power]);
-  
+
   // 火の玉パーティクルを生成
   const fireParticles = useMemo(() => {
     const particles: FireParticle[] = [];
-    
+
     for (let i = 0; i < powerSettings.particleCount; i++) {
       const colorIndex = Math.floor(Math.random() * powerSettings.colors.length);
-      
+
       particles.push({
         id: i,
         x: Math.random() * 160 - 80, // -80 ~ 80の範囲
@@ -84,7 +84,7 @@ const FireSkillEffect: React.FC<FireSkillEffectProps> = ({
         delay: Math.random() * 300
       });
     }
-    
+
     return particles;
   }, [powerSettings]);
 
@@ -94,23 +94,23 @@ const FireSkillEffect: React.FC<FireSkillEffectProps> = ({
     const chargingTimer = setTimeout(() => {
       setAnimationStage('firing');
     }, powerSettings.chargeDuration);
-    
+
     // 発射アニメーション
     const firingTimer = setTimeout(() => {
       setAnimationStage('impact');
     }, powerSettings.chargeDuration + 400);
-    
+
     // インパクトアニメーション
     const impactTimer = setTimeout(() => {
       setAnimationStage('completed');
     }, powerSettings.chargeDuration + 400 + 700);
-    
+
     // エフェクト終了 - ここでコールバックを実行する
     const completionTimer = setTimeout(() => {
       // アニメーション終了時にonCompleteコールバックを実行
       onComplete();
     }, duration);
-    
+
     return () => {
       clearTimeout(chargingTimer);
       clearTimeout(firingTimer);
@@ -124,11 +124,11 @@ const FireSkillEffect: React.FC<FireSkillEffectProps> = ({
     x: window.innerWidth / 2,
     y: window.innerHeight * 0.5
   };
-  
+
   // // チャージエフェクト
   // const renderChargingEffect = () => {
   //   if (animationStage !== 'charging') return null;
-    
+
   //   return (
   //     <div 
   //       className="absolute w-16 h-16 rounded-full"
@@ -147,13 +147,13 @@ const FireSkillEffect: React.FC<FireSkillEffectProps> = ({
   // 発射エフェクト
   const renderFiringEffect = () => {
     if (animationStage !== 'firing') return null;
-    
+
     // 発射元から目標までの角度を計算
     const angle = Math.atan2(
       targetPosition.y - sourcePosition.y,
       targetPosition.x - sourcePosition.x
     );
-    
+
     // 軌道に沿って複数の火の玉を配置
     return (
       <div className="absolute inset-0 pointer-events-none">
@@ -162,7 +162,7 @@ const FireSkillEffect: React.FC<FireSkillEffectProps> = ({
           const progress = i / 4;
           const x = sourcePosition.x + (targetPosition.x - sourcePosition.x) * progress;
           const y = sourcePosition.y + (targetPosition.y - sourcePosition.y) * progress;
-          
+
           // 軌道上に火の玉を描画
           return (
             <div
@@ -182,7 +182,7 @@ const FireSkillEffect: React.FC<FireSkillEffectProps> = ({
             />
           );
         })}
-        
+
         {/* 軌道の尾（トレイル） */}
         <div
           className="absolute"
@@ -190,7 +190,7 @@ const FireSkillEffect: React.FC<FireSkillEffectProps> = ({
             left: sourcePosition.x,
             top: sourcePosition.y,
             width: Math.sqrt(
-              Math.pow(targetPosition.x - sourcePosition.x, 2) + 
+              Math.pow(targetPosition.x - sourcePosition.x, 2) +
               Math.pow(targetPosition.y - sourcePosition.y, 2)
             ),
             height: '4px',
@@ -204,11 +204,11 @@ const FireSkillEffect: React.FC<FireSkillEffectProps> = ({
       </div>
     );
   };
-  
+
   // インパクトエフェクト
   const renderImpactEffect = () => {
     if (animationStage !== 'impact') return null;
-    
+
     return (
       <div className="absolute" style={{
         left: targetPosition.x,
@@ -216,7 +216,7 @@ const FireSkillEffect: React.FC<FireSkillEffectProps> = ({
         transform: 'translate(-50%, -50%)',
       }}>
         {/* 爆発の中心 */}
-        <div 
+        <div
           className="absolute rounded-full"
           style={{
             width: powerSettings.size,
@@ -228,7 +228,7 @@ const FireSkillEffect: React.FC<FireSkillEffectProps> = ({
             animation: 'explode 0.7s forwards'
           }}
         />
-        
+
         {/* 波紋効果 */}
         {[...Array(3)].map((_, i) => (
           <div
@@ -244,7 +244,7 @@ const FireSkillEffect: React.FC<FireSkillEffectProps> = ({
             }}
           />
         ))}
-        
+
         {/* 火花エフェクト */}
         {fireParticles.map(particle => (
           <div
@@ -262,7 +262,7 @@ const FireSkillEffect: React.FC<FireSkillEffectProps> = ({
             }}
           />
         ))}
-        
+
         {/* ダメージ表示
         {damageValue && (
           <div
@@ -279,7 +279,7 @@ const FireSkillEffect: React.FC<FireSkillEffectProps> = ({
             {damageValue}
           </div>
         )} */}
-        
+
         {/* スキル名表示 
         <div
           className="absolute whitespace-nowrap"
@@ -301,7 +301,11 @@ const FireSkillEffect: React.FC<FireSkillEffectProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 pointer-events-none z-50">
+    <div className="fixed pointer-events-none z-50" style={{
+      position: 'absolute',
+      background: 'transparent',
+      // 必要な範囲だけをカバー
+    }}>
       {/*{renderChargingEffect()}*/}
       {renderFiringEffect()}
       {renderImpactEffect()}

@@ -46,6 +46,9 @@ export class SkillHandler {
   >;
   private showPlayerAttackEffect?: (isSkill: boolean) => void;
   private enemyRefs: React.MutableRefObject<(HTMLDivElement | null)[]>;
+  private setSkillAnimationInProgress: React.Dispatch<
+    React.SetStateAction<boolean>
+  >;
 
   /**
    * コンストラクタ - 必要な状態更新関数を注入
@@ -65,7 +68,8 @@ export class SkillHandler {
     setTargetIndex: React.Dispatch<React.SetStateAction<number>>,
     setActiveSkill: React.Dispatch<React.SetStateAction<SkillInstance | null>>,
     showPlayerAttackEffect?: (isSkill: boolean) => void,
-    enemyRefs?: React.MutableRefObject<(HTMLDivElement | null)[]> // 敵キャラの参照を受け取る
+    enemyRefs?: React.MutableRefObject<(HTMLDivElement | null)[]>, // 敵キャラの参照を受け取る
+    setSkillAnimationInProgress?: React.Dispatch<React.SetStateAction<boolean>>
   ) {
     this.player = player;
     this.currentEnemies = currentEnemies;
@@ -82,6 +86,8 @@ export class SkillHandler {
     this.setActiveSkill = setActiveSkill;
     this.showPlayerAttackEffect = showPlayerAttackEffect;
     this.enemyRefs = enemyRefs || { current: [] };
+    this.setSkillAnimationInProgress =
+      setSkillAnimationInProgress || (() => {}); // デフォルト値として空関数を設定
   }
 
   /**
@@ -270,6 +276,9 @@ export class SkillHandler {
       return;
     }
 
+    // スキルアニメーション開始フラグをセット
+    this.setSkillAnimationInProgress(true);
+
     // MP消費処理（先に消費する）
     this.setPlayer((prev) => {
       return new Player(
@@ -297,7 +306,7 @@ export class SkillHandler {
     const result = skill.execute(this.player, this.currentEnemies, targetIndex);
 
     if (result.success && targetIndex !== undefined) {
-        const enemyPosition = this.getEnemyPosition(targetIndex);
+      const enemyPosition = this.getEnemyPosition(targetIndex);
 
       // アニメーション表示、onComplete時にダメージを適用する
       this.showFireSkillEffect({
@@ -306,6 +315,8 @@ export class SkillHandler {
         damageValue: result.damageAmount,
         power: "low", // 低威力設定
         onComplete: () => {
+          // アニメーション終了時にフラグを戻す
+          this.setSkillAnimationInProgress(false);
           // アニメーション完了後にダメージを適用する
           if (result.targetIndex !== undefined) {
             // ダメージ表示とヒットアニメーション
@@ -356,6 +367,10 @@ export class SkillHandler {
         },
       });
     }
+    else {
+        // 失敗したときもフラグをリセット
+        this.setSkillAnimationInProgress(false);
+    }
   }
 
   /**
@@ -395,18 +410,11 @@ export class SkillHandler {
 
     if (result.success && targetIndex !== undefined) {
       // 対象の敵の位置を取得
-      const targetEnemy = this.currentEnemies[targetIndex];
-      const enemyPosition = targetEnemy.positionOffset || { x: 0, y: 0 };
-      const centerX = window.innerWidth / 2;
-      const centerY = window.innerHeight / 2;
-
+      const enemyPosition = this.getEnemyPosition(targetIndex);
       // ファイアボールエフェクト表示
       this.showFireSkillEffect({
         skillName: "ファイアボール",
-        targetPosition: {
-          x: centerX + enemyPosition.x,
-          y: centerY - 100 + enemyPosition.y,
-        },
+        targetPosition: enemyPosition,
         damageValue: result.damageAmount,
         power: "medium", // 中威力設定
         onComplete: () => {

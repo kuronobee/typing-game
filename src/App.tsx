@@ -75,11 +75,14 @@ const App: React.FC = () => {
   const [isDead, setIsDead] = useState(false);
   const [showGameOver, setShowGameOver] = useState(false);
 
+
   // スキル関連の変数
   const [activeSkill, setActiveSkill] = useState<SkillInstance | null>(null);
   const [equippedSkills, setEquippedSkills] = useState<
     (SkillInstance | null)[]
   >([]);
+  // アニメーション中かどうかを追跡
+  const [skillAnimationInProgress, setSkillAnimationInProgress] = useState<boolean>(false);
   const [availableSkillIds, setAvailableSkillIds] =
     useState<string[]>(initialPlayerSkills);
   const [showSkillManagement, setShowSkillManagement] = useState(false);
@@ -102,6 +105,8 @@ const App: React.FC = () => {
   // 2. 炎系スキル表示関数を追加
   // 炎系スキルのエフェクトを表示する関数
   const showFireSkillEffect = (props: FireSkillEffectProps) => {
+    setSkillAnimationInProgress(true); // アニメーション開始
+
     // 画面効果を追加（オプション）
     document.body.classList.add("fire-skill-flash");
     setTimeout(() => {
@@ -109,7 +114,21 @@ const App: React.FC = () => {
     }, 500);
 
     // エフェクト状態を設定
-    setFireSkillEffect(props);
+    setFireSkillEffect({
+      ...props,
+      onComplete: () => {
+        // オリジナルのコールバックを保存
+        const originalCallback = props.onComplete;
+
+        // アニメーション終了時にフラグをリセット
+        setSkillAnimationInProgress(false);
+
+        // 元のコールバックがあれば実行
+        if (originalCallback) {
+          originalCallback();
+        }
+      }
+    });
 
     // 敵へのヒット後に火のオーラエフェクトを追加（オプション）
     if (props.targetPosition && props.damageValue) {
@@ -279,7 +298,8 @@ const App: React.FC = () => {
         setTargetIndex,
         setActiveSkill,
         showPlayerAttackEffect,
-        enemyRefs
+        enemyRefs,
+        setSkillAnimationInProgress,
       );
       setSkillHandler(handler);
     }
@@ -597,7 +617,7 @@ const App: React.FC = () => {
       )}
       {/* ファイヤースキル発動 */}
       {fireSkillEffect && (
-        <div className="z-500 opacity-80">
+        <div className="z-500">
           <FireSkillEffect
             skillName={fireSkillEffect.skillName}
             targetPosition={fireSkillEffect.targetPosition}
@@ -687,6 +707,7 @@ const App: React.FC = () => {
               expGain={expGain}
               playerAttackEffect={playerAttackEffect} // プレイヤーアタックエフェクト用
               enemyRefs={enemyRefs}
+              skillAnimationInProgress={skillAnimationInProgress}
             />
 
             {/* レベルアップ通知 */}
