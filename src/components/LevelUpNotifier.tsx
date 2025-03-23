@@ -1,5 +1,6 @@
-// src/components/LevelUpNotifier.tsx - 修正版
-import React, { useEffect, useRef } from "react";
+// src/components/LevelUpNotifier.tsx の修正
+
+import React, { useEffect, useRef, useState } from "react";
 import { Player as PlayerModel } from "../models/Player";
 import { ExperienceManager } from "../managers/ExperienceManager";
 
@@ -13,6 +14,9 @@ const LevelUpNotifier: React.FC<LevelUpNotifierProps> = ({ player, level, onClos
   // 前回のプレイヤー状態を一時的に保存する ref
   const prevPlayerRef = useRef<PlayerModel | null>(null);
   
+  // エラー状態を追跡
+  const [hasError, setHasError] = useState(false);
+  
   // このレベルで習得するスキル情報
   const skillsForLevel = ExperienceManager.LEVEL_SKILLS
     .filter(skill => skill.level === level)
@@ -22,44 +26,75 @@ const LevelUpNotifier: React.FC<LevelUpNotifierProps> = ({ player, level, onClos
   
   // コンポーネントマウント時に一度だけprevPlayerを設定
   useEffect(() => {
-    // prevPlayerにはレベルアップ前の状態を推測して設定
-    if (!prevPlayerRef.current) {
-      // 現在のプレイヤーからレベルが1つ低い状態を作成
-      const prevLevel = level - 1;
-      const estimatedPrevHp = player.maxHP - 10;
-      const estimatedPrevMp = player.maxMP - 5;
-      const estimatedPrevDefense = player.defense - 1;
-      const estimatedPrevMagicDefense = player.magicDefense - 1;
-      const estimatedPrevSpeed = player.speed - 1;
-      const estimatedPrevAttack = player.attack - 2;
-      const estimatedPrevLuck = player.luck - 1;
-      const estimatedPrevPower = player.power - 1;
+    try {
+      // レベル整合性チェック
+      if (level > player.level) {
+        console.error(`異常なレベル: 表示レベル ${level} が現在レベル ${player.level} より大きい`);
+        setHasError(true);
+        return;
+      }
       
-      // レベルアップ前の状態を推測して設定
-      prevPlayerRef.current = new PlayerModel(
-        estimatedPrevHp,
-        estimatedPrevHp,
-        estimatedPrevMp,
-        estimatedPrevMp,
-        estimatedPrevDefense,
-        estimatedPrevMagicDefense,
-        prevLevel,
-        0,
-        player.totalExp - player.exp,
-        estimatedPrevSpeed,
-        estimatedPrevAttack,
-        estimatedPrevLuck,
-        estimatedPrevPower,
-        [...player.statusEffects]
-      );
+      if (level <= 0) {
+        console.error(`不正なレベル値: ${level}`);
+        setHasError(true);
+        return;
+      }
+      
+      // prevPlayerにはレベルアップ前の状態を推測して設定
+      if (!prevPlayerRef.current) {
+        // 現在のプレイヤーからレベルが1つ低い状態を作成
+        const prevLevel = level - 1;
+        
+        // 前のレベルのステータスを推測（レベルごとの増加量に基づく）
+        const estimatedPrevHp = Math.max(player.maxHP - 10, 10);
+        const estimatedPrevMp = Math.max(player.maxMP - 5, 5);
+        const estimatedPrevDefense = Math.max(player.defense - 1, 1);
+        const estimatedPrevMagicDefense = Math.max(player.magicDefense - 1, 1);
+        const estimatedPrevSpeed = Math.max(player.speed - 1, 1);
+        const estimatedPrevAttack = Math.max(player.attack - 2, 1);
+        const estimatedPrevLuck = Math.max(player.luck - 1, 1);
+        const estimatedPrevPower = Math.max(player.power - 1, 1);
+        
+        // レベルアップ前の状態を推測して設定
+        prevPlayerRef.current = new PlayerModel(
+          estimatedPrevHp,
+          estimatedPrevHp,
+          estimatedPrevMp,
+          estimatedPrevMp,
+          estimatedPrevDefense,
+          estimatedPrevMagicDefense,
+          prevLevel,
+          0,
+          player.totalExp - player.exp,
+          estimatedPrevSpeed,
+          estimatedPrevAttack,
+          estimatedPrevLuck,
+          estimatedPrevPower,
+          [...player.statusEffects]
+        );
+        
+        console.log(`前のレベル(${prevLevel})ステータスを推測:`, {
+          HP: estimatedPrevHp,
+          MP: estimatedPrevMp,
+          DEF: estimatedPrevDefense,
+          MDEF: estimatedPrevMagicDefense,
+          SPD: estimatedPrevSpeed,
+          ATK: estimatedPrevAttack,
+          LUK: estimatedPrevLuck,
+          POW: estimatedPrevPower
+        });
+      }
+    } catch (error) {
+      console.error("レベルアップ通知の初期化中にエラー:", error);
+      setHasError(true);
     }
   }, [level, player]);
 
   // メッセージが表示されているときにEnterキーで閉じる処理
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === " " || e.code === "Space") {
-        // デフォルトの動作（スペース入力）を防止
+      if (e.key === " " || e.code === "Space" || e.key === "Enter") {
+        // デフォルトの動作を防止
         e.preventDefault();
         onClose();
       }
@@ -68,6 +103,25 @@ const LevelUpNotifier: React.FC<LevelUpNotifierProps> = ({ player, level, onClos
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [onClose]);
+
+  // エラー時の表示
+  if (hasError) {
+    return (
+      <div className="absolute inset-0 flex items-center justify-center z-50 bg-black bg-opacity-75" 
+           onClick={onClose}>
+        <div className="bg-red-800 text-white p-4 rounded-lg">
+          <h3 className="text-xl font-bold mb-2">エラー</h3>
+          <p>レベルアップ表示中に問題が発生しました</p>
+          <button 
+            className="mt-4 px-4 py-2 bg-red-600 rounded hover:bg-red-500"
+            onClick={onClose}
+          >
+            閉じる
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // ステータス増加分を計算
   const prevPlayer = prevPlayerRef.current || player;

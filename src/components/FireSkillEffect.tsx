@@ -1,5 +1,5 @@
-// src/components/FireSkillEffect.tsx の修正
-import React, { useEffect, useState, useMemo } from 'react';
+// 改善版 FireSkillEffect.tsx
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 
 interface FireSkillEffectProps {
   skillName: string;
@@ -31,10 +31,15 @@ const FireSkillEffect: React.FC<FireSkillEffectProps> = ({
   power = 'medium'
 }) => {
   void skillName;
-
+  // アニメーション状態を追跡
   const [animationStage, setAnimationStage] = useState<'charging' | 'firing' | 'impact' | 'completed'>('charging');
+  
+  // 実行済みフラグで重複実行を防止
+  const completedRef = useRef(false);
+  // タイマー参照を保持して確実にクリーンアップ
+  const timersRef = useRef<number[]>([]);
 
-  // パワーに応じてパラメータを調整
+  // パワーに応じてパラメータを調整 (定数を使用してハードコード)
   const powerSettings = useMemo(() => {
     switch (power) {
       case 'low':
@@ -43,7 +48,7 @@ const FireSkillEffect: React.FC<FireSkillEffectProps> = ({
           size: 100,
           colors: ['#ff4d00', '#ff7700', '#ff9500'],
           impactScale: 1.2,
-          chargeDuration: 300
+          chargeDuration: 500 // 300から500に変更して安定化
         };
       case 'high':
         return {
@@ -60,7 +65,7 @@ const FireSkillEffect: React.FC<FireSkillEffectProps> = ({
           size: 140,
           colors: ['#ff2d00', '#ff6d00', '#ff9d00'],
           impactScale: 1.5,
-          chargeDuration: 400
+          chargeDuration: 500 // 400から500に変更して統一
         };
     }
   }, [power]);
@@ -88,34 +93,43 @@ const FireSkillEffect: React.FC<FireSkillEffectProps> = ({
     return particles;
   }, [powerSettings]);
 
-  // アニメーションのタイミング制御
+  // アニメーションのタイミング制御（useEffectをアニメーション管理専用に）
   useEffect(() => {
+    // 既にアニメーションが完了していたら何もしない
+    if (completedRef.current) return;
+
     // チャージアニメーション
     const chargingTimer = setTimeout(() => {
       setAnimationStage('firing');
     }, powerSettings.chargeDuration);
+    timersRef.current.push(chargingTimer);
 
     // 発射アニメーション
     const firingTimer = setTimeout(() => {
       setAnimationStage('impact');
     }, powerSettings.chargeDuration + 400);
+    timersRef.current.push(firingTimer);
 
     // インパクトアニメーション
     const impactTimer = setTimeout(() => {
       setAnimationStage('completed');
     }, powerSettings.chargeDuration + 400 + 700);
+    timersRef.current.push(impactTimer);
 
     // エフェクト終了 - ここでコールバックを実行する
     const completionTimer = setTimeout(() => {
-      // アニメーション終了時にonCompleteコールバックを実行
-      onComplete();
+      // コールバックは一度だけ実行する
+      if (!completedRef.current) {
+        completedRef.current = true;
+        onComplete(); // 一度だけ実行されることを保証
+      }
     }, duration);
+    timersRef.current.push(completionTimer);
 
+    // クリーンアップで全てのタイマーをクリア
     return () => {
-      clearTimeout(chargingTimer);
-      clearTimeout(firingTimer);
-      clearTimeout(impactTimer);
-      clearTimeout(completionTimer);
+      timersRef.current.forEach(timer => clearTimeout(timer));
+      timersRef.current = [];
     };
   }, [powerSettings.chargeDuration, duration, onComplete]);
 
@@ -124,25 +138,6 @@ const FireSkillEffect: React.FC<FireSkillEffectProps> = ({
     x: window.innerWidth / 2,
     y: window.innerHeight * 0.5
   };
-
-  // // チャージエフェクト
-  // const renderChargingEffect = () => {
-  //   if (animationStage !== 'charging') return null;
-
-  //   return (
-  //     <div 
-  //       className="absolute w-16 h-16 rounded-full"
-  //       style={{
-  //         left: sourcePosition.x - 32,
-  //         top: sourcePosition.y - 32,
-  //         background: `radial-gradient(circle, ${powerSettings.colors[1]}, ${powerSettings.colors[0]})`,
-  //         boxShadow: `0 0 20px ${powerSettings.colors[0]}`,
-  //         animation: 'pulseGrow 0.5s ease-in-out infinite alternate',
-  //         zIndex: 100
-  //       }}
-  //     />
-  //   );
-  // };
 
   // 発射エフェクト
   const renderFiringEffect = () => {
@@ -262,40 +257,6 @@ const FireSkillEffect: React.FC<FireSkillEffectProps> = ({
             }}
           />
         ))}
-
-        {/* ダメージ表示
-        {damageValue && (
-          <div
-            className="absolute text-3xl font-bold text-center"
-            style={{
-              top: -60,
-              width: 100,
-              left: -50,
-              color: powerSettings.colors[0],
-              textShadow: `0 0 5px ${powerSettings.colors[1]}`,
-              animation: 'damageFloat 1s forwards'
-            }}
-          >
-            {damageValue}
-          </div>
-        )} */}
-
-        {/* スキル名表示 
-        <div
-          className="absolute whitespace-nowrap"
-          style={{
-            bottom: powerSettings.size / 2 + 10,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            color: powerSettings.colors[1],
-            textShadow: `0 0 5px ${powerSettings.colors[0]}`,
-            fontWeight: 'bold',
-            fontSize: '1.2rem',
-            animation: 'fadeIn 0.3s forwards'
-          }}
-        >
-          {skillName}
-        </div>*/}
       </div>
     );
   };
@@ -304,9 +265,7 @@ const FireSkillEffect: React.FC<FireSkillEffectProps> = ({
     <div className="fixed pointer-events-none z-50" style={{
       position: 'absolute',
       background: 'transparent',
-      // 必要な範囲だけをカバー
     }}>
-      {/*{renderChargingEffect()}*/}
       {renderFiringEffect()}
       {renderImpactEffect()}
     </div>

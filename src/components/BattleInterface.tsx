@@ -42,7 +42,8 @@ const BattleInterface: React.FC<BattleInterfaceProps> = ({
   // スキル関連の状態
   const [activeSkillIndex, setActiveSkillIndex] = useState<number | null>(null);
   const [hoveredSkillIndex, setHoveredSkillIndex] = useState<number | null>(null);
-
+  void hoveredSkillIndex;
+  
   useEffect(() => {
     if (shouldSelectInput && inputRef.current) {
       inputRef.current.select();

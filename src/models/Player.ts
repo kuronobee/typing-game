@@ -1,7 +1,7 @@
 // src/models/Player.ts
 export type StatusEffect = {
   type: "poison";
-  ticks: number;         // 例：毒状態が持続する tick 数（例：5 tick＝5秒）
+  ticks: number; // 例：毒状態が持続する tick 数（例：5 tick＝5秒）
   damagePerTick: number; // 毒1 tickあたりのダメージ
 };
 
@@ -83,6 +83,12 @@ export class Player implements IPlayer {
 
   // 経験値を加算し、レベルアップ処理を行い新しいインスタンスを返す
   addExp(amount: number): Player {
+    // 経験値の整合性チェック
+    if (amount < 0) {
+      console.error(`不正な経験値: ${amount}`);
+      return this; // 不正な経験値は加算しない
+    }
+
     const newExp = this.exp + amount;
     const newTotalExp = this.totalExp + amount;
     let newLevel = this.level;
@@ -97,62 +103,98 @@ export class Player implements IPlayer {
     let newSpeed = this.speed;
     let newLuck = this.luck;
     let newPower = this.power;
-    // 閾値は this.levelUpThreshold を使う
-    let threshold = this.levelUpThreshold;
 
+    // 現在のレベルに基づく閾値から始める
+    let threshold = this.level * 100;
+
+    // ロギングを追加
+    console.log(
+      `レベルアップ処理開始: 現在Lv${this.level}、経験値${this.exp}→${newExp}`
+    );
+    console.log(`現在の閾値: ${threshold}`);
+
+    // レベルアップのチェック
     while (remainingExp >= threshold) {
+      // 現在のレベルに必要な経験値を消費
       remainingExp -= threshold;
+
+      // レベルアップ
       newLevel++;
-      newMaxHP += 10;  // 最大HP 増加
-      newMaxMP += 5;   // 最大MP 増加
+
+      // ステータスの増加
+      newMaxHP += 10; // 最大HP 増加
+      newMaxMP += 5; // 最大MP 増加
       newMagicDefense += 1; // 魔法防御力増加
       newDefense += 1; // 防御力増加
       newSpeed += 1; // スピード増加
       newLuck += 1;
       newPower += 1;
+
       // レベルアップ時に HP/MP を全回復する
       newHp = newMaxHP;
       newMp = newMaxMP;
       newAttack += 2;
+
+      // 次のレベルの閾値を計算（新しいレベルに基づく）
       threshold = newLevel * 100;
+
+      console.log(
+        `レベルアップ: Lv${newLevel}、新閾値: ${threshold}、残り経験値: ${remainingExp}`
+      );
     }
 
+    // 不正な値のチェック
+    if (newLevel < this.level) {
+      console.error(
+        `レベルダウン検出: ${this.level} → ${newLevel}、処理を中止`
+      );
+      return this;
+    }
+
+    // ロギング
+    console.log(`レベルアップ処理終了: Lv${this.level} → Lv${newLevel}`);
+    console.log(
+      `HP: ${this.maxHP} → ${newMaxHP}, MP: ${this.maxMP} → ${newMaxMP}`
+    );
+
     return new Player(
-      newHp, 
-      newMaxHP, 
-      newMp, 
-      newMaxMP, 
-      newDefense, 
-      newMagicDefense, 
-      newLevel, 
-      remainingExp, 
-      newTotalExp, 
-      newSpeed, 
-      newAttack, 
+      newHp,
+      newMaxHP,
+      newMp,
+      newMaxMP,
+      newDefense,
+      newMagicDefense,
+      newLevel,
+      remainingExp,
+      newTotalExp,
+      newSpeed,
+      newAttack,
       newLuck,
       newPower,
-      this.statusEffects);
+      this.statusEffects
+    );
   }
-
+  
   // ダメージを受けた場合、新しいインスタンスを返す
   takeDamage(amount: number): Player {
     const newHp = Math.max(this.hp - amount, 0);
     console.log("newHP", newHp);
     return new Player(
       newHp,
-      this.maxHP, 
-      this.mp, 
-      this.maxMP, 
-      this.defense, 
-      this.magicDefense, 
-      this.level, 
-      this.exp, 
-      this.totalExp, 
-      this.speed, 
+      this.maxHP,
+      this.mp,
+      this.maxMP,
+      this.defense,
+      this.magicDefense,
+      this.level,
+      this.exp,
+      this.totalExp,
+      this.speed,
       this.attack,
       this.luck,
       this.power,
-      this.statusEffects);
+      this.statusEffects
+    );
   }
 
   // 状態異常を適用するメソッド
@@ -181,7 +223,8 @@ export class Player implements IPlayer {
     console.log("applyStatusEffects: effects", effects);
     // 新たに追加する効果は、すでに存在するものと重複しないものに絞る
     const newEffects = effects.filter(
-      effect => !this.statusEffects.some(existing => existing.type === effect.type)
+      (effect) =>
+        !this.statusEffects.some((existing) => existing.type === effect.type)
     );
     return new Player(
       this.hp,
@@ -223,7 +266,7 @@ export class Player implements IPlayer {
   // 状態異常の type を文字列で指定して除去するメソッド
   removeStatusEffects(removeType: string): Player {
     const newStatusEffects = this.statusEffects.filter(
-      effect => effect.type !== removeType
+      (effect) => effect.type !== removeType
     );
     return new Player(
       this.hp,

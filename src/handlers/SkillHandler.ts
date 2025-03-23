@@ -50,6 +50,11 @@ export class SkillHandler {
     React.SetStateAction<boolean>
   >;
   private showSkillCallOut?: (skillName: string) => void;
+  // アニメーション状態を追跡するための新しいプロパティ
+  private isAnimating: boolean = false;
+  
+  // 進行中のアニメーションタイマーを追跡
+  private animationTimers: number[] = [];
   /**
    * コンストラクタ - 必要な状態更新関数を注入
    */
@@ -90,6 +95,15 @@ export class SkillHandler {
     this.setSkillAnimationInProgress =
       setSkillAnimationInProgress || (() => {}); // デフォルト値として空関数を設定
     this.showSkillCallOut = showSkillCallOut;
+  }
+
+  // コンポーネントのアンマウント時やタイマークリアのためのメソッド
+  public cleanupAnimations(): void {
+    // すべてのタイマーをクリア
+    this.animationTimers.forEach(timerId => clearTimeout(timerId));
+    this.animationTimers = [];
+    this.isAnimating = false;
+    this.setSkillAnimationInProgress(false);
   }
 
   /**
@@ -143,12 +157,34 @@ export class SkillHandler {
     // スキルがコマンド型（即時発動）の場合
     if (skill.activationTiming === "onCommand") {
       this.handleCommandSkill(skill, targetIndex);
+    }
+    // onCorrectAnswerスキルの場合はスキルタイプに基づいて処理
+    else if (skill.activationTiming === "onCorrectAnswer") {
+      // ファイヤボルトスキルの場合
+      if (skill.id === "fire_bolt") {
+        // 既にsetActiveSkill(null)が呼ばれた後に実行される
+        this.handleFireBoltSkill(skill, targetIndex);
+      }
+      // ファイヤボールスキルの場合
+      else if (skill.id === "fire_ball") {
+        this.handleFireBallSkill(skill, targetIndex);
+      }
+      // ファイヤストームスキルの場合
+      else if (skill.id === "fire_storm") {
+        if (targetIndex !== undefined) {
+            this.handleFireStormSkill(skill, targetIndex);
+        }
+      }
+      // その他のスキル
+      else {
+        // 他のonCorrectAnswerスキルがあれば追加
+        this.handleGenericDamageSkill(skill, targetIndex);
+      }
     } else {
       // コマンド型でないスキルは活性化して後で使用
       this.setActiveSkill(skill);
     }
   }
-
   /**
    * コマンド型スキル（即時発動）の処理
    */
@@ -202,8 +238,8 @@ export class SkillHandler {
     const result = skill.execute(this.player, this.currentEnemies);
     // スキル名の表示
     if (this.showSkillCallOut) {
-        this.showSkillCallOut(skill.name);
-      }
+      this.showSkillCallOut(skill.name);
+    }
     if (result.success) {
       // プレイヤー状態の更新（MP消費と回復）
       this.setPlayer((prev) => {
@@ -269,10 +305,12 @@ export class SkillHandler {
     }
   }
 
-  /**
-   * ファイアボルトスキル処理
-   */
-  private handleFireBoltSkill(
+// SkillHandler.ts 内の handleFireBoltSkill メソッドの改善版
+
+/**
+ * ファイアボルトスキル処理（改善版）
+ */
+private handleFireBoltSkill(
     skill: SkillInstance,
     targetIndex?: number
   ): void {
@@ -280,13 +318,21 @@ export class SkillHandler {
       this.setMessage({ text: "攻撃対象が定まっていない！", sender: "system" });
       return;
     }
-
-    // スキルアニメーション開始フラグをセット
+  
+    // 既にアニメーション中なら早期リターン
+    if (this.isAnimating) {
+      return;
+    }
+  
+    // アニメーション状態を追跡するフラグを設定
+    this.isAnimating = true;
     this.setSkillAnimationInProgress(true);
+  
     // スキル名の表示
     if (this.showSkillCallOut) {
       this.showSkillCallOut(skill.name);
     }
+  
     // MP消費処理（先に消費する）
     this.setPlayer((prev) => {
       return new Player(
@@ -306,16 +352,17 @@ export class SkillHandler {
         prev.statusEffects
       );
     });
-
+  
     if (this.showPlayerAttackEffect) {
       this.showPlayerAttackEffect(true);
     }
+  
     // 事前にスキル結果を計算
     const result = skill.execute(this.player, this.currentEnemies, targetIndex);
-
+  
     if (result.success && targetIndex !== undefined) {
       const enemyPosition = this.getEnemyPosition(targetIndex);
-
+  
       // アニメーション表示、onComplete時にダメージを適用する
       this.showFireSkillEffect({
         skillName: "ファイアボルト",
@@ -323,32 +370,30 @@ export class SkillHandler {
         damageValue: result.damageAmount,
         power: "low", // 低威力設定
         onComplete: () => {
-          // アニメーション終了時にフラグを戻す
+          // アニメーション状態リセット
+          this.isAnimating = false;
           this.setSkillAnimationInProgress(false);
+  
           // アニメーション完了後にダメージを適用する
           if (result.targetIndex !== undefined) {
             // ダメージ表示とヒットアニメーション
             this.setDamageDisplay(result.targetIndex, result.damageAmount || 0);
             this.setHitFlag(result.targetIndex, ENEMY_HIT_ANIMATION_DURATION);
-
+  
             // メッセージ表示
             this.setMessage({
               text: result.message,
               sender: "player",
             });
-
+  
             // 対象の敵にダメージを適用
             const targetEnemy = this.currentEnemies[result.targetIndex];
             targetEnemy.takeDamage(result.damageAmount || 0);
-
-            console.log(
-              `敵の状態: HP=${targetEnemy.currentHP}, 倒された=${targetEnemy.defeated}`
-            );
-
+  
             // 敵が倒れたかチェック
             if (targetEnemy.defeated) {
               this.setEnemyDefeatedMessage(targetEnemy.name);
-
+  
               // 次のターゲットを探す
               setTimeout(() => {
                 const nextAliveIndex = this.findNextAliveEnemyIndex(
@@ -358,17 +403,9 @@ export class SkillHandler {
                 if (nextAliveIndex !== -1) {
                   this.setTargetIndex(nextAliveIndex);
                 }
-
-                // 全ての敵が倒されたかを確認して、ステージクリア処理
-                const allDefeated = this.currentEnemies.every(
-                  (e) => e.defeated
-                );
-                console.log(`全ての敵が倒された: ${allDefeated}`);
-
-                if (allDefeated) {
-                  console.log("ステージクリア処理を実行");
-                  this.checkStageCompletion(this.currentEnemies);
-                }
+  
+                // 全ての敵が倒されたかを確認してステージクリア処理
+                this.checkStageCompletion(this.currentEnemies);
               }, 2000);
             }
           }
@@ -376,10 +413,11 @@ export class SkillHandler {
       });
     } else {
       // 失敗したときもフラグをリセット
+      this.isAnimating = false;
       this.setSkillAnimationInProgress(false);
     }
   }
-
+  
   /**
    * ファイアボールスキル処理
    */
@@ -393,8 +431,8 @@ export class SkillHandler {
     }
     // スキル名の表示
     if (this.showSkillCallOut) {
-        this.showSkillCallOut(skill.name);
-      }
+      this.showSkillCallOut(skill.name);
+    }
     // MP消費処理
     this.setPlayer((prev) => {
       return new Player(

@@ -305,8 +305,6 @@ const App: React.FC = () => {
 
   // スキルハンドラの状態を管理
   const [skillHandler, setSkillHandler] = useState<SkillHandler | null>(null);
-  // レベルアップ追跡フック
-  const [showLevelUp, setShowLevelUp] = useState(false);
 
   // 戦闘システムフック
   const combat = useCombatSystem(player, setPlayer, currentEnemies, setMessage, showPlayerHitEffect);
@@ -458,17 +456,16 @@ const App: React.FC = () => {
 
       // アクティブなスキルがあれば実行
       if (activeSkill && activeSkill.activationTiming === "onCorrectAnswer") {
-        // スキルを実行
-        console.log("active", activeSkill);
-        activeSkill.activationTiming = "onCommand"; // handleSkillUseでスキルを発動させるため、一時的にonCommandへ。
-        handleSkillUse(activeSkill, targetIndex);
-        activeSkill.activationTiming = "onCorrectAnswer";
-
-        // アクティブスキルをリセット
-        setActiveSkill(null);
+        console.log("アクティブスキル発動:", activeSkill.name);
 
         // スキル使用時のプレイヤーアニメーション
         showPlayerAttackEffect(true);
+
+        // スキルを実行
+        handleSkillUse(activeSkill, targetIndex);
+
+        // アクティブスキルをリセット
+        setActiveSkill(null);
       } else {
         // 通常攻撃処理
         const { damage, specialMessage } =
@@ -520,6 +517,7 @@ const App: React.FC = () => {
       setActiveSkill(null);
     }
   };
+
   // // すべての敵が倒されたかチェック
   // const checkStageCompletion = () => {
   //   const allDefeated = StageManager.isStageCompleted(currentEnemies);
@@ -545,64 +543,125 @@ const App: React.FC = () => {
   // レベルアップ完了時のコールバックを保持するref
   const levelCompletionCallbacks = useRef<(() => void)[]>([]);
 
-  // プレイヤーに経験値を付与
+  // 経験値を付与する関数
   const gainEXP = (amount: number) => {
-    // 経験値が負の値や異常に大きな値でないことを確認
+    // 入力検証（負の値や異常に大きな値を検出）
     if (amount <= 0 || amount > 10000) {
-      console.error(`Invalid experience amount: ${amount}`);
-      return;
+      console.error(`無効な経験値量: ${amount}`);
+      return false;
     }
 
     console.log(`経験値を獲得: ${amount}`);
 
-    // レベルアップ表示のコールバック関数
-    const showLevelUpCallback = (level: number, callback: () => void) => {
-      // レベルアップキューに追加
-      setLevelUpQueue(prev => [...prev, level]);
+    try {
+      // レベルアップ表示のコールバック関数
+      const showLevelUpCallback = (level: number, callback: () => void) => {
+        // ロギング
+        console.log(`レベル ${level} の表示処理を開始`);
 
-      // コールバック関数を保存しておく（クロージャで保持）
-      window.setTimeout(() => {
+        // レベルの整合性チェック
+        if (level <= 0 || level > 100) {
+          console.error(`無効なレベル値: ${level}`);
+          // エラー時は次のレベル処理へ
+          callback();
+          return;
+        }
+
+        // レベルアップキューに追加
+        setLevelUpQueue(prev => [...prev, level]);
+
         // 表示用の状態変数を更新
-        setCurrentShowingLevel(level);
-        // このレベルのコールバック関数をキューに追加
-        levelCompletionCallbacks.current.push(callback);
-      }, 0);
-    };
+        window.setTimeout(() => {
+          // ロギング
+          console.log(`レベル ${level} の通知を表示`);
 
-    // ExperienceManager に改良した関数を渡す
-    const didLevelUp = ExperienceManager.gainExperience(
-      amount,
-      player,
-      setPlayer,
-      setExpGain,
-      acquireNewSkill,
-      showLevelUpCallback
-    );
+          setCurrentShowingLevel(level);
+          // このレベルのコールバック関数をキューに追加
+          levelCompletionCallbacks.current.push(callback);
+        }, 100);
+      };
 
-    // ステージ完了メッセージを設定
-    setMessage(StageManager.createCompletionMessage(amount));
+      // 前のレベルを記録
+      const oldLevel = player.level;
 
-    return didLevelUp;
+      // ExperienceManager に改良した関数を渡す
+      const didLevelUp = ExperienceManager.gainExperience(
+        amount,
+        player,
+        setPlayer,
+        setExpGain,
+        acquireNewSkill,
+        showLevelUpCallback
+      );
+
+      // レベルの整合性チェック（ステージ完了後）
+      if (player.level < oldLevel) {
+        console.error(`レベルダウン検出: ${oldLevel} → ${player.level}、修正します`);
+        // 以前のレベルに戻す緊急修正
+        setPlayer(prev => new PlayerModel(
+          prev.hp,
+          prev.maxHP,
+          prev.mp,
+          prev.maxMP,
+          prev.defense,
+          prev.magicDefense,
+          oldLevel, // 元のレベルを維持
+          prev.exp,
+          prev.totalExp,
+          prev.speed,
+          prev.attack,
+          prev.luck,
+          prev.power,
+          prev.statusEffects
+        ));
+      }
+
+      // ステージ完了メッセージを設定
+      setMessage(StageManager.createCompletionMessage(amount));
+
+      return didLevelUp;
+    } catch (error) {
+      console.error('経験値獲得処理中にエラーが発生しました:', error);
+      setMessage({
+        text: "経験値獲得処理中にエラーが発生しました",
+        sender: "system"
+      });
+      return false;
+    }
   };
 
   // レベルアップ表示を閉じる処理
   const handleCloseLevelUp = () => {
-    // キューから次のレベルを処理
-    const callback = levelCompletionCallbacks.current.shift();
-    if (callback) {
-      // コールバック実行（次のレベルやスキル獲得処理を行う）
-      callback();
+    try {
+      console.log("レベルアップ表示を閉じる処理を開始");
+
+      // キューから次のレベルを処理
+      const callback = levelCompletionCallbacks.current.shift();
+      if (callback) {
+        // コールバック実行（次のレベルやスキル獲得処理を行う）
+        console.log("次のレベル処理用コールバックを実行");
+        callback();
+      }
+
+      // 現在のレベル表示をクリア
+      setCurrentShowingLevel(null);
+
+      // キューから次のレベルを取り出す
+      setLevelUpQueue(prev => {
+        const newQueue = [...prev];
+        if (newQueue.length > 0) {
+          console.log(`レベルアップキューから削除: ${newQueue[0]}`);
+          newQueue.shift();
+        }
+        return newQueue;
+      });
+    } catch (error) {
+      console.error('レベルアップ表示処理中にエラー:', error);
+      // エラー時は状態をリセット
+      setCurrentShowingLevel(null);
+      setLevelUpQueue([]);
+      levelCompletionCallbacks.current = [];
     }
-
-    // 現在のレベル表示をクリア
-    setCurrentShowingLevel(null);
-
-    // キューから次のレベルを取り出す
-    setLevelUpQueue(prev => {
-      const newQueue = [...prev];
-      newQueue.shift();
-      return newQueue;
-    });
   };
 
   // 新しい戦闘ステージを生成
@@ -819,7 +878,7 @@ const App: React.FC = () => {
               />
             )}
             {/* 次のステージボタン */}
-            {readyForNextStage && !showLevelUp && (
+            {readyForNextStage && levelUpQueue.length === 0 && (
               <NextStageButton
                 onNext={handleNextStage}
               />
