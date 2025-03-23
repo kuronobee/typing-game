@@ -23,7 +23,7 @@ export const skillData: ISkill[] = [
     type: 'heal',
     mpCost: 10,
     cooldown: 3,
-    icon: '/icons/heal_medium.png',
+    icon: new URL("../assets/icons/heal_medium.png", import.meta.url).toString(),
     activationTiming: 'onCommand',
     targetType: 'self'
   },
@@ -34,7 +34,7 @@ export const skillData: ISkill[] = [
     type: 'heal',
     mpCost: 20,
     cooldown: 5,
-    icon: '/icons/heal_major.png',
+    icon: new URL("../assets/icons/heal_major.png", import.meta.url).toString(),
     activationTiming: 'onCommand',
     targetType: 'self'
   },

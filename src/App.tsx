@@ -53,6 +53,9 @@ const App: React.FC = () => {
     PlayerModel.createDefault()
   );
 
+  const [levelUpQueue, setLevelUpQueue] = useState<number[]>([]); // レベルアップキュー
+  const [currentShowingLevel, setCurrentShowingLevel] = useState<number | null>(null); // 現在表示中のレベル
+
   // 戦闘関連の状態
   const [currentEnemies, setCurrentEnemies] = useState<EnemyModel[]>([]);
   const [targetIndex, setTargetIndex] = useState<number>(0);
@@ -539,6 +542,9 @@ const App: React.FC = () => {
     );
   };
 
+  // レベルアップ完了時のコールバックを保持するref
+  const levelCompletionCallbacks = useRef<(() => void)[]>([]);
+
   // プレイヤーに経験値を付与
   const gainEXP = (amount: number) => {
     // 経験値が負の値や異常に大きな値でないことを確認
@@ -549,21 +555,56 @@ const App: React.FC = () => {
 
     console.log(`経験値を獲得: ${amount}`);
 
-    // ExperienceManager に acquireNewSkill 関数を渡す
+    // レベルアップ表示のコールバック関数
+    const showLevelUpCallback = (level: number, callback: () => void) => {
+      // レベルアップキューに追加
+      setLevelUpQueue(prev => [...prev, level]);
+
+      // コールバック関数を保存しておく（クロージャで保持）
+      window.setTimeout(() => {
+        // 表示用の状態変数を更新
+        setCurrentShowingLevel(level);
+        // このレベルのコールバック関数をキューに追加
+        levelCompletionCallbacks.current.push(callback);
+      }, 0);
+    };
+
+    // ExperienceManager に改良した関数を渡す
     const didLevelUp = ExperienceManager.gainExperience(
       amount,
       player,
       setPlayer,
       setExpGain,
-      acquireNewSkill
+      acquireNewSkill,
+      showLevelUpCallback
     );
 
     // ステージ完了メッセージを設定
     setMessage(StageManager.createCompletionMessage(amount));
 
-    // レベルアップ画面の表示状態を設定
-    setShowLevelUp(didLevelUp);
+    return didLevelUp;
   };
+
+  // レベルアップ表示を閉じる処理
+  const handleCloseLevelUp = () => {
+    // キューから次のレベルを処理
+    const callback = levelCompletionCallbacks.current.shift();
+    if (callback) {
+      // コールバック実行（次のレベルやスキル獲得処理を行う）
+      callback();
+    }
+
+    // 現在のレベル表示をクリア
+    setCurrentShowingLevel(null);
+
+    // キューから次のレベルを取り出す
+    setLevelUpQueue(prev => {
+      const newQueue = [...prev];
+      newQueue.shift();
+      return newQueue;
+    });
+  };
+
   // 新しい戦闘ステージを生成
   const spawnNewStage = () => {
     const { enemies, message } = StageManager.createNewStage();
@@ -763,14 +804,14 @@ const App: React.FC = () => {
               skillCallOut={skillCallOut}
             />
 
-            {/* レベルアップ通知 */}
-            {showLevelUp && (
+            {/* レベルアップ通知 - 修正部分 */}
+            {currentShowingLevel !== null && (
               <LevelUpNotifier
                 player={player}
-                onClose={() => setShowLevelUp(false)}
+                level={currentShowingLevel}
+                onClose={handleCloseLevelUp}
               />
-            )}
-            {/* スキル獲得通知 */}
+            )}            {/* スキル獲得通知 */}
             {newlyAcquiredSkill && (
               <SkillAcquisitionNotification
                 skill={newlyAcquiredSkill}
