@@ -1,4 +1,4 @@
-// src/components/SkillBar.tsx - ホバー機能追加版
+// src/components/SkillBar.tsx - トグル機能サポート版
 import React from 'react';
 import SkillSlot from './SkillSlot';
 import { Skill } from '../models/Skill';
@@ -10,7 +10,7 @@ interface SkillBarProps {
   onSkillUse: (skillIndex: number) => void;
   activeSkillIndex: number | null;
   inputRef: React.RefObject<HTMLInputElement | null>;
-  onSkillHover?: (index: number | null) => void; // ホバー機能用の新しいプロパティ
+  onSkillHover?: (index: number | null) => void;
 }
 
 const SkillBar: React.FC<SkillBarProps> = ({
@@ -24,12 +24,7 @@ const SkillBar: React.FC<SkillBarProps> = ({
   // スキルスロットが選択された時の処理
   const handleSkillClick = (index: number) => {
     inputRef.current?.focus();  // 入力フィールドにフォーカスする
-    const skill = skills[index];
-    
-    // スキルが存在し、使用可能な場合
-    if (skill && skill.canUse(player)) {
-      onSkillUse(index);
-    }
+    onSkillUse(index);
   };
 
   // スキルスロットへのマウスイベント処理
@@ -43,6 +38,16 @@ const SkillBar: React.FC<SkillBarProps> = ({
     if (onSkillHover) {
       onSkillHover(null);
     }
+  };
+
+  const isSkillDisabled = (skill: Skill | null, index: number): boolean => {
+    if (!skill) return true;
+    
+    // アクティブなスキルは選択解除のために常に有効
+    if (activeSkillIndex === index) return false;
+    
+    // それ以外はMPとクールダウンをチェック
+    return !skill.canUse(player);
   };
   
   return (
@@ -61,7 +66,7 @@ const SkillBar: React.FC<SkillBarProps> = ({
             isActive={activeSkillIndex === index}
             cooldown={skill?.state.remainingCooldown || 0}
             onClick={handleSkillClick}
-            disabled={skill ? !skill.canUse(player) : true}
+            disabled={isSkillDisabled(skill, index)}
           />
         </div>
       ))}

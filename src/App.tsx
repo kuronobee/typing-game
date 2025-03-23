@@ -727,6 +727,7 @@ const App: React.FC = () => {
               equippedSkills={equippedSkills}
               setEquippedSkills={setEquippedSkills}
               onOpenSkillManagement={() => setShowSkillManagement(true)}
+              setActiveSkill={setActiveSkill}
             />
           </div>
 

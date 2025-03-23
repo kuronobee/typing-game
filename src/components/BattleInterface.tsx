@@ -1,4 +1,4 @@
-// src/components/BattleInterface.tsx - スキル説明パネルを常に表示する版
+// src/components/BattleInterface.tsx - スキル説明パネルを削除した版
 import React, { useState, useEffect } from "react";
 import { Player } from "../models/Player";
 import SkillBar from "./SkillBar";
@@ -16,6 +16,7 @@ interface BattleInterfaceProps {
   equippedSkills: (SkillInstance | null)[];
   setEquippedSkills?: React.Dispatch<React.SetStateAction<(SkillInstance | null)[]>>;
   onOpenSkillManagement?: () => void;
+  setActiveSkill?: React.Dispatch<React.SetStateAction<SkillInstance | null>>;
 }
 
 const BattleInterface: React.FC<BattleInterfaceProps> = ({
@@ -28,7 +29,8 @@ const BattleInterface: React.FC<BattleInterfaceProps> = ({
   targetIndex,
   equippedSkills,
   setEquippedSkills,
-  onOpenSkillManagement
+  onOpenSkillManagement,
+  setActiveSkill
 }) => {
   void currentEnemies;
   void setEquippedSkills;
@@ -81,6 +83,7 @@ const BattleInterface: React.FC<BattleInterfaceProps> = ({
 
     // アクティブなスキルがある場合はクリア
     setActiveSkillIndex(null);
+    if (setActiveSkill) setActiveSkill(null); // activeSkillもクリア（存在する場合）
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -90,29 +93,34 @@ const BattleInterface: React.FC<BattleInterfaceProps> = ({
     }
   };
 
-  // スキル使用処理
+  // スキル使用処理 - トグル機能を追加
   const handleSkillUse = (skillIndex: number) => {
     const selectedSkill = equippedSkills[skillIndex];
     
     if (!selectedSkill) return;
     
-    // スキルを実行
-    onSkillUse(selectedSkill, targetIndex);
+    // 現在選択中のスキルが再度押された場合はキャンセル
+    if (activeSkillIndex === skillIndex) {
+      setActiveSkillIndex(null);
+      if (setActiveSkill) setActiveSkill(null); // 存在する場合のみ
+      return;
+    }
+    
     // コマンド直接発動型のスキル
     if (selectedSkill.activationTiming === 'onCommand') {
+      // スキルを実行
+      onSkillUse(selectedSkill, targetIndex);
       // アクティブスキルをリセット
       setActiveSkillIndex(null);
+      if (setActiveSkill) setActiveSkill(null); // 存在する場合のみ
     } 
     // 入力と組み合わせて使うスキル（例：正解時に発動するスキル）
     else if (selectedSkill.activationTiming === 'onCorrectAnswer') {
-      // アクティブなスキルとして設定
+      // アクティブなスキルとして設定し、setActiveSkillも呼び出す
+      if (setActiveSkill) setActiveSkill(selectedSkill); // 存在する場合のみ
       setActiveSkillIndex(skillIndex);
     }
   };
-
-  // 表示するスキル情報を決定（アクティブなスキルまたはホバーしているスキル）
-  const displayedSkillIndex = activeSkillIndex !== null ? activeSkillIndex : hoveredSkillIndex;
-  const displayedSkill = displayedSkillIndex !== null ? equippedSkills[displayedSkillIndex] : null;
 
   // 常にコンパクトモードスタイルを適用
   return (
@@ -172,31 +180,6 @@ const BattleInterface: React.FC<BattleInterfaceProps> = ({
             </button>
           )}
         </div>
-      </div>
-      
-      {/* スキル情報表示 - 常に表示する */}
-      <div className={`bg-blue-900/50 mx-2 p-1 rounded-md mb-2 min-h-[24px] ${displayedSkill ? 'opacity-100' : 'opacity-50'}`}>
-        {displayedSkill ? (
-          <div className="text-xs text-center relative">
-            <span className="font-bold">{displayedSkill.name}</span>
-            {": "}
-            <span>{displayedSkill.description}</span>
-            {/* アクティブスキルがある場合はキャンセルボタンを表示 */}
-            {activeSkillIndex !== null && (
-              <button 
-                className="absolute right-1 top-0 bg-gray-700 w-4 h-4 text-xs rounded-full flex items-center justify-center"
-                onClick={() => setActiveSkillIndex(null)}
-                title="キャンセル"
-              >
-                ×
-              </button>
-            )}
-          </div>
-        ) : (
-          <div className="text-xs text-center text-gray-400">
-            スキルを選択して説明を表示
-          </div>
-        )}
       </div>
     </div>
   );
