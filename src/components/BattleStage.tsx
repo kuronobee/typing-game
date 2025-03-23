@@ -14,6 +14,7 @@ import QuestionContainer from "./QuestionContainer";
 import { Player } from "../models/Player";
 import { Enemy as EnemyModel } from "../models/EnemyModel";
 import MessageDisplay, { MessageType } from "./MessageDisplay";
+import SkillCallOut from "./SkillCallOut";
 
 type DamageDisplay = {
   value: number;
@@ -42,6 +43,7 @@ interface BattleStageProps {
   playerAttackEffect?: boolean;
   enemyRefs: React.MutableRefObject<(HTMLDivElement | null)[]>;
   skillAnimationInProgress?: boolean;
+  skillCallOut?: string | null;
 }
 
 const BattleStage: React.FC<BattleStageProps> = ({
@@ -66,6 +68,7 @@ const BattleStage: React.FC<BattleStageProps> = ({
   playerAttackEffect = false,
   enemyRefs,
   skillAnimationInProgress = false,
+  skillCallOut = null,
 }) => {
   // 各敵毎の攻撃ゲージ進捗を管理する配列(0〜1)
   const [attackProgresses, setAttackProgresses] = useState<number[]>([]);
@@ -261,7 +264,10 @@ const BattleStage: React.FC<BattleStageProps> = ({
             </div>
           );
         })}
-
+        {/* プレイヤーキャラクターの上にスキルコールアウトを表示 */}
+        {skillCallOut && (
+          <SkillCallOut skillName={skillCallOut} />
+        )}
         {/* 質問コンテナ */}
         {currentEnemies[targetIndex] &&
           currentEnemies[targetIndex].currentHP > 0 && (

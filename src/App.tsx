@@ -83,6 +83,17 @@ const App: React.FC = () => {
   >([]);
   // アニメーション中かどうかを追跡
   const [skillAnimationInProgress, setSkillAnimationInProgress] = useState<boolean>(false);
+  // スキル詠唱に関する変数
+  const [skillCallOut, setSkillCallOut] = useState<string | null>(null);
+  // コールアウトを表示する関数
+  const showSkillCallOut = (skillName: string) => {
+    setSkillCallOut(skillName);
+
+    // 一定時間後に非表示にする
+    setTimeout(() => {
+      setSkillCallOut(null);
+    }, 1500);
+  };
   const [availableSkillIds, setAvailableSkillIds] =
     useState<string[]>(initialPlayerSkills);
   const [showSkillManagement, setShowSkillManagement] = useState(false);
@@ -300,6 +311,7 @@ const App: React.FC = () => {
         showPlayerAttackEffect,
         enemyRefs,
         setSkillAnimationInProgress,
+        showSkillCallOut,
       );
       setSkillHandler(handler);
     }
@@ -537,6 +549,8 @@ const App: React.FC = () => {
       // スキル使用時のプレイヤーアニメーション
       if (skill.activationTiming === 'onCommand') {
         showPlayerAttackEffect(true);
+        // スキル名を表示
+        showSkillCallOut(skill.name);
       }
 
       skillHandler.handleSkillUse(skill, targetIndex);
@@ -708,6 +722,7 @@ const App: React.FC = () => {
               playerAttackEffect={playerAttackEffect} // プレイヤーアタックエフェクト用
               enemyRefs={enemyRefs}
               skillAnimationInProgress={skillAnimationInProgress}
+              skillCallOut={skillCallOut}
             />
 
             {/* レベルアップ通知 */}

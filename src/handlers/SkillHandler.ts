@@ -49,7 +49,7 @@ export class SkillHandler {
   private setSkillAnimationInProgress: React.Dispatch<
     React.SetStateAction<boolean>
   >;
-
+  private showSkillCallOut?: (skillName: string) => void;
   /**
    * コンストラクタ - 必要な状態更新関数を注入
    */
@@ -69,7 +69,8 @@ export class SkillHandler {
     setActiveSkill: React.Dispatch<React.SetStateAction<SkillInstance | null>>,
     showPlayerAttackEffect?: (isSkill: boolean) => void,
     enemyRefs?: React.MutableRefObject<(HTMLDivElement | null)[]>, // 敵キャラの参照を受け取る
-    setSkillAnimationInProgress?: React.Dispatch<React.SetStateAction<boolean>>
+    setSkillAnimationInProgress?: React.Dispatch<React.SetStateAction<boolean>>,
+    showSkillCallOut?: (skillName: string) => void
   ) {
     this.player = player;
     this.currentEnemies = currentEnemies;
@@ -88,6 +89,7 @@ export class SkillHandler {
     this.enemyRefs = enemyRefs || { current: [] };
     this.setSkillAnimationInProgress =
       setSkillAnimationInProgress || (() => {}); // デフォルト値として空関数を設定
+    this.showSkillCallOut = showSkillCallOut;
   }
 
   /**
@@ -198,7 +200,10 @@ export class SkillHandler {
   private handleHealSkill(skill: SkillInstance): void {
     // スキル実行
     const result = skill.execute(this.player, this.currentEnemies);
-
+    // スキル名の表示
+    if (this.showSkillCallOut) {
+        this.showSkillCallOut(skill.name);
+      }
     if (result.success) {
       // プレイヤー状態の更新（MP消費と回復）
       this.setPlayer((prev) => {
@@ -278,7 +283,10 @@ export class SkillHandler {
 
     // スキルアニメーション開始フラグをセット
     this.setSkillAnimationInProgress(true);
-
+    // スキル名の表示
+    if (this.showSkillCallOut) {
+      this.showSkillCallOut(skill.name);
+    }
     // MP消費処理（先に消費する）
     this.setPlayer((prev) => {
       return new Player(
@@ -366,10 +374,9 @@ export class SkillHandler {
           }
         },
       });
-    }
-    else {
-        // 失敗したときもフラグをリセット
-        this.setSkillAnimationInProgress(false);
+    } else {
+      // 失敗したときもフラグをリセット
+      this.setSkillAnimationInProgress(false);
     }
   }
 
@@ -384,7 +391,10 @@ export class SkillHandler {
       this.setMessage({ text: "攻撃対象が定まっていない！", sender: "system" });
       return;
     }
-
+    // スキル名の表示
+    if (this.showSkillCallOut) {
+        this.showSkillCallOut(skill.name);
+      }
     // MP消費処理
     this.setPlayer((prev) => {
       return new Player(
