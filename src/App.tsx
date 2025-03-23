@@ -115,6 +115,7 @@ const App: React.FC = () => {
     power: "low" | "medium" | "high";
     onComplete?: () => void; // コールバック関数を追加
   } | null>(null);
+  const [activeKeyIndex, setActiveKeyIndex] = useState<number | null>(null);
 
   // 2. 炎系スキル表示関数を追加
   // 炎系スキルのエフェクトを表示する関数
@@ -416,6 +417,25 @@ const App: React.FC = () => {
       else if (event.key === "Enter" && readyForNextStage) {
         spawnNewStage();
         setReadyForNextStage(false);
+      }
+      // ファンクションキー（F1〜F3）でスキル選択を追加
+      if (event.key.startsWith('F') && !isNaN(parseInt(event.key.slice(1)))) {
+        const keyNum = parseInt(event.key.slice(1));
+        if (keyNum >= 1 && keyNum <= 3) {
+          // ブラウザのデフォルト動作を防止
+          event.preventDefault();
+
+          // F1-F3のキーコードからインデックスを取得（0-2）
+          const skillIndex = keyNum - 1;
+
+          // アクティブキーインデックスを設定 - これがSkillSlotコンポーネントに伝播される
+          setActiveKeyIndex(skillIndex);
+
+          // 短い遅延後にリセット（視覚効果のため）
+          setTimeout(() => {
+            setActiveKeyIndex(null);
+          }, 200);
+        }
       }
     };
 
@@ -828,6 +848,7 @@ const App: React.FC = () => {
               setEquippedSkills={setEquippedSkills}
               onOpenSkillManagement={() => setShowSkillManagement(true)}
               setActiveSkill={setActiveSkill}
+              activeKeyIndex={activeKeyIndex}
             />
           </div>
 

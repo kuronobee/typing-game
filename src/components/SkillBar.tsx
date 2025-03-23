@@ -11,6 +11,7 @@ interface SkillBarProps {
   activeSkillIndex: number | null;
   inputRef: React.RefObject<HTMLInputElement | null>;
   onSkillHover?: (index: number | null) => void;
+  activeKeyIndex?: number | null;   // ファンクションキーのインデックス
 }
 
 const SkillBar: React.FC<SkillBarProps> = ({
@@ -19,7 +20,8 @@ const SkillBar: React.FC<SkillBarProps> = ({
   onSkillUse,
   activeSkillIndex,
   inputRef,
-  onSkillHover
+  onSkillHover,
+  activeKeyIndex = null,
 }) => {
   // スキルスロットが選択された時の処理
   const handleSkillClick = (index: number) => {
@@ -64,6 +66,7 @@ const SkillBar: React.FC<SkillBarProps> = ({
             skill={skill}
             index={index}
             isActive={activeSkillIndex === index}
+            isKeyPressed={activeKeyIndex === index} // ファンクションキーのインデックス
             cooldown={skill?.state.remainingCooldown || 0}
             onClick={handleSkillClick}
             disabled={isSkillDisabled(skill, index)}

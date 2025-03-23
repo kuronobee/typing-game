@@ -17,6 +17,7 @@ interface BattleInterfaceProps {
   setEquippedSkills?: React.Dispatch<React.SetStateAction<(SkillInstance | null)[]>>;
   onOpenSkillManagement?: () => void;
   setActiveSkill?: React.Dispatch<React.SetStateAction<SkillInstance | null>>;
+  activeKeyIndex?: number | null;
 }
 
 const BattleInterface: React.FC<BattleInterfaceProps> = ({
@@ -30,7 +31,8 @@ const BattleInterface: React.FC<BattleInterfaceProps> = ({
   equippedSkills,
   setEquippedSkills,
   onOpenSkillManagement,
-  setActiveSkill
+  setActiveSkill,
+  activeKeyIndex = null,
 }) => {
   void currentEnemies;
   void setEquippedSkills;
@@ -38,12 +40,20 @@ const BattleInterface: React.FC<BattleInterfaceProps> = ({
 
   const [userInput, setUserInput] = useState("");
   const [shouldSelectInput, setShouldSelectInput] = useState(false);
-  
+
   // スキル関連の状態
   const [activeSkillIndex, setActiveSkillIndex] = useState<number | null>(null);
   const [hoveredSkillIndex, setHoveredSkillIndex] = useState<number | null>(null);
   void hoveredSkillIndex;
-  
+
+  // ファンクションキーが押されたときの処理を追加
+  useEffect(() => {
+    if (activeKeyIndex !== null && equippedSkills[activeKeyIndex]) {
+      // スキルが存在する場合、クリックをシミュレート
+      handleSkillUse(activeKeyIndex);
+    }
+  }, [activeKeyIndex]);
+
   useEffect(() => {
     if (shouldSelectInput && inputRef.current) {
       inputRef.current.select();
@@ -67,16 +77,16 @@ const BattleInterface: React.FC<BattleInterfaceProps> = ({
   const processSubmit = () => {
     // 入力をトリムして空白チェック
     const trimmedInput = userInput.trim();
-    
+
     // 空の場合は送信しない
     if (!trimmedInput) return;
-    
+
     // トリムした値を送信
     onSubmit(trimmedInput);
-    
+
     // 入力をクリア
     setUserInput("");
-    
+
     // 入力フィールドにフォーカスを維持
     if (inputRef.current) {
       inputRef.current.focus();
@@ -97,16 +107,16 @@ const BattleInterface: React.FC<BattleInterfaceProps> = ({
   // スキル使用処理 - トグル機能を追加
   const handleSkillUse = (skillIndex: number) => {
     const selectedSkill = equippedSkills[skillIndex];
-    
+
     if (!selectedSkill) return;
-    
+
     // 現在選択中のスキルが再度押された場合はキャンセル
     if (activeSkillIndex === skillIndex) {
       setActiveSkillIndex(null);
       if (setActiveSkill) setActiveSkill(null); // 存在する場合のみ
       return;
     }
-    
+
     // コマンド直接発動型のスキル
     if (selectedSkill.activationTiming === 'onCommand') {
       // スキルを実行
@@ -114,7 +124,7 @@ const BattleInterface: React.FC<BattleInterfaceProps> = ({
       // アクティブスキルをリセット
       setActiveSkillIndex(null);
       if (setActiveSkill) setActiveSkill(null); // 存在する場合のみ
-    } 
+    }
     // 入力と組み合わせて使うスキル（例：正解時に発動するスキル）
     else if (selectedSkill.activationTiming === 'onCorrectAnswer') {
       // アクティブなスキルとして設定し、setActiveSkillも呼び出す
@@ -125,7 +135,7 @@ const BattleInterface: React.FC<BattleInterfaceProps> = ({
 
   // 常にコンパクトモードスタイルを適用
   return (
-    <div 
+    <div
       className="w-full flex flex-col justify-start mt-6 bg-gray-900 text-white border-t border-gray-700 transition-all duration-300"
     >
       {/* 入力フィールドのラッパー */}
@@ -158,7 +168,7 @@ const BattleInterface: React.FC<BattleInterfaceProps> = ({
             }}
           />
         </div>
-        
+
         {/* スキルバーとスキル管理ボタン - 小さいサイズで */}
         <div className="ml-2 flex items-center">
           <SkillBar
@@ -168,11 +178,12 @@ const BattleInterface: React.FC<BattleInterfaceProps> = ({
             activeSkillIndex={activeSkillIndex}
             inputRef={inputRef}
             onSkillHover={setHoveredSkillIndex}
+            activeKeyIndex={activeKeyIndex}
           />
-          
+
           {/* スキル管理ボタン - 小さいサイズに */}
           {onOpenSkillManagement && (
-            <button 
+            <button
               className="h-8 w-6 ml-1 bg-gray-700 rounded-md hover:bg-gray-600 text-white flex items-center justify-center"
               onClick={onOpenSkillManagement}
               title="スキル管理"
