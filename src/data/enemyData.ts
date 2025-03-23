@@ -229,10 +229,10 @@ const enemies: IEnemyData[] = [
   {
     name: "チーター",
     level: 3,
-    maxHP: 45,
+    maxHP: 40,
     attackPower: 7,
     defense: 3,
-    exp: 4000,
+    exp: 40,
     word: "bear",
     image: new URL("../assets/enemies/cheetah.png", import.meta.url).toString(),
     scale: 1.0,
@@ -289,7 +289,7 @@ const enemies: IEnemyData[] = [
   {
     name: "ウォールゴーレム",
     level: 10,
-    maxHP: 1450,
+    maxHP: 500,
     attackPower: 50,
     defense: 30,
     exp: 4000,
@@ -309,7 +309,7 @@ const enemies: IEnemyData[] = [
   {
     name: "ライノブルート",
     level: 10,
-    maxHP: 1230,
+    maxHP: 800,
     attackPower: 40,
     defense: 20,
     exp: 3000,
