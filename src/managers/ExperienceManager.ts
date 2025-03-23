@@ -12,13 +12,14 @@ export class ExperienceManager {
    * @param player プレイヤーインスタンス
    * @param setPlayer Playerステート更新関数
    * @param setExpGain 経験値表示ステート更新関数
-   * @param setShowLevelUp レベルアップ表示ステート更新関数
+   * @param acquireNewSkill 新しいスキルを獲得する関数（オプション）
    */
   static gainExperience(
     amount: number,
     player: PlayerModel,
     setPlayer: React.Dispatch<React.SetStateAction<PlayerModel>>,
     setExpGain: React.Dispatch<React.SetStateAction<number | null>>,
+    acquireNewSkill?: (skillId: string) => void
   ): boolean {
     // 獲得経験値を表示する
     setExpGain(amount);
@@ -38,10 +39,21 @@ export class ExperienceManager {
     // プレイヤー状態を更新
     setPlayer(newPlayer);
     
-    // レベルアップした場合は通知を表示
-    if (didLevelUp) {
-      console.log(`レベルアップ検出: ${oldLevel} -> ${newPlayer.level}`);
+    // レベルアップした場合のスキル獲得処理
+    if (didLevelUp && acquireNewSkill) {
+      console.log(`レベルアップ: ${oldLevel} -> ${newPlayer.level}`);
+      
+      // 特定のレベルに応じてスキルを追加
+      // 新しいレベルでのスキル獲得処理
+      if (newPlayer.level === 3) {
+        console.log("レベル3達成: fire_ballスキル獲得処理");
+        acquireNewSkill('fire_ball');
+      } else if (newPlayer.level === 5) {
+        console.log("レベル5達成: fire_stormスキル獲得処理");
+        acquireNewSkill('fire_storm');
+      }
     }
+    
     return didLevelUp;
   }
 

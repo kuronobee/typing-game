@@ -28,12 +28,12 @@ import SkillManagement from "./components/SkillManagement";
 import { SkillInstance } from "./models/Skill";
 import {
   createSkillInstance,
-  skillData,
   initialPlayerSkills,
 } from "./data/skillData";
 import SkillEffect from "./components/SkillEffect";
 import FireSkillEffect from "./components/FireSkillEffect";
 import { SkillHandler, SkillEffectProps, FireSkillEffectProps } from "./handlers/SkillHandler";
+import SkillAcquisitionNotification from "./components/SkillAcquisitionNotification";
 
 const App: React.FC = () => {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -103,7 +103,7 @@ const App: React.FC = () => {
     value?: number;
     skillName?: string;
   } | null>(null);
-
+  const [newlyAcquiredSkill, setNewlyAcquiredSkill] = useState<SkillInstance | null>(null);
   // FireSkillEffectの状態を管理する
   const [fireSkillEffect, setFireSkillEffect] = useState<{
     skillName: string;
@@ -214,16 +214,42 @@ const App: React.FC = () => {
 
   // 新しいスキルの獲得（レベルアップなどで取得する場合）
   const acquireNewSkill = (skillId: string) => {
-    if (!availableSkillIds.includes(skillId)) {
-      setAvailableSkillIds((prev) => [...prev, skillId]);
+    // すでに所持しているスキルは追加しない
+    if (availableSkillIds.includes(skillId)) {
+      console.log(`スキル「${skillId}」はすでに獲得済みです`);
+      return;
+    }
+
+    console.log(`新しいスキル「${skillId}」を獲得`);
+
+    try {
+      // スキルインスタンスを作成
+      const newSkill = createSkillInstance(skillId);
+
+      // 状態を更新
+      setAvailableSkillIds(prev => [...prev, skillId]);
+
+      // スキル獲得通知を表示
+      setNewlyAcquiredSkill(newSkill);
+
+      // システムメッセージも表示（バックアップとして）
       setMessage({
-        text: `新しいスキル「${skillData.find((s) => s.id === skillId)?.name
-          }」を習得した！`,
+        text: `新しいスキル「${newSkill.name}」を習得した！`,
+        sender: "system",
+      });
+    } catch (error) {
+      console.error(`スキル「${skillId}」の取得に失敗しました:`, error);
+      setMessage({
+        text: `スキル「${skillId}」の取得に失敗しました`,
         sender: "system",
       });
     }
   };
-  void acquireNewSkill;
+
+  // スキル獲得通知を閉じる処理
+  const handleCloseSkillNotification = () => {
+    setNewlyAcquiredSkill(null);
+  };
 
   // スキル装備の処理
   const handleEquipSkill = (skillId: string, slotIndex: number) => {
@@ -515,17 +541,28 @@ const App: React.FC = () => {
 
   // プレイヤーに経験値を付与
   const gainEXP = (amount: number) => {
-    // ExperienceManager から setShowLevelUp も渡すように変更
-    const lvu = ExperienceManager.gainExperience(
+    // 経験値が負の値や異常に大きな値でないことを確認
+    if (amount <= 0 || amount > 10000) {
+      console.error(`Invalid experience amount: ${amount}`);
+      return;
+    }
+
+    console.log(`経験値を獲得: ${amount}`);
+
+    // ExperienceManager に acquireNewSkill 関数を渡す
+    const didLevelUp = ExperienceManager.gainExperience(
       amount,
       player,
       setPlayer,
-      setExpGain
+      setExpGain,
+      acquireNewSkill
     );
 
     // ステージ完了メッセージを設定
     setMessage(StageManager.createCompletionMessage(amount));
-    setShowLevelUp(lvu);
+
+    // レベルアップ画面の表示状態を設定
+    setShowLevelUp(didLevelUp);
   };
   // 新しい戦闘ステージを生成
   const spawnNewStage = () => {
@@ -732,7 +769,13 @@ const App: React.FC = () => {
                 onClose={() => setShowLevelUp(false)}
               />
             )}
-
+            {/* スキル獲得通知 */}
+            {newlyAcquiredSkill && (
+              <SkillAcquisitionNotification
+                skill={newlyAcquiredSkill}
+                onClose={handleCloseSkillNotification}
+              />
+            )}
             {/* 次のステージボタン */}
             {readyForNextStage && !showLevelUp && (
               <NextStageButton

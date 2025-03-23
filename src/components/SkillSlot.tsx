@@ -47,6 +47,7 @@ const SkillSlot: React.FC<SkillSlotProps> = ({
         relative overflow-hidden
       `}
       onClick={handleClick}
+      
     >
       {/* スキルアイコン（準備ができたら実際の画像を使用） */}
       <div className="w-full h-full flex items-center justify-center text-white">

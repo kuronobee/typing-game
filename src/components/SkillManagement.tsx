@@ -150,7 +150,7 @@ const SkillManagement: React.FC<SkillManagementProps> = ({
                       </div>
                     )}
                     <div className="text-xs text-white mt-1">{skill.name}</div>
-                    <div className="text-xs text-blue-300">MP: {skill.mpCost}</div>
+                    <div className="text-xs text-blue-300">MP: {skill.mpCost} / CD: {skill.cooldown}秒</div>
                     
                     {isEquipped && (
                       <div className="text-xs text-yellow-400 mt-1">装備中</div>

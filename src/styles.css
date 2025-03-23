@@ -1389,3 +1389,100 @@ input {
     opacity: 0.7;
     animation: magic-circle 1.5s ease-out forwards;
   }
+
+  /* src/styles.css に追加 - スキル獲得通知のアニメーション */
+
+@keyframes skill-acquired-animation {
+    0% {
+      transform: scale(0.8);
+      opacity: 0;
+    }
+    30% {
+      transform: scale(1.1);
+      opacity: 1;
+    }
+    70% {
+      transform: scale(0.95);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+  
+  .animate-skill-acquired {
+    animation: skill-acquired-animation 0.8s ease-out forwards;
+  }
+  
+  /* スキルアイコンのキラキラエフェクト */
+  @keyframes skill-icon-glow {
+    0%, 100% {
+      filter: drop-shadow(0 0 3px rgba(255, 215, 0, 0.7));
+    }
+    50% {
+      filter: drop-shadow(0 0 10px rgba(255, 215, 0, 1));
+    }
+  }
+  
+  .skill-icon-glow {
+    animation: skill-icon-glow 2s infinite;
+  }
+  
+  /* スキル説明テキストの出現アニメーション */
+  @keyframes text-reveal {
+    0% {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .text-reveal {
+    animation: text-reveal 0.5s ease-out forwards;
+  }
+  
+  /* 背景の輝きエフェクト */
+  @keyframes bg-pulse {
+    0%, 100% {
+      box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+    }
+    50% {
+      box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+    }
+  }
+  
+  .bg-pulse {
+    animation: bg-pulse 2s infinite;
+  }
+
+  /* アクティブスキルの点滅アニメーション */
+@keyframes pulse-active {
+    0%, 100% {
+      box-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+    }
+    50% {
+      box-shadow: 0 0 15px rgba(255, 215, 0, 0.8);
+    }
+  }
+  
+  .pulse-active {
+    animation: pulse-active 1.5s infinite;
+  }
+  
+  /* スキルアイコンのグロー効果 - アクティブ時に適用 */
+  @keyframes skill-icon-pulse {
+    0%, 100% {
+      filter: brightness(1);
+    }
+    50% {
+      filter: brightness(1.5);
+    }
+  }
+  
+  .skill-icon-glow {
+    animation: skill-icon-pulse 1.5s infinite;
+  }

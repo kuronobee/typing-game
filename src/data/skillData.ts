@@ -148,5 +148,6 @@ export function createSkillInstance(skillId: string): SkillInstance {
 export const initialPlayerSkills = [
   'heal_minor',
   'fire_bolt',
+
   //'defense_up'
 ];
