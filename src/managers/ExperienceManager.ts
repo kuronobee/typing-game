@@ -1,4 +1,4 @@
-// src/managers/ExperienceManager.ts 修正版
+// src/managers/ExperienceManager.ts 修正版 - 複数レベルアップ時のスキル獲得修正
 import { Player as PlayerModel } from "../models/Player";
 import { EXP_GAIN_DISPLAY_DURATION } from "../data/constants";
 
@@ -43,18 +43,45 @@ export class ExperienceManager {
     if (didLevelUp && acquireNewSkill) {
       console.log(`レベルアップ: ${oldLevel} -> ${newPlayer.level}`);
       
-      // 特定のレベルに応じてスキルを追加
-      // 新しいレベルでのスキル獲得処理
-      if (newPlayer.level === 3) {
-        console.log("レベル3達成: fire_ballスキル獲得処理");
-        acquireNewSkill('fire_ball');
-      } else if (newPlayer.level === 5) {
-        console.log("レベル5達成: fire_stormスキル獲得処理");
-        acquireNewSkill('fire_storm');
+      // ここが問題: 複数レベル上がった場合に途中のレベルで獲得するスキルを処理していない
+      // 修正: 各レベルごとにスキル獲得処理を行う
+      for (let level = oldLevel + 1; level <= newPlayer.level; level++) {
+        this.checkAndAcquireSkillsForLevel(level, acquireNewSkill);
       }
     }
     
     return didLevelUp;
+  }
+
+  /**
+   * 特定レベルで獲得するスキルをチェックして習得する
+   * @param level チェックするレベル
+   * @param acquireNewSkill スキル獲得関数
+   */
+  private static checkAndAcquireSkillsForLevel(
+    level: number, 
+    acquireNewSkill: (skillId: string) => void
+  ): void {
+    // レベルに応じたスキル獲得判定
+    switch (level) {
+      case 3:
+        console.log(`レベル${level}達成: fire_ballスキル獲得処理`);
+        acquireNewSkill('fire_ball');
+        break;
+      case 5:
+        console.log(`レベル${level}達成: fire_stormスキル獲得処理`);
+        acquireNewSkill('fire_storm');
+        break;
+      case 7:
+        console.log(`レベル${level}達成: heal_mediumスキル獲得処理`);
+        acquireNewSkill('heal_medium');
+        break;
+      case 10:
+        console.log(`レベル${level}達成: heal_majorスキル獲得処理`);
+        acquireNewSkill('heal_major');
+        break;
+      // 必要に応じて他のレベルとスキルを追加
+    }
   }
 
   /**
