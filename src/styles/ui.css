@@ -1,0 +1,121 @@
+/* src/styles/ui.css - UIコンポーネント関連スタイル */
+
+/* ================= メッセージ表示 ================= */
+
+/* メッセージのフェードイン効果 */
+.message-fade-in {
+    animation: fadeIn 0.3s ease-out forwards;
+  }
+  
+  /* メッセージ間のセパレータ */
+  .message-separator {
+    height: 1px;
+    background-color: rgba(255, 255, 255, 0.2);
+    margin: 2px 0;
+  }
+  
+  /* ================= 問題表示エリア ================= */
+  
+  /* 問題コンテナのスタイル */
+  .question-container {
+    background-color: rgba(0, 0, 0, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 0.5rem;
+    padding: 0.5rem 1rem;
+    margin-bottom: 0.5rem;
+    transition: all 0.3s ease;
+  }
+  
+  /* 問題のプロンプトスタイル */
+  .question-prompt {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: #f0f0f0;
+    margin-bottom: 0.5rem;
+  }
+  
+  /* ヒント表示スタイル */
+  .hint-text {
+    font-family: monospace;
+    letter-spacing: 0.1em;
+    color: #b0b0b0;
+  }
+  
+  /* ================= プレイヤーステータス ================= */
+  
+  /* HPゲージスタイル */
+  .hp-gauge {
+    height: 0.75rem;
+    background-color: rgba(44, 44, 44, 0.7);
+    border-radius: 1rem;
+    overflow: hidden;
+    margin-bottom: 0.25rem;
+  }
+  
+  .hp-bar {
+    height: 100%;
+    background-color: #48bb78;
+    transition: width 0.5s ease;
+  }
+  
+  /* MPゲージスタイル */
+  .mp-gauge {
+    height: 0.75rem;
+    background-color: rgba(44, 44, 44, 0.7);
+    border-radius: 1rem;
+    overflow: hidden;
+  }
+  
+  .mp-bar {
+    height: 100%;
+    background-color: #4299e1;
+    transition: width 0.5s ease;
+  }
+  
+  /* 経験値ゲージスタイル */
+  .exp-gauge {
+    height: 0.5rem;
+    background-color: rgba(44, 44, 44, 0.7);
+    border-radius: 1rem;
+    overflow: hidden;
+    margin: 0.25rem 0;
+  }
+  
+  .exp-bar {
+    height: 100%;
+    background-color: #ecc94b;
+    transition: width 0.5s ease;
+  }
+  
+  /* ================= ゲームオーバー画面 ================= */
+  
+  .game-over-screen {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.9);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+    text-align: center;
+  }
+  
+  .game-over-title {
+    font-size: 3rem;
+    font-weight: 700;
+    color: #ef4444;
+    margin-bottom: 1rem;
+    animation: pulse 2s infinite;
+  }
+  
+  .game-over-stats {
+    margin-bottom: 2rem;
+    font-size: 1.25rem;
+    color: rgba(255, 255, 255, 0.8);
+  }
+  
+  .game-over-buttons {
+    display: flex;
+    gap: 1rem;
+  }

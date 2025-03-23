@@ -1,0 +1,69 @@
+/* src/styles/skills.css - スキル関連のスタイル */
+
+/* ================= スキルスロット & スキルバー ================= */
+
+/* スキルスロットのクールダウン表示 */
+.cooldown-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: white;
+  }
+  
+  /* スキルがアクティブ状態 */
+  .skill-active {
+    border: 2px solid #ffc107;
+    box-shadow: 0 0 10px rgba(255, 193, 7, 0.5);
+  }
+  
+  /* 使用不可能なスキル */
+  .skill-disabled {
+    opacity: 0.5;
+    filter: grayscale(70%);
+  }
+  
+  /* スキルアイコンのグロー効果 */
+  .skill-icon-glow {
+    animation: skill-icon-pulse 1.5s infinite;
+  }
+  
+  /* ================= スキルコールアウト ================= */
+  
+  .skill-callout {
+    position: absolute;
+    left: 50%;
+    bottom: 100px;
+    transform: translateX(-50%);
+    width: 100%;
+    text-align: center;
+  }
+  
+  /* スキル名の装飾 */
+  .skill-callout span {
+    display: inline-block;
+    padding: 0.2em 0.6em;
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: 0.4em;
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+    text-shadow: 0 0 5px rgba(255, 215, 0, 0.7);
+  }
+  
+  /* 魔法陣エフェクト */
+  .skill-callout::before {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 20px;
+    background: radial-gradient(ellipse at center, rgba(255, 215, 0, 0.5) 0%, rgba(255, 215, 0, 0) 70%);
+    border-radius: 50%;
+    z-index: -1;
+    opacity: 0.7;
+    animation: magic-circle 1.5s ease-out forwards;
+  }

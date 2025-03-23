@@ -1,0 +1,101 @@
+/* src/styles/effects.css - エフェクト関連のスタイル */
+
+/* ================= 画面エフェクト ================= */
+
+/* 画面揺れと光る効果 */
+.screen-flash-shake {
+    animation: screenFlashShake 0.5s ease-in-out;
+  }
+  
+  .screen-shake {
+    animation: screenShake 0.5s ease-in-out;
+  }
+  
+  /* 回復時の画面エフェクト */
+  .heal-flash {
+    animation: healFlash 0.5s;
+  }
+  
+  /* 炎系スキル使用時の画面エフェクト */
+  .fire-skill-flash {
+    animation: fireSkillFlash 0.5s;
+  }
+  
+  /* ================= パーティクルエフェクト ================= */
+  
+  /* 火花・パーティクルエフェクト */
+  .particle {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    animation: particleFadeout 1s forwards;
+    pointer-events: none;
+  }
+  
+  /* ================= ダメージ表示エフェクト ================= */
+  
+  /* ダメージ数値表示 */
+  .damage-number {
+    position: absolute;
+    font-weight: bold;
+    text-shadow: 0 0 3px rgba(0, 0, 0, 0.8);
+    pointer-events: none;
+    z-index: 30;
+  }
+  
+  /* クリティカルヒットダメージ */
+  .critical-damage {
+    color: #fb7185;
+    font-size: 1.5em;
+    animation: damageFloat 1.2s forwards;
+  }
+  
+  /* 通常ダメージ */
+  .normal-damage {
+    color: #ffffff;
+    animation: damageFloat 1s forwards;
+  }
+  
+  /* 回復エフェクト */
+  .heal-number {
+    color: #86efac;
+    animation: floatUp 1.5s forwards;
+  }
+  
+  /* ================= 炎エフェクト ================= */
+  
+  /* 炎のオーラエフェクト */
+  .fire-aura {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .fire-aura::after {
+    content: "";
+    position: absolute;
+    inset: -10px;
+    background: radial-gradient(
+        ellipse at top,
+        rgba(255, 69, 0, 0.6),
+        transparent 70%
+      ),
+      radial-gradient(ellipse at bottom, rgba(255, 165, 0, 0.6), transparent 70%);
+    animation: fireAura 1.5s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 10;
+  }
+  
+  /* ================= 瀕死状態エフェクト ================= */
+  
+  /* 瀕死状態の表示 */
+  .low-health-indicator {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background-color: rgba(220, 38, 38, 0.5);
+    transition: background-color 0.5s ease;
+    z-index: 25;
+  }

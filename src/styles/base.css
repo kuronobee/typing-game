@@ -1,0 +1,80 @@
+/* src/styles/base.css - 基本スタイル設定 */
+
+/* 全体の背景色を黒に設定 */
+html,
+body,
+#root {
+  background-color: #000000;
+  color: white;
+}
+
+/* バトルステージ背景色 */
+.compact-battle-stage {
+  background-color: #000000;
+}
+
+/* 背景画像の下にある要素の背景色も黒に */
+.absolute.inset-0 {
+  background-color: #000000;
+}
+
+/* バトルエフェクトのコンテナ背景 */
+.w-full.flex.flex-col {
+  background-color: #000000;
+}
+
+/* iOSスクロール問題対策 */
+html,
+body {
+  position: fixed;
+  height: 100%;
+  overflow: auto;
+  width: 100%;
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+  touch-action: manipulation;
+}
+
+/* キーボード表示時のスタイル */
+.keyboard-open {
+  position: fixed;
+  width: 100%;
+  height: var(--window-height, 100%);
+  overflow: hidden;
+  transition: none !important;
+}
+
+/* グローバル変数 */
+:root {
+  --window-height: 100vh;
+  --combo-animation-duration: 1s;
+}
+
+/* タップ時の青いハイライトを非表示 */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 入力フィールドタップ時の挙動を安定化 */
+input {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  outline: none;
+}
+
+/* 入力欄フォーカス関連 */
+.input-wrapper {
+  position: relative;
+  z-index: 1000;
+}
+
+/* スクロール防止 */
+.no-scroll {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}

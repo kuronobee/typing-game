@@ -1,0 +1,88 @@
+/* src/styles/responsive.css - レスポンシブデザイン対応 */
+
+/* ================= 小さな画面への対応 ================= */
+
+/* 小さい画面での表示調整 */
+@media (max-width: 640px) {
+    .player-status-panel {
+      min-width: 110px !important;
+      padding: 0.5rem !important;
+      font-size: 0.875rem !important;
+    }
+  
+    .player-status-panel .text-xl {
+      font-size: 1rem !important;
+    }
+  
+    .player-status-panel .text-xs {
+      font-size: 0.7rem !important;
+    }
+    
+    /* メッセージ表示の調整 */
+    .message-display {
+      font-size: 0.75rem !important;
+      padding: 0.25rem 0.5rem !important;
+    }
+  }
+  
+  /* ================= 極端に小さい画面への対応 ================= */
+  
+  /* 極端に小さい画面での調整 */
+  @media (max-width: 360px) {
+    .player-status-panel {
+      min-width: 90px !important;
+      padding: 0.375rem !important;
+      top: 20% !important;
+      height: 120px !important; /* 高さを少し増やす */
+    }
+  
+    /* ゲージの高さを小さく */
+    .player-status-panel .h-3 {
+      height: 0.5rem !important;
+    }
+  
+    /* トータルEXP表示を小さく */
+    .player-status-panel .text-gray-300 {
+      font-size: 0.65rem !important;
+    }
+    
+    /* 極小画面ではエフェクトを簡略化 */
+    .particle, .sparkle {
+      display: none;
+    }
+    
+    /* 入力フィールドを小さく調整 */
+    .input-wrapper input {
+      height: 2rem !important;
+      font-size: 0.875rem !important;
+    }
+  }
+  
+  /* ================= コンパクトモード時の表示調整 ================= */
+  
+  /* コンパクトモード時のBattleStage-BattleInterface間のギャップを確保 */
+  .keyboard-open .flex-[0.3] {
+    padding-bottom: 10px;
+  }
+  
+  /* キーボード表示時にBattleInterfaceの上部にスペースを作る */
+  .keyboard-open .battle-interface-container {
+    margin-top: 10px;
+  }
+  
+  /* コンパクトモードでの調整 */
+  @media (max-height: 600px) {
+    .compact-battle-stage {
+      /* 非常に小さい画面での追加最適化 */
+      transform: scale(0.95);
+      transform-origin: center top;
+    }
+  }
+  
+  /* キーボード表示時のみのスタイル */
+  @media (max-height: 580px) {
+    .compact-battle-stage .enemy-container {
+      /* 非常に小さい画面でさらに上方に配置 */
+      transform: translateY(-15px);
+    }
+  }
