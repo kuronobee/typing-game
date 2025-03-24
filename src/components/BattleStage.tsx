@@ -45,6 +45,7 @@ interface BattleStageProps {
   skillAnimationInProgress?: boolean;
   skillCallOut?: string | null;
   specialAttackTypes?: (string | null)[]; // 追加: 特殊攻撃の種類
+  criticalHits?: boolean[];
 }
 
 const BattleStage: React.FC<BattleStageProps> = ({
@@ -71,6 +72,7 @@ const BattleStage: React.FC<BattleStageProps> = ({
   skillAnimationInProgress = false,
   skillCallOut = null,
   specialAttackTypes = [],
+  criticalHits = [],
 }) => {
   // 各敵毎の攻撃ゲージ進捗を管理する配列(0〜1)
   const [attackProgresses, setAttackProgresses] = useState<number[]>([]);
@@ -263,6 +265,7 @@ const BattleStage: React.FC<BattleStageProps> = ({
                 comboCount={comboCount}
                 scaleAdjustment={0.8}
                 specialAttackType={specialAttackTypes[index] || null} // 追加: 特殊攻撃の種類
+                isCriticalHit={criticalHits[index] || false}
               />
             </div>
           );

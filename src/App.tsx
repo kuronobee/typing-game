@@ -883,6 +883,7 @@ const App: React.FC = () => {
               skillAnimationInProgress={skillAnimationInProgress}
               skillCallOut={skillCallOut}
               specialAttackTypes={combat.specialAttackTypes}
+              criticalHits={combat.criticalHits}
             />
 
             {/* レベルアップ通知 - 修正部分 */}

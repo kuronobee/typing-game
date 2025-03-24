@@ -34,7 +34,8 @@ export function useCombatSystem(
   const [specialAttackTypes, setSpecialAttackTypes] = useState<
     (string | null)[]
   >([]);
-
+  // クリティカル攻撃状態の追加
+  const [criticalHits, setCriticalHits] = useState<boolean[]>([]);
   // プレイヤーダメージ表示用の状態を追加
   const [playerDamageDisplay, setPlayerDamageDisplay] = useState<{
     value: number;
@@ -54,6 +55,7 @@ export function useCombatSystem(
     setEnemyFireFlags(currentEnemies.map(() => false));
     setEnemyHitFlags(currentEnemies.map(() => false));
     setSpecialAttackTypes(currentEnemies.map(() => null));
+    setCriticalHits(currentEnemies.map(() => false));
   }, [currentEnemies]);
 
   // 毒状態効果の処理
@@ -194,6 +196,23 @@ export function useCombatSystem(
             damageDescription = "かすり傷！";
           }
 
+          // クリティカル状態を設定
+          const index = currentEnemies.findIndex((e) => e === attackingEnemy);
+          setCriticalHits((prev) => {
+            const newCriticals = [...prev];
+            newCriticals[index] = true;
+            return newCriticals;
+          });
+
+          // タイマーでリセット
+          setTimeout(() => {
+            setCriticalHits((prev) => {
+              const newCriticals = [...prev];
+              newCriticals[index] = false;
+              return newCriticals;
+            });
+          }, 1000);
+
           setMessage({
             text: `${attackingEnemy.name} のクリティカル攻撃！${damageDescription} 防御を無視した ${damageToApply} のダメージ！`,
             sender: "enemy",
@@ -304,6 +323,7 @@ export function useCombatSystem(
     playerRef,
     playerDamageDisplay,
     specialAttackTypes,
+    criticalHits,
     // 関数
     initializeAnimations,
     handleEnemyAttack,

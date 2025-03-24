@@ -22,6 +22,7 @@ interface EnemyProps {
     comboCount?: number;
     scaleAdjustment?: number;
     specialAttackType?: string | null;
+    isCriticalHit?: boolean;
 }
 
 const Enemy: React.FC<EnemyProps> = ({
@@ -37,6 +38,7 @@ const Enemy: React.FC<EnemyProps> = ({
     comboCount,
     scaleAdjustment = 1,
     specialAttackType = null,
+    isCriticalHit = false,
 }) => {
     const hpPercentage = (enemy.currentHP / enemy.maxHP) * 100;
     const baseScale = enemy.scale || 1;
@@ -44,7 +46,8 @@ const Enemy: React.FC<EnemyProps> = ({
     const enemyClass = `
     ${enemyHit ? "animate-hit" : ""}
     ${playerHit ? "animate-phit" : ""}
-    ${playerFire ? "animate-fire" : ""}`;
+    ${playerFire ? "animate-fire" : ""}
+    ${isCriticalHit ? "animate-critical-hit" : ""}`;
     const gaugeOffset = 96 * (1 - effectiveScale);
 
     // 攻撃ゲージの警告閾値 (80%で警告開始)
@@ -87,6 +90,14 @@ const Enemy: React.FC<EnemyProps> = ({
             }, 1000);
         }
     }, [specialAttackType]);
+    useEffect(() => {
+        if (isCriticalHit) {
+            setShowMessage("クリティカル！");
+            setTimeout(() => {
+                setShowMessage(null);
+            }, 1000);
+        }
+    }, [isCriticalHit]);
     return (
         <div className="relative inline-block enemy-container">
             {/* 特殊攻撃メッセージ表示 */}
