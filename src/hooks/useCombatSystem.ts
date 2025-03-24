@@ -30,8 +30,16 @@ export function useCombatSystem(
   const [damageNumbers, setDamageNumbers] = useState<(DamageDisplay | null)[]>(
     []
   );
+  // 状態の追加
+  const [specialAttackTypes, setSpecialAttackTypes] = useState<
+    (string | null)[]
+  >([]);
+
   // プレイヤーダメージ表示用の状態を追加
-  const [playerDamageDisplay, setPlayerDamageDisplay] = useState<{value: number, id: number} | null>(null);
+  const [playerDamageDisplay, setPlayerDamageDisplay] = useState<{
+    value: number;
+    id: number;
+  } | null>(null);
 
   // プレイヤーの最新情報を保持するためのref
   const playerRef = useRef(player);
@@ -45,6 +53,7 @@ export function useCombatSystem(
     setEnemyAttackFlags(currentEnemies.map(() => false));
     setEnemyFireFlags(currentEnemies.map(() => false));
     setEnemyHitFlags(currentEnemies.map(() => false));
+    setSpecialAttackTypes(currentEnemies.map(() => null));
   }, [currentEnemies]);
 
   // 毒状態効果の処理
@@ -112,6 +121,23 @@ export function useCombatSystem(
 
       // 特殊攻撃の処理
       if (attack.special) {
+        // 特殊攻撃タイプを設定
+        const index = currentEnemies.findIndex((e) => e === attackingEnemy);
+        setSpecialAttackTypes((prev) => {
+          const newTypes = [...prev];
+          newTypes[index] = attack.special ?? null;
+          return newTypes;
+        });
+
+        // タイマーでリセット（例：1秒後）
+        setTimeout(() => {
+          setSpecialAttackTypes((prev) => {
+            const newTypes = [...prev];
+            newTypes[index] = null;
+            return newTypes;
+          });
+        }, 1000);
+
         setPlayer((prev) =>
           prev.applyStatusEffects(attack.result.statusEffects)
         );
@@ -277,7 +303,7 @@ export function useCombatSystem(
     damageNumbers,
     playerRef,
     playerDamageDisplay,
-
+    specialAttackTypes,
     // 関数
     initializeAnimations,
     handleEnemyAttack,

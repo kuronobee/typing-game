@@ -1,7 +1,8 @@
 // src/components/Enemy.tsx を修正
 
-import React from "react";
+import React, {useEffect, useState} from "react";
 import { Enemy as EnemyModel } from "../models/EnemyModel";
+import MonsterMessage from "./MonsterMessage";
 
 type DamageDisplay = {
     value: number;
@@ -20,6 +21,7 @@ interface EnemyProps {
     damage?: DamageDisplay | null;
     comboCount?: number;
     scaleAdjustment?: number;
+    specialAttackType?: string | null;
 }
 
 const Enemy: React.FC<EnemyProps> = ({
@@ -33,7 +35,8 @@ const Enemy: React.FC<EnemyProps> = ({
     progress,
     damage,
     comboCount,
-    scaleAdjustment = 1
+    scaleAdjustment = 1,
+    specialAttackType = null,
 }) => {
     const hpPercentage = (enemy.currentHP / enemy.maxHP) * 100;
     const baseScale = enemy.scale || 1;
@@ -61,9 +64,38 @@ const Enemy: React.FC<EnemyProps> = ({
         attackGaugeClass = "attack-gauge-warning";
         attackBarClass = "bg-red-500 animate-attack-warning";
     }
-
+    const [showMessage, setShowMessage] = useState<string | null>(null);
+    // プレイヤーが攻撃を受けたときに特別メッセージを表示する
+    useEffect(() => {
+        if (playerHit) {
+            setShowMessage(`${enemy.name}の攻撃！`);
+            console.log(`${enemy.name}の攻撃！`);
+            // 一定時間後にメッセージを消す
+            setTimeout(() => {
+                setShowMessage(null);
+            }, 1000);
+            
+            //return () => clearTimeout(timer);
+        }
+    }, [playerHit, enemy.name]);
+    useEffect(() => {
+        if (specialAttackType) {
+            setShowMessage(specialAttackType);
+            console.log(specialAttackType);
+            setTimeout(() => {
+                setShowMessage(null);
+            }, 1000);
+        }
+    }, [specialAttackType]);
     return (
         <div className="relative inline-block enemy-container">
+            {/* 特殊攻撃メッセージ表示 */}
+            {showMessage && (
+                <MonsterMessage 
+                    message={showMessage} 
+                    position="top"
+                />
+            )}
             {/* 親要素でscaleを適用 */}
             <div
                 className="transition-all duration-2000 ease-out"
