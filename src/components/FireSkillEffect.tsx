@@ -4,6 +4,7 @@ import React, { useEffect, useState, useMemo, useRef } from 'react';
 interface FireSkillEffectProps {
   skillName: string;
   targetPosition: { x: number, y: number };
+  sourcePosition: { x: number, y: number };  // スキルの発動源
   damageValue?: number;
   onComplete: () => void; // コールバック関数を必須にする
   duration?: number;
@@ -26,11 +27,13 @@ interface FireParticle {
 const FireSkillEffect: React.FC<FireSkillEffectProps> = ({
   skillName,
   targetPosition,
+  sourcePosition,
   onComplete,
   duration = 1500,
   power = 'medium'
 }) => {
   void skillName;
+
   // アニメーション状態を追跡
   const [animationStage, setAnimationStage] = useState<'charging' | 'firing' | 'impact' | 'completed'>('charging');
   
@@ -133,20 +136,18 @@ const FireSkillEffect: React.FC<FireSkillEffectProps> = ({
     };
   }, [powerSettings.chargeDuration, duration, onComplete]);
 
-  // スキル発動源の位置（画面中央下部）
-  const sourcePosition = {
+  const effectiveSourcePosition = sourcePosition || {
     x: window.innerWidth / 2,
-    y: window.innerHeight * 0.5
+    y: window.innerHeight - 150
   };
 
   // 発射エフェクト
   const renderFiringEffect = () => {
     if (animationStage !== 'firing') return null;
-
     // 発射元から目標までの角度を計算
     const angle = Math.atan2(
-      targetPosition.y - sourcePosition.y,
-      targetPosition.x - sourcePosition.x
+      targetPosition.y - effectiveSourcePosition.y,
+      targetPosition.x - effectiveSourcePosition.x
     );
 
     // 軌道に沿って複数の火の玉を配置
@@ -155,8 +156,8 @@ const FireSkillEffect: React.FC<FireSkillEffectProps> = ({
         {[...Array(5)].map((_, i) => {
           // 発射元から目標までの距離を5分割して配置
           const progress = i / 4;
-          const x = sourcePosition.x + (targetPosition.x - sourcePosition.x) * progress;
-          const y = sourcePosition.y + (targetPosition.y - sourcePosition.y) * progress;
+          const x = effectiveSourcePosition.x + (targetPosition.x - effectiveSourcePosition.x) * progress;
+          const y = effectiveSourcePosition.y + (targetPosition.y - effectiveSourcePosition.y) * progress;
 
           // 軌道上に火の玉を描画
           return (
@@ -182,11 +183,11 @@ const FireSkillEffect: React.FC<FireSkillEffectProps> = ({
         <div
           className="absolute"
           style={{
-            left: sourcePosition.x,
-            top: sourcePosition.y,
+            left: effectiveSourcePosition.x,
+            top: effectiveSourcePosition.y,
             width: Math.sqrt(
-              Math.pow(targetPosition.x - sourcePosition.x, 2) +
-              Math.pow(targetPosition.y - sourcePosition.y, 2)
+              Math.pow(targetPosition.x - effectiveSourcePosition.x, 2) +
+              Math.pow(targetPosition.y - effectiveSourcePosition.y, 2)
             ),
             height: '4px',
             background: `linear-gradient(90deg, ${powerSettings.colors[0]}, transparent)`,

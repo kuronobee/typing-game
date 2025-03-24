@@ -46,6 +46,7 @@ interface BattleStageProps {
   skillCallOut?: string | null;
   specialAttackTypes?: (string | null)[]; // 追加: 特殊攻撃の種類
   criticalHits?: boolean[];
+  playerReff?: React.RefObject<HTMLDivElement | null>;
 }
 
 const BattleStage: React.FC<BattleStageProps> = ({
@@ -73,6 +74,7 @@ const BattleStage: React.FC<BattleStageProps> = ({
   skillCallOut = null,
   specialAttackTypes = [],
   criticalHits = [],
+  playerReff,
 }) => {
   // 各敵毎の攻撃ゲージ進捗を管理する配列(0〜1)
   const [attackProgresses, setAttackProgresses] = useState<number[]>([]);
@@ -343,14 +345,15 @@ const BattleStage: React.FC<BattleStageProps> = ({
           className={`absolute z-20 pointer-events-none ${playerHitEffect 
             ? 'player-shake' : playerAttackEffect ? 'player-attack-m' : ''
             }`}
-          style={{
-            top: `-90px`,
-            left: "50%",
-            transform: "translateX(-50%)",
-            width: "160px",
-            height: "240px",
-            transition: "all 0.3s ease"
-          }}
+            style={{
+              top: `-90px`,
+              left: "50%",
+              transform: "translateX(-50%)",
+              width: "160px",
+              height: "240px",
+              transition: "all 0.3s ease"
+            }}
+            ref={playerReff}
         >
           <img
             src={playerImage}

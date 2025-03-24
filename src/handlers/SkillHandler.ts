@@ -17,6 +17,7 @@ export interface SkillEffectProps {
 export interface FireSkillEffectProps {
   skillName: string;
   targetPosition: { x: number; y: number };
+  sourcePosition: { x: number; y: number };
   damageValue?: number;
   power: "low" | "medium" | "high";
   onComplete?: () => void;
@@ -55,6 +56,7 @@ export class SkillHandler {
   
   // 進行中のアニメーションタイマーを追跡
   private animationTimers: number[] = [];
+  private playerRef: React.RefObject<HTMLDivElement | null>;
   /**
    * コンストラクタ - 必要な状態更新関数を注入
    */
@@ -75,7 +77,8 @@ export class SkillHandler {
     showPlayerAttackEffect?: (isSkill: boolean) => void,
     enemyRefs?: React.MutableRefObject<(HTMLDivElement | null)[]>, // 敵キャラの参照を受け取る
     setSkillAnimationInProgress?: React.Dispatch<React.SetStateAction<boolean>>,
-    showSkillCallOut?: (skillName: string) => void
+    showSkillCallOut?: (skillName: string) => void,
+    playerRef?: React.RefObject<HTMLDivElement | null>,
   ) {
     this.player = player;
     this.currentEnemies = currentEnemies;
@@ -95,6 +98,7 @@ export class SkillHandler {
     this.setSkillAnimationInProgress =
       setSkillAnimationInProgress || (() => {}); // デフォルト値として空関数を設定
     this.showSkillCallOut = showSkillCallOut;
+    this.playerRef = playerRef || { current: null };
   }
 
   // コンポーネントのアンマウント時やタイマークリアのためのメソッド
@@ -150,6 +154,21 @@ export class SkillHandler {
     };
   }
 
+  private getPlayerPosition(): { x: number, y: number } {
+    if (this.playerRef.current) {
+      const rect = this.playerRef.current.getBoundingClientRect();
+      return {
+        x: rect.left + rect.width / 2,
+        y: rect.top + rect.height / 2
+      };
+    }
+    
+    // デフォルト値（プレイヤー要素が見つからない場合）
+    return {
+      x: window.innerWidth / 2,
+      y: window.innerHeight - 150
+    };
+  }
   /**
    * スキル使用ハンドラのメインメソッド
    */
@@ -362,11 +381,12 @@ private handleFireBoltSkill(
   
     if (result.success && targetIndex !== undefined) {
       const enemyPosition = this.getEnemyPosition(targetIndex);
-  
+      const playerPosition = this.getPlayerPosition();
       // アニメーション表示、onComplete時にダメージを適用する
       this.showFireSkillEffect({
         skillName: "ファイアボルト",
         targetPosition: enemyPosition,
+        sourcePosition: playerPosition,
         damageValue: result.damageAmount,
         power: "low", // 低威力設定
         onComplete: () => {
@@ -459,10 +479,12 @@ private handleFireBoltSkill(
     if (result.success && targetIndex !== undefined) {
       // 対象の敵の位置を取得
       const enemyPosition = this.getEnemyPosition(targetIndex);
+      const playerPosition = this.getPlayerPosition();
       // ファイアボールエフェクト表示
       this.showFireSkillEffect({
         skillName: "ファイアボール",
         targetPosition: enemyPosition,
+        sourcePosition: playerPosition,
         damageValue: result.damageAmount,
         power: "medium", // 中威力設定
         onComplete: () => {

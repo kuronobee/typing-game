@@ -111,6 +111,7 @@ const App: React.FC = () => {
   const [fireSkillEffect, setFireSkillEffect] = useState<{
     skillName: string;
     targetPosition: { x: number; y: number };
+    sourcePosition: { x: number; y: number };
     damageValue?: number;
     power: "low" | "medium" | "high";
     onComplete?: () => void; // コールバック関数を追加
@@ -194,6 +195,8 @@ const App: React.FC = () => {
     // 配列のサイズを現在の敵の数に合わせる
     enemyRefs.current = Array(currentEnemies.length).fill(null);
   }, [currentEnemies.length]);
+  // プレイヤー要素のrefを作成
+  const playerRef = useRef<HTMLDivElement | null>(null);
 
   // 初回マウント時の初期化
   useEffect(() => {
@@ -340,6 +343,7 @@ const App: React.FC = () => {
         enemyRefs,
         setSkillAnimationInProgress,
         showSkillCallOut,
+        playerRef,
       );
       setSkillHandler(handler);
     }
@@ -792,6 +796,7 @@ const App: React.FC = () => {
           <FireSkillEffect
             skillName={fireSkillEffect.skillName}
             targetPosition={fireSkillEffect.targetPosition}
+            sourcePosition={fireSkillEffect.sourcePosition} 
             damageValue={fireSkillEffect.damageValue}
             power={fireSkillEffect.power}
             onComplete={() => {
@@ -884,6 +889,7 @@ const App: React.FC = () => {
               skillCallOut={skillCallOut}
               specialAttackTypes={combat.specialAttackTypes}
               criticalHits={combat.criticalHits}
+              playerReff={playerRef}
             />
 
             {/* レベルアップ通知 - 修正部分 */}
