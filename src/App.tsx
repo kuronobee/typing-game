@@ -1,4 +1,4 @@
-// src/App.tsx - useGameStateフックを適用
+// src/App.tsx - useGameStateとuseEffectsフックを適用
 import React, { useState, useEffect, useRef } from "react";
 import BattleStage from "./components/BattleStage";
 import BattleInterface from "./components/BattleInterface";
@@ -7,17 +7,15 @@ import LevelUpNotifier from "./components/LevelUpNotifier";
 import CombatEffects from "./components/CombatEffects";
 import NextStageButton from "./components/NextStageButton";
 
-import { commonQuestions, Question } from "./data/questions";
 import { Player as PlayerModel } from "./models/Player";
-import { Enemy as EnemyModel } from "./models/EnemyModel";
-import { MessageType } from "./components/MessageDisplay";
 import { ENEMY_HIT_ANIMATION_DURATION } from "./data/constants";
 
 // カスタムフックのインポート
 import useIOSScrollPrevention from "./hooks/useIOSScrollPrevention";
 import { useCombatSystem } from "./hooks/useCombatSystem";
 import { usePlayerAttack } from "./hooks/usePlayerAttack";
-import { useGameState } from "./hooks/useGameState"; // 新しく追加したフック
+import { useGameState } from "./hooks/useGameState"; // ゲーム状態管理フック
+import { useEffects } from "./hooks/useEffects"; // 視覚効果管理フック
 
 // マネージャークラスのインポート
 import { StageManager } from "./managers/StageManager";
@@ -32,7 +30,7 @@ import {
 } from "./data/skillData";
 import SkillEffect from "./components/SkillEffect";
 import FireSkillEffect from "./components/FireSkillEffect";
-import { SkillHandler, SkillEffectProps, FireSkillEffectProps } from "./handlers/SkillHandler";
+import { SkillHandler } from "./handlers/SkillHandler";
 import SkillAcquisitionNotification from "./components/SkillAcquisitionNotification";
 
 const App: React.FC = () => {
@@ -43,6 +41,9 @@ const App: React.FC = () => {
 
   // ゲーム状態管理フックを使用
   const gameState = useGameState();
+  
+  // 視覚効果管理フックを使用
+  const effects = useEffects();
 
   // マウント時に入力フィールドにフォーカス
   useEffect(() => {
@@ -51,31 +52,6 @@ const App: React.FC = () => {
     }
   }, []);
 
-  // プレイヤーの状態
-  // const [player, setPlayer] = useState<PlayerModel>(
-  //   PlayerModel.createDefault()
-  // );
-
-  // const [levelUpQueue, setLevelUpQueue] = useState<number[]>([]); // レベルアップキュー
-  // const [currentShowingLevel, setCurrentShowingLevel] = useState<number | null>(null); // 現在表示中のレベル
-
-  // 戦闘関連の状態
-  // const [currentEnemies, setCurrentEnemies] = useState<EnemyModel[]>([]);
-  // const [targetIndex, setTargetIndex] = useState<number>(0);
-  // const [currentQuestion, setCurrentQuestion] = useState<Question>(
-  //   commonQuestions[Math.floor(Math.random() * commonQuestions.length)]
-  // );
-  // const [wrongAttempts, setWrongAttempts] = useState(0);
-  // const [isHintFullyRevealed, setIsHintFullyRevealed] = useState(false);
-  // const [comboCount, setComboCount] = useState<number>(0);
-  // const [readyForNextStage, setReadyForNextStage] = useState(false);
-
-  // UI状態
-  // const [message, setMessage] = useState<MessageType | null>(null);
-  // const [expGain, setExpGain] = useState<number | null>(null);
-  // const [isDead, setIsDead] = useState(false);
-  // const [showGameOver, setShowGameOver] = useState(false);
-
   // スキル関連の変数
   const [activeSkill, setActiveSkill] = useState<SkillInstance | null>(null);
   const [equippedSkills, setEquippedSkills] = useState<
@@ -83,108 +59,13 @@ const App: React.FC = () => {
   >([]);
   // アニメーション中かどうかを追跡
   const [skillAnimationInProgress, setSkillAnimationInProgress] = useState<boolean>(false);
-  // スキル詠唱に関する変数
-  const [skillCallOut, setSkillCallOut] = useState<string | null>(null);
-  // コールアウトを表示する関数
-  const showSkillCallOut = (skillName: string) => {
-    setSkillCallOut(skillName);
 
-    // 一定時間後に非表示にする
-    setTimeout(() => {
-      setSkillCallOut(null);
-    }, 1500);
-  };
   const [availableSkillIds, setAvailableSkillIds] =
     useState<string[]>(initialPlayerSkills);
   const [showSkillManagement, setShowSkillManagement] = useState(false);
-  const [skillEffect, setSkillEffect] = useState<{
-    type: "heal" | "damage" | "buff" | "debuff";
-    targetPosition?: { x: number; y: number };
-    value?: number;
-    skillName?: string;
-  } | null>(null);
   const [newlyAcquiredSkill, setNewlyAcquiredSkill] = useState<SkillInstance | null>(null);
-  // FireSkillEffectの状態を管理する
-  const [fireSkillEffect, setFireSkillEffect] = useState<{
-    skillName: string;
-    targetPosition: { x: number; y: number };
-    sourcePosition: { x: number; y: number };
-    damageValue?: number;
-    power: "low" | "medium" | "high";
-    onComplete?: () => void; // コールバック関数を追加
-  } | null>(null);
   const [activeKeyIndex, setActiveKeyIndex] = useState<number | null>(null);
 
-  // 2. 炎系スキル表示関数を追加
-  // 炎系スキルのエフェクトを表示する関数
-  const showFireSkillEffect = (props: FireSkillEffectProps) => {
-    setSkillAnimationInProgress(true); // アニメーション開始
-
-    // 画面効果を追加（オプション）
-    document.body.classList.add("fire-skill-flash");
-    setTimeout(() => {
-      document.body.classList.remove("fire-skill-flash");
-    }, 500);
-
-    // エフェクト状態を設定
-    setFireSkillEffect({
-      ...props,
-      onComplete: () => {
-        // オリジナルのコールバックを保存
-        const originalCallback = props.onComplete;
-
-        // アニメーション終了時にフラグをリセット
-        setSkillAnimationInProgress(false);
-
-        // 元のコールバックがあれば実行
-        if (originalCallback) {
-          originalCallback();
-        }
-      }
-    });
-
-    // 敵へのヒット後に火のオーラエフェクトを追加（オプション）
-    if (props.targetPosition && props.damageValue) {
-      setTimeout(() => {
-        // 対象の敵要素に一時的にfire-auraクラスを追加
-        const enemyElements = document.querySelectorAll(".compact-battle-stage");
-        if (enemyElements.length > 0) {
-          // ターゲットインデックスに応じた敵要素を取得
-          const targetEnemyElement = enemyElements[gameState.targetIndex];
-          if (targetEnemyElement) {
-            targetEnemyElement.classList.add("fire-aura");
-            setTimeout(() => {
-              targetEnemyElement.classList.remove("fire-aura");
-            }, 1500);
-          }
-        }
-      }, 600); // 火球が命中した後にエフェクト追加
-    }
-  };
-
-  const [playerHitEffect, setPlayerHitEffect] = useState<boolean>(false);
-
-  // ダメージを受けたときのプレイヤーエフェクトを表示
-  const showPlayerHitEffect = () => {
-    setPlayerHitEffect(true);
-    setTimeout(() => {
-      setPlayerHitEffect(false);
-    }, 600);
-  };
-
-  // 状態の追加
-  const [playerAttackEffect, setPlayerAttackEffect] = useState<boolean>(false);
-
-  // プレイヤーの攻撃エフェクトを表示する関数
-  const showPlayerAttackEffect = (isSkill: boolean = false) => {
-    // アニメーションのクラス名を設定
-    setPlayerAttackEffect(true);
-
-    // アニメーション終了後にリセット
-    setTimeout(() => {
-      setPlayerAttackEffect(false);
-    }, isSkill ? 700 : 500); // スキル使用時は少し長めのアニメーション
-  };
   // 敵キャラクターのDOM要素への参照を保持するためのRef配列
   const enemyRefs = useRef<(HTMLDivElement | null)[]>([]);
   // 敵の数が変わったときにRef配列を初期化
@@ -283,27 +164,6 @@ const App: React.FC = () => {
     });
   };
 
-  // スキルエフェクトの表示処理
-  const showSkillEffectAnimation = (props: SkillEffectProps) => {
-    setSkillEffect(props);
-
-    // スキル使用時のスクリーンエフェクト（オプション）
-    if (props.type === "damage") {
-      // ダメージスキルはスクリーンシェイク
-      combat.isScreenShake = true;
-      setTimeout(() => {
-        combat.isScreenShake = false;
-      }, 500);
-    } else if (props.type === "heal") {
-      // 回復スキルは明るくフラッシュ（CombatEffectsに新しいメソッドが必要）
-      document.body.classList.add("heal-flash");
-      setTimeout(() => {
-        document.body.classList.remove("heal-flash");
-      }, 500);
-    }
-    // 必要に応じてここでサウンド効果や画面シェイクなども追加可能
-  };
-
   // スキルハンドラの状態を管理
   const [skillHandler, setSkillHandler] = useState<SkillHandler | null>(null);
 
@@ -313,7 +173,7 @@ const App: React.FC = () => {
     gameState.setPlayer, 
     gameState.currentEnemies, 
     gameState.setMessage, 
-    showPlayerHitEffect
+    effects.showPlayerHitEffect
   );
 
   // プレイヤー更新時のrefを更新
@@ -335,17 +195,17 @@ const App: React.FC = () => {
         gameState.setMessage,
         combat.setDamageDisplay,
         combat.setHitFlag,
-        showSkillEffectAnimation,
-        showFireSkillEffect,
+        effects.showSkillEffectAnimation,
+        effects.showFireSkillEffect,
         checkStageCompletion,
         playerAttack.setEnemyDefeatedMessage,
         StageManager.findNextAliveEnemyIndex,
         gameState.setTargetIndex,
         setActiveSkill,
-        showPlayerAttackEffect,
+        effects.showPlayerAttackEffect,
         enemyRefs,
         setSkillAnimationInProgress,
-        showSkillCallOut,
+        effects.showSkillCallOut,
         playerRef,
       );
       setSkillHandler(handler);
@@ -353,7 +213,7 @@ const App: React.FC = () => {
     else {
       skillHandler.updateState(gameState.player, gameState.currentEnemies);
     }
-  }, [gameState.player, gameState.currentEnemies]);
+  }, [gameState.player, gameState.currentEnemies, effects]);
 
   // マウント時に初期ステージを生成
   useEffect(() => {
@@ -487,7 +347,7 @@ const App: React.FC = () => {
         console.log("アクティブスキル発動:", activeSkill.name);
 
         // スキル使用時のプレイヤーアニメーション
-        showPlayerAttackEffect(true);
+        effects.showPlayerAttackEffect(true);
 
         // スキルを実行
         handleSkillUse(activeSkill, gameState.targetIndex);
@@ -513,7 +373,7 @@ const App: React.FC = () => {
         playerAttack.setAttackResultMessage(damage, specialMessage);
 
         // 通常攻撃時のプレイヤーアニメーション
-        showPlayerAttackEffect(false);
+        effects.showPlayerAttackEffect(false);
       }
 
       gameState.setWrongAttempts(0);
@@ -701,9 +561,9 @@ const App: React.FC = () => {
     if (skillHandler) {
       // スキル使用時のプレイヤーアニメーション
       if (skill.activationTiming === 'onCommand') {
-        showPlayerAttackEffect(true);
+        effects.showPlayerAttackEffect(true);
         // スキル名を表示
-        showSkillCallOut(skill.name);
+        effects.showSkillCallOut(skill.name);
       }
 
       skillHandler.handleSkillUse(skill, targetIndex);
@@ -783,21 +643,21 @@ const App: React.FC = () => {
         <GameOver totalEXP={gameState.player.totalExp} onContinue={handleContinueGame} />
       )}
       {/* ファイヤースキル発動 */}
-      {fireSkillEffect && (
+      {effects.fireSkillEffect && (
         <div className="z-500">
           <FireSkillEffect
-            skillName={fireSkillEffect.skillName}
-            targetPosition={fireSkillEffect.targetPosition}
-            sourcePosition={fireSkillEffect.sourcePosition} 
-            damageValue={fireSkillEffect.damageValue}
-            power={fireSkillEffect.power}
+            skillName={effects.fireSkillEffect.skillName}
+            targetPosition={effects.fireSkillEffect.targetPosition}
+            sourcePosition={effects.fireSkillEffect.sourcePosition} 
+            damageValue={effects.fireSkillEffect.damageValue}
+            power={effects.fireSkillEffect.power}
             onComplete={() => {
               // 保存されたコールバックがあれば実行
-              if (fireSkillEffect?.onComplete) {
-                fireSkillEffect.onComplete();
+              if (effects.fireSkillEffect?.onComplete) {
+                effects.fireSkillEffect.onComplete();
               }
               // エフェクト表示をクリア
-              setFireSkillEffect(null);
+              effects.setFireSkillEffect(null);
             }}
             duration={1500}
           />
@@ -818,13 +678,13 @@ const App: React.FC = () => {
           )}
 
           {/* スキルエフェクト表示 */}
-          {skillEffect && (
+          {effects.skillEffect && (
             <SkillEffect
-              type={skillEffect.type}
-              targetPosition={skillEffect.targetPosition}
-              value={skillEffect.value}
-              skillName={skillEffect.skillName}
-              onComplete={() => setSkillEffect(null)}
+              type={effects.skillEffect.type}
+              targetPosition={effects.skillEffect.targetPosition}
+              value={effects.skillEffect.value}
+              skillName={effects.skillEffect.skillName}
+              onComplete={() => effects.setSkillEffect(null)}
               duration={1000}
             />
           )}
@@ -872,26 +732,26 @@ const App: React.FC = () => {
               onSelectTarget={handleSelectTarget}
               comboCount={gameState.comboCount}
               inputRef={inputRef}
-              playerHitEffect={playerHitEffect} // プレイヤーダメージエフェクト用
-              playerDamageDisplay={combat.playerDamageDisplay} // プレイヤーダメージ表示用
+              playerHitEffect={effects.playerHitEffect} // エフェクトフックから参照
+              playerDamageDisplay={combat.playerDamageDisplay}
               expGain={gameState.expGain}
-              playerAttackEffect={playerAttackEffect} // プレイヤーアタックエフェクト用
+              playerAttackEffect={effects.playerAttackEffect} // エフェクトフックから参照
               enemyRefs={enemyRefs}
               skillAnimationInProgress={skillAnimationInProgress}
-              skillCallOut={skillCallOut}
+              skillCallOut={effects.skillCallOut} // エフェクトフックから参照
               specialAttackTypes={combat.specialAttackTypes}
               criticalHits={combat.criticalHits}
               playerReff={playerRef}
             />
 
-            {/* レベルアップ通知 - 修正部分 */}
+            {/* レベルアップ通知 */}
             {gameState.currentShowingLevel !== null && (
               <LevelUpNotifier
                 player={gameState.player}
                 level={gameState.currentShowingLevel}
                 onClose={handleCloseLevelUp}
               />
-            )}            
+            )}  
             {/* スキル獲得通知 */}
             {newlyAcquiredSkill && (
               <SkillAcquisitionNotification
