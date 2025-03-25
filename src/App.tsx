@@ -1,5 +1,5 @@
-// src/App.tsx - useGameStateとuseEffectsフックを適用
-import React, { useState, useEffect, useRef } from "react";
+// src/App.tsx - useGameState, useEffects, useSkillManagementフックを適用
+import React, { useEffect, useRef, useState } from "react";
 import BattleStage from "./components/BattleStage";
 import BattleInterface from "./components/BattleInterface";
 import GameOver from "./components/GameOver";
@@ -16,6 +16,7 @@ import { useCombatSystem } from "./hooks/useCombatSystem";
 import { usePlayerAttack } from "./hooks/usePlayerAttack";
 import { useGameState } from "./hooks/useGameState"; // ゲーム状態管理フック
 import { useEffects } from "./hooks/useEffects"; // 視覚効果管理フック
+import { useSkillManagement } from "./hooks/useSkillManagement"; // スキル管理フック
 
 // マネージャークラスのインポート
 import { StageManager } from "./managers/StageManager";
@@ -24,10 +25,6 @@ import { ExperienceManager } from "./managers/ExperienceManager";
 // インポート
 import SkillManagement from "./components/SkillManagement";
 import { SkillInstance } from "./models/Skill";
-import {
-  createSkillInstance,
-  initialPlayerSkills,
-} from "./data/skillData";
 import SkillEffect from "./components/SkillEffect";
 import FireSkillEffect from "./components/FireSkillEffect";
 import { SkillHandler } from "./handlers/SkillHandler";
@@ -45,26 +42,15 @@ const App: React.FC = () => {
   // 視覚効果管理フックを使用
   const effects = useEffects();
 
+  // スキル管理フックを使用
+  const skillManagement = useSkillManagement(gameState.setMessage);
+
   // マウント時に入力フィールドにフォーカス
   useEffect(() => {
     if (inputRef.current) {
       inputRef.current.focus();
     }
   }, []);
-
-  // スキル関連の変数
-  const [activeSkill, setActiveSkill] = useState<SkillInstance | null>(null);
-  const [equippedSkills, setEquippedSkills] = useState<
-    (SkillInstance | null)[]
-  >([]);
-  // アニメーション中かどうかを追跡
-  const [skillAnimationInProgress, setSkillAnimationInProgress] = useState<boolean>(false);
-
-  const [availableSkillIds, setAvailableSkillIds] =
-    useState<string[]>(initialPlayerSkills);
-  const [showSkillManagement, setShowSkillManagement] = useState(false);
-  const [newlyAcquiredSkill, setNewlyAcquiredSkill] = useState<SkillInstance | null>(null);
-  const [activeKeyIndex, setActiveKeyIndex] = useState<number | null>(null);
 
   // 敵キャラクターのDOM要素への参照を保持するためのRef配列
   const enemyRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -75,94 +61,6 @@ const App: React.FC = () => {
   }, [gameState.currentEnemies.length]);
   // プレイヤー要素のrefを作成
   const playerRef = useRef<HTMLDivElement | null>(null);
-
-  // 初回マウント時の初期化
-  useEffect(() => {
-    // 初期スキルをセットアップ
-    const initialSkillsArray = initialPlayerSkills.map((skillId) => {
-      try {
-        return createSkillInstance(skillId);
-      } catch (error) {
-        console.error(`Error creating skill instance for ${skillId}:`, error);
-        return null;
-      }
-    });
-
-    // 3スロット分のスキル配列を用意（空きスロットはnull）
-    const skillsWithEmptySlots = [...initialSkillsArray];
-    while (skillsWithEmptySlots.length < 3) {
-      skillsWithEmptySlots.push(null);
-    }
-
-    setEquippedSkills(skillsWithEmptySlots);
-  }, []);
-
-  // 新しいスキルの獲得（レベルアップなどで取得する場合）
-  const acquireNewSkill = (skillId: string) => {
-    // すでに所持しているスキルは追加しない
-    if (availableSkillIds.includes(skillId)) {
-      console.log(`スキル「${skillId}」はすでに獲得済みです`);
-      return;
-    }
-
-    console.log(`新しいスキル「${skillId}」を獲得`);
-
-    try {
-      // スキルインスタンスを作成
-      const newSkill = createSkillInstance(skillId);
-
-      // 状態を更新
-      setAvailableSkillIds(prev => [...prev, skillId]);
-
-      // スキル獲得通知を表示
-      setNewlyAcquiredSkill(newSkill);
-
-      // システムメッセージも表示（バックアップとして）
-      gameState.setMessage({
-        text: `新しいスキル「${newSkill.name}」を習得した！`,
-        sender: "system",
-      });
-    } catch (error) {
-      console.error(`スキル「${skillId}」の取得に失敗しました:`, error);
-      gameState.setMessage({
-        text: `スキル「${skillId}」の取得に失敗しました`,
-        sender: "system",
-      });
-    }
-  };
-
-  // スキル獲得通知を閉じる処理
-  const handleCloseSkillNotification = () => {
-    setNewlyAcquiredSkill(null);
-  };
-
-  // スキル装備の処理
-  const handleEquipSkill = (skillId: string, slotIndex: number) => {
-    try {
-      const newSkill = createSkillInstance(skillId);
-
-      setEquippedSkills((prev) => {
-        const newSkills = [...prev];
-        newSkills[slotIndex] = newSkill;
-        return newSkills;
-      });
-    } catch (error) {
-      console.error(`Error equipping skill ${skillId}:`, error);
-      gameState.setMessage({
-        text: "スキルの装備に失敗しました",
-        sender: "system",
-      });
-    }
-  };
-
-  // スキル解除の処理
-  const handleUnequipSkill = (slotIndex: number) => {
-    setEquippedSkills((prev) => {
-      const newSkills = [...prev];
-      newSkills[slotIndex] = null;
-      return newSkills;
-    });
-  };
 
   // スキルハンドラの状態を管理
   const [skillHandler, setSkillHandler] = useState<SkillHandler | null>(null);
@@ -201,10 +99,10 @@ const App: React.FC = () => {
         playerAttack.setEnemyDefeatedMessage,
         StageManager.findNextAliveEnemyIndex,
         gameState.setTargetIndex,
-        setActiveSkill,
+        skillManagement.setActiveSkill,
         effects.showPlayerAttackEffect,
         enemyRefs,
-        setSkillAnimationInProgress,
+        skillManagement.setSkillAnimationInProgress,
         effects.showSkillCallOut,
         playerRef,
       );
@@ -213,7 +111,7 @@ const App: React.FC = () => {
     else {
       skillHandler.updateState(gameState.player, gameState.currentEnemies);
     }
-  }, [gameState.player, gameState.currentEnemies, effects]);
+  }, [gameState.player, gameState.currentEnemies, effects, skillManagement]);
 
   // マウント時に初期ステージを生成
   useEffect(() => {
@@ -295,12 +193,12 @@ const App: React.FC = () => {
           // F1-F3のキーコードからインデックスを取得（0-2）
           const skillIndex = keyNum - 1;
 
-          // アクティブキーインデックスを設定 - これがSkillSlotコンポーネントに伝播される
-          setActiveKeyIndex(skillIndex);
+          // アクティブキーインデックスを設定
+          skillManagement.setActiveKeyIndex(skillIndex);
 
           // 短い遅延後にリセット（視覚効果のため）
           setTimeout(() => {
-            setActiveKeyIndex(null);
+            skillManagement.setActiveKeyIndex(null);
           }, 200);
         }
       }
@@ -308,7 +206,7 @@ const App: React.FC = () => {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [gameState.readyForNextStage, gameState.currentEnemies]);
+  }, [gameState.readyForNextStage, gameState.currentEnemies, skillManagement]);
 
   // アンマウント時にタイムアウトをクリア
   const questionTimeoutRef = useRef<number | null>(null);
@@ -343,17 +241,17 @@ const App: React.FC = () => {
       playerAttack.handleComboUpdate(newCombo);
 
       // アクティブなスキルがあれば実行
-      if (activeSkill && activeSkill.activationTiming === "onCorrectAnswer") {
-        console.log("アクティブスキル発動:", activeSkill.name);
+      if (skillManagement.activeSkill && skillManagement.activeSkill.activationTiming === "onCorrectAnswer") {
+        console.log("アクティブスキル発動:", skillManagement.activeSkill.name);
 
         // スキル使用時のプレイヤーアニメーション
         effects.showPlayerAttackEffect(true);
 
         // スキルを実行
-        handleSkillUse(activeSkill, gameState.targetIndex);
+        handleSkillUse(skillManagement.activeSkill, gameState.targetIndex);
 
         // アクティブスキルをリセット
-        setActiveSkill(null);
+        skillManagement.setActiveSkill(null);
       } else {
         // 通常攻撃処理
         const { damage, specialMessage } =
@@ -402,7 +300,7 @@ const App: React.FC = () => {
       playerAttack.setWrongAnswerMessage();
 
       // アクティブスキルも解除
-      setActiveSkill(null);
+      skillManagement.setActiveSkill(null);
     }
   };
 
@@ -466,7 +364,7 @@ const App: React.FC = () => {
         gameState.player,
         gameState.setPlayer,
         gameState.setExpGain,
-        acquireNewSkill,
+        skillManagement.acquireNewSkill,
         showLevelUpCallback
       );
 
@@ -556,7 +454,7 @@ const App: React.FC = () => {
     }
   };
 
-  // スキル使用時の処理関数（App コンポーネント内に追加）
+  // スキル使用時の処理関数
   const handleSkillUse = (skill: SkillInstance, targetIndex?: number) => {
     if (skillHandler) {
       // スキル使用時のプレイヤーアニメーション
@@ -666,14 +564,14 @@ const App: React.FC = () => {
       {!gameState.showGameOver && (
         <div className="bg-black">
           {/* スキル管理画面 */}
-          {showSkillManagement && (
+          {skillManagement.showSkillManagement && (
             <SkillManagement
-              equippedSkills={equippedSkills}
-              onEquipSkill={handleEquipSkill}
-              onUnequipSkill={handleUnequipSkill}
+              equippedSkills={skillManagement.equippedSkills}
+              onEquipSkill={skillManagement.handleEquipSkill}
+              onUnequipSkill={skillManagement.handleUnequipSkill}
               playerLevel={gameState.player.level}
-              onClose={() => setShowSkillManagement(false)}
-              availableSkillIds={availableSkillIds}
+              onClose={() => skillManagement.setShowSkillManagement(false)}
+              availableSkillIds={skillManagement.availableSkillIds}
             />
           )}
 
@@ -701,11 +599,11 @@ const App: React.FC = () => {
               inputRef={inputRef}
               currentEnemies={gameState.currentEnemies}
               targetIndex={gameState.targetIndex}
-              equippedSkills={equippedSkills}
-              setEquippedSkills={setEquippedSkills}
-              onOpenSkillManagement={() => setShowSkillManagement(true)}
-              setActiveSkill={setActiveSkill}
-              activeKeyIndex={activeKeyIndex}
+              equippedSkills={skillManagement.equippedSkills}
+              setEquippedSkills={skillManagement.setEquippedSkills}
+              onOpenSkillManagement={() => skillManagement.toggleSkillManagement(true)}
+              setActiveSkill={skillManagement.setActiveSkill}
+              activeKeyIndex={skillManagement.activeKeyIndex}
             />
           </div>
 
@@ -732,13 +630,13 @@ const App: React.FC = () => {
               onSelectTarget={handleSelectTarget}
               comboCount={gameState.comboCount}
               inputRef={inputRef}
-              playerHitEffect={effects.playerHitEffect} // エフェクトフックから参照
+              playerHitEffect={effects.playerHitEffect}
               playerDamageDisplay={combat.playerDamageDisplay}
               expGain={gameState.expGain}
-              playerAttackEffect={effects.playerAttackEffect} // エフェクトフックから参照
+              playerAttackEffect={effects.playerAttackEffect}
               enemyRefs={enemyRefs}
-              skillAnimationInProgress={skillAnimationInProgress}
-              skillCallOut={effects.skillCallOut} // エフェクトフックから参照
+              skillAnimationInProgress={skillManagement.skillAnimationInProgress}
+              skillCallOut={effects.skillCallOut}
               specialAttackTypes={combat.specialAttackTypes}
               criticalHits={combat.criticalHits}
               playerReff={playerRef}
@@ -751,12 +649,12 @@ const App: React.FC = () => {
                 level={gameState.currentShowingLevel}
                 onClose={handleCloseLevelUp}
               />
-            )}  
+            )}            
             {/* スキル獲得通知 */}
-            {newlyAcquiredSkill && (
+            {skillManagement.newlyAcquiredSkill && (
               <SkillAcquisitionNotification
-                skill={newlyAcquiredSkill}
-                onClose={handleCloseSkillNotification}
+                skill={skillManagement.newlyAcquiredSkill}
+                onClose={skillManagement.handleCloseSkillNotification}
               />
             )}
             {/* 次のステージボタン */}
