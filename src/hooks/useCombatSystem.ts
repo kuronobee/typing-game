@@ -67,7 +67,25 @@ export function useCombatSystem(
 
       // 毎秒毒ダメージを与えるためのインターバル設定
       poisonTimerRef.current = setInterval(() => {
-        setPlayer((prev) => prev.takeDamage(poisonEffect.damagePerTick));
+        setPlayer(prev => {
+          const newHP = Math.max(prev.hp - poisonEffect.damagePerTick, 0);
+          return new PlayerModel(
+            newHP,
+            prev.maxHP,
+            prev.mp,
+            prev.maxMP,
+            prev.defense,
+            prev.magicDefense,
+            prev.level,
+            prev.exp,
+            prev.totalExp,
+            prev.speed,
+            prev.attack,
+            prev.luck,
+            prev.power,
+            prev.statusEffects
+          );
+        });
         // プレイヤーヒットエフェクト表示（オプション）
         if (showPlayerHitEffect) showPlayerHitEffect();
       }, 1000);
@@ -226,7 +244,25 @@ export function useCombatSystem(
       }
 
       // プレイヤーにダメージを適用
-      setPlayer((prev) => prev.takeDamage(damageToApply));
+      setPlayer(prev => {
+        const newHP = Math.max(prev.hp - damageToApply, 0);
+        return new PlayerModel(
+          newHP,
+          prev.maxHP,
+          prev.mp,
+          prev.maxMP,
+          prev.defense,
+          prev.magicDefense,
+          prev.level,
+          prev.exp,
+          prev.totalExp,
+          prev.speed,
+          prev.attack,
+          prev.luck,
+          prev.power,
+          prev.statusEffects
+        );
+      });
 
       // プレイヤーヒットエフェクト表示
       if (showPlayerHitEffect) showPlayerHitEffect();
