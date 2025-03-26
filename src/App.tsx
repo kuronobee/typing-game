@@ -1,135 +1,49 @@
-// src/App.tsx - GameContextを使用してリファクタリング (修正版)
-import React, { useEffect, useRef } from "react";
+// src/App.tsx - useGameState, useEffects, useSkillManagementフックを適用
+import React, { useEffect, useRef, useState } from "react";
 import BattleStage from "./components/BattleStage";
 import BattleInterface from "./components/BattleInterface";
 import GameOver from "./components/GameOver";
 import LevelUpNotifier from "./components/LevelUpNotifier";
 import CombatEffects from "./components/CombatEffects";
 import NextStageButton from "./components/NextStageButton";
-import SkillManagement from "./components/SkillManagement";
-import SkillEffect from "./components/SkillEffect";
-import FireSkillEffect from "./components/FireSkillEffect";
-import SkillAcquisitionNotification from "./components/SkillAcquisitionNotification";
+
 import { Player as PlayerModel } from "./models/Player";
+import { ENEMY_HIT_ANIMATION_DURATION } from "./data/constants";
 
 // カスタムフックのインポート
 import useIOSScrollPrevention from "./hooks/useIOSScrollPrevention";
-import { useEffects } from "./hooks/useEffects";
-import { useSkillManagement } from "./hooks/useSkillManagement";
 import { useCombatSystem } from "./hooks/useCombatSystem";
 import { usePlayerAttack } from "./hooks/usePlayerAttack";
-import { ENEMY_HIT_ANIMATION_DURATION } from "./data/constants";
-import { SkillInstance } from "./models/Skill";
+import { useGameState } from "./hooks/useGameState"; // ゲーム状態管理フック
+import { useEffects } from "./hooks/useEffects"; // 視覚効果管理フック
+import { useSkillManagement } from "./hooks/useSkillManagement"; // スキル管理フック
+
+// マネージャークラスのインポート
 import { StageManager } from "./managers/StageManager";
 import { ExperienceManager } from "./managers/ExperienceManager";
 
-// GameContextのインポート
-import { GameProvider, useGame } from "./contexts/GameContext";
+// インポート
+import SkillManagement from "./components/SkillManagement";
+import { SkillInstance } from "./models/Skill";
+import SkillEffect from "./components/SkillEffect";
+import FireSkillEffect from "./components/FireSkillEffect";
+import { SkillHandler } from "./handlers/SkillHandler";
+import SkillAcquisitionNotification from "./components/SkillAcquisitionNotification";
 
-/**
- * メインアプリケーションコンポーネント - GameProviderでラップ
- */
 const App: React.FC = () => {
-  return (
-    <GameProvider>
-      <AppContent />
-    </GameProvider>
-  );
-};
-
-/**
- * アプリケーションのメインコンテンツ部分
- * GameContextを使用してステートの操作を行う
- */
-const AppContent: React.FC = () => {
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   // カスタムフックの使用
   useIOSScrollPrevention(inputRef);
 
-  // GameContextから状態を取得
-  const {
-    player,
-    setPlayer,
-    currentEnemies,
-    targetIndex,
-    setTargetIndex,
-    currentQuestion,
-    setCurrentQuestion,
-    wrongAttempts,
-    setWrongAttempts,
-    message,
-    setMessage,
-    comboCount,
-    setComboCount,
-    readyForNextStage,
-    setReadyForNextStage,
-    expGain,
-    isDead,
-    setIsDead,
-    showGameOver,
-    setShowGameOver,
-    isHintFullyRevealed,
-    setIsHintFullyRevealed,
-    levelUpQueue,
-    levelCompletionCallbacksRef,
-    setLevelUpQueue,
-    currentShowingLevel,
-    setCurrentShowingLevel,
-    spawnNewStage,
-    handleSelectTarget,
-    handleContinueGame,
-    checkStageCompletion,
-  } = useGame();
-
+  // ゲーム状態管理フックを使用
+  const gameState = useGameState();
+  
   // 視覚効果管理フックを使用
   const effects = useEffects();
 
   // スキル管理フックを使用
-  const skillManagement = useSkillManagement(setMessage);
-
-  // 敵キャラクターのDOM要素への参照を保持するためのRef配列
-  const enemyRefs = useRef<(HTMLDivElement | null)[]>([]);
-
-  // 敵の数が変わったときにRef配列を初期化
-  useEffect(() => {
-    enemyRefs.current = Array(currentEnemies.length).fill(null);
-  }, [currentEnemies.length]);
-
-  // AppContent コンポーネント内で、useEffectを追加してスキル獲得関数をExperienceManagerに登録
-  useEffect(() => {
-    // ExperienceManagerのLEVEL_SKILLSに基づいて既存のスキルをチェック
-    ExperienceManager.LEVEL_SKILLS.forEach(levelSkill => {
-      if (levelSkill.level <= player.level && !skillManagement.availableSkillIds.includes(levelSkill.skillId)) {
-        console.log(`レベル${levelSkill.level}のスキル「${levelSkill.skillName}」を獲得状態に追加`);
-        skillManagement.acquireNewSkill(levelSkill.skillId);
-      }
-    });
-
-    // スキルリストをデバッグ表示
-    console.log("現在利用可能なスキルリスト:", skillManagement.availableSkillIds);
-  }, [player.level]);
-
-  // プレイヤー要素のrefを作成
-  const playerRef = useRef<HTMLDivElement | null>(null);
-
-  // 戦闘システムフック
-  const combat = useCombatSystem(
-    player,
-    setPlayer,
-    currentEnemies,
-    setMessage,
-    effects.showPlayerHitEffect
-  );
-
-  // プレイヤー攻撃フック
-  const playerAttack = usePlayerAttack(
-    player,
-    setComboCount,
-    setWrongAttempts,
-    setMessage,
-    isHintFullyRevealed
-  );
+  const skillManagement = useSkillManagement(gameState.setMessage);
 
   // マウント時に入力フィールドにフォーカス
   useEffect(() => {
@@ -138,336 +52,138 @@ const AppContent: React.FC = () => {
     }
   }, []);
 
+  // 敵キャラクターのDOM要素への参照を保持するためのRef配列
+  const enemyRefs = useRef<(HTMLDivElement | null)[]>([]);
+  // 敵の数が変わったときにRef配列を初期化
+  useEffect(() => {
+    // 配列のサイズを現在の敵の数に合わせる
+    enemyRefs.current = Array(gameState.currentEnemies.length).fill(null);
+  }, [gameState.currentEnemies.length]);
+  // プレイヤー要素のrefを作成
+  const playerRef = useRef<HTMLDivElement | null>(null);
+
+  // スキルハンドラの状態を管理
+  const [skillHandler, setSkillHandler] = useState<SkillHandler | null>(null);
+
+  // 戦闘システムフック
+  const combat = useCombatSystem(
+    gameState.player, 
+    gameState.setPlayer, 
+    gameState.currentEnemies, 
+    gameState.setMessage, 
+    effects.showPlayerHitEffect
+  );
+
   // プレイヤー更新時のrefを更新
   useEffect(() => {
     combat.updatePlayerRef();
-  }, [player, combat.updatePlayerRef]);
+  }, [gameState.player, combat.updatePlayerRef]);
 
   // 敵が変わったときにアニメーション配列を初期化
   useEffect(() => {
     combat.initializeAnimations();
-  }, [currentEnemies, combat.initializeAnimations]);
+  }, [gameState.currentEnemies, combat.initializeAnimations]);
+
+  useEffect(() => {
+    if (!skillHandler) {
+      const handler = new SkillHandler(
+        gameState.player,
+        gameState.currentEnemies,
+        gameState.setPlayer,
+        gameState.setMessage,
+        combat.setDamageDisplay,
+        combat.setHitFlag,
+        effects.showSkillEffectAnimation,
+        effects.showFireSkillEffect,
+        checkStageCompletion,
+        playerAttack.setEnemyDefeatedMessage,
+        StageManager.findNextAliveEnemyIndex,
+        gameState.setTargetIndex,
+        skillManagement.setActiveSkill,
+        effects.showPlayerAttackEffect,
+        enemyRefs,
+        skillManagement.setSkillAnimationInProgress,
+        effects.showSkillCallOut,
+        playerRef,
+      );
+      setSkillHandler(handler);
+    }
+    else {
+      skillHandler.updateState(gameState.player, gameState.currentEnemies);
+    }
+  }, [gameState.player, gameState.currentEnemies, effects, skillManagement]);
 
   // マウント時に初期ステージを生成
   useEffect(() => {
     spawnNewStage();
-  }, [spawnNewStage]);
+  }, []);
 
   // ターゲットが変わったときに現在の問題を更新
   useEffect(() => {
-    if (currentEnemies.length > 0) {
-      const targetEnemy = currentEnemies[targetIndex];
+    if (gameState.currentEnemies.length > 0) {
+      const targetEnemy = gameState.currentEnemies[gameState.targetIndex];
       if (targetEnemy && !targetEnemy.defeated) {
-        setCurrentQuestion(
+        gameState.setCurrentQuestion(
           targetEnemy.presentedQuestion || targetEnemy.getNextQuestion()
         );
       }
     }
-  }, [targetIndex, currentEnemies, setCurrentQuestion]);
+  }, [gameState.targetIndex, gameState.currentEnemies]);
 
-  // プレイヤーが敵を攻撃する処理
-  const handlePlayerAttack = (input: string) => {
-    if (!currentEnemies.length) return;
+  // プレイヤー攻撃フック
+  const playerAttack = usePlayerAttack(
+    gameState.player,
+    gameState.setComboCount,
+    gameState.setWrongAttempts,
+    gameState.setMessage,
+    gameState.isHintFullyRevealed
+  );
 
-    const targetEnemy = currentEnemies[targetIndex];
-    if (!targetEnemy || targetEnemy.defeated) return;
-
-    if (!currentQuestion) {
-      setCurrentQuestion(targetEnemy.getNextQuestion());
-      return;
-    }
-
-    const trimmedInput = input.trim();
-
-    // 問題の正解から<>タグを除去
-    const cleanedAnswer = currentQuestion.answer.replace(/<|>/g, "");
-
-    if (trimmedInput.toLowerCase() === cleanedAnswer.toLowerCase()) {
-      // 正解の場合
-      const newCombo = comboCount + 1;
-      playerAttack.handleComboUpdate(newCombo);
-
-      // アクティブなスキルがあれば実行
-      if (skillManagement.activeSkill && skillManagement.activeSkill.activationTiming === "onCorrectAnswer") {
-        console.log("アクティブスキル発動:", skillManagement.activeSkill.name);
-
-        // スキル使用時のプレイヤーアニメーション
-        effects.showPlayerAttackEffect(true);
-
-        // スキルを実行
-        handleSkillUse(skillManagement.activeSkill, targetIndex);
-
-        // アクティブスキルをリセット
-        skillManagement.setActiveSkill(null);
-      } else {
-        // 通常攻撃処理
-        const { damage, specialMessage } =
-          playerAttack.calculateEffectiveDamage(
-            currentQuestion,
-            targetEnemy,
-            newCombo,
-            wrongAttempts
-          );
-        targetEnemy.takeDamage(damage);
-
-        // ダメージ表示とヒットアニメーション
-        combat.setDamageDisplay(targetIndex, damage);
-        combat.setHitFlag(targetIndex, ENEMY_HIT_ANIMATION_DURATION);
-
-        // ダメージメッセージを設定
-        playerAttack.setAttackResultMessage(damage, specialMessage);
-
-        // 通常攻撃時のプレイヤーアニメーション
-        effects.showPlayerAttackEffect(false);
-      }
-
-      setWrongAttempts(0);
-
-      // 敵が倒されたかチェック
-      if (targetEnemy.defeated) {
-        playerAttack.setEnemyDefeatedMessage(targetEnemy.name);
-
-        // 次のターゲットを探す
-        const nextIndex = StageManager.findNextAliveEnemyIndex(
-          targetIndex,
-          currentEnemies
-        );
-        if (nextIndex !== -1) {
-          setTargetIndex(nextIndex);
-        }
-      } else {
-        // 次の問題を取得
-        setCurrentQuestion(targetEnemy.getNextQuestion());
-      }
-
-      // ステージが完了したかチェック
-      checkStageCompletion();
-    } else {
-      // 不正解の場合
-      playerAttack.setWrongAnswerMessage();
-
-      // アクティブスキルも解除
-      skillManagement.setActiveSkill(null);
-    }
-  };
-
-  // スキル使用時の処理関数
-  // スキル使用時の処理関数 - 修正版
-  const handleSkillUse = (skill: SkillInstance, targetIndex?: number) => {
-    // すでにスキルアニメーション実行中なら処理しない
-    if (skillManagement.skillAnimationInProgress) {
-      return;
-    }
-
-    // スキルが使用可能かチェック
-    if (!skill.canUse(player)) {
-      setMessage({
-        text: "MPが足りないか、クールダウン中です",
-        sender: "system"
-      });
-      return;
-    }
-
-    // スキル使用時のプレイヤーアニメーション
-    if (skill.activationTiming === 'onCommand') {
-      effects.showPlayerAttackEffect(true);
-      // スキル名を表示
-      effects.showSkillCallOut(skill.name);
-    }
-
-    // スキルアニメーション開始フラグをセット
-    skillManagement.setSkillAnimationInProgress(true);
-
-    // MP消費処理を先に行う - MPの減少を確実に反映
-    const updatedPlayer = new PlayerModel(
-      player.hp,
-      player.maxHP,
-      player.mp - skill.mpCost, // MPを減らす
-      player.maxMP,
-      player.defense,
-      player.magicDefense,
-      player.level,
-      player.exp,
-      player.totalExp,
-      player.speed,
-      player.attack,
-      player.luck,
-      player.power,
-      player.statusEffects
-    );
-    setPlayer(updatedPlayer);
-
-    if (skill.type === 'heal') {
-      // 回復スキルの例
-      const result = skill.execute(updatedPlayer, currentEnemies);
-      const healAmount = result.healAmount || 20;
-
-      // エフェクト表示
-      effects.showSkillEffectAnimation({
-        type: 'heal',
-        targetPosition: { x: window.innerWidth / 2, y: window.innerHeight / 2 - 100 },
-        value: healAmount,
-        skillName: skill.name
-      });
-
-      // プレイヤーのHP回復処理 - MPはすでに消費済み
-      setPlayer(prev => {
-        const newHP = Math.min(prev.hp + healAmount, prev.maxHP);
-        return new PlayerModel(
-          newHP,
-          prev.maxHP,
-          prev.mp,
-          prev.maxMP,
-          prev.defense,
-          prev.magicDefense,
-          prev.level,
-          prev.exp,
-          prev.totalExp,
-          prev.speed,
-          prev.attack,
-          prev.luck,
-          prev.power,
-          prev.statusEffects
-        );
-      });
-
-      // メッセージ表示
-      setMessage({
-        text: `${skill.name}を使用！ HPが${healAmount}回復した！`,
-        sender: "player"
-      });
-
-      // アニメーション終了
-      setTimeout(() => {
-        skillManagement.setSkillAnimationInProgress(false);
-      }, 1000);
-    } else if (skill.type === 'damage' && targetIndex !== undefined) {
-      // ダメージスキルの例
-      const targetEnemy = currentEnemies[targetIndex];
-      if (!targetEnemy || targetEnemy.defeated) {
-        // ターゲットがいない場合はアニメーションフラグを解除して終了
-        skillManagement.setSkillAnimationInProgress(false);
-        return;
-      }
-
-      // ターゲットの位置を取得
-      const enemyPosition = getEnemyPosition(targetIndex);
-      // プレイヤーの位置を取得
-      const playerPosition = getPlayerPosition();
-
-      // スキル実行結果を取得 (正しくダメージを計算)
-      const result = skill.execute(updatedPlayer, currentEnemies, targetIndex);
-      const damageAmount = result.damageAmount || 0;
-
-      // エフェクト表示 - z-indexを高く設定
-      effects.showFireSkillEffect({
-        skillName: skill.name,
-        targetPosition: enemyPosition,
-        sourcePosition: playerPosition,
-        damageValue: damageAmount,
-        power: "medium",
-        onComplete: () => {
-          // 安全な敵の状態更新 - 直接配列を変更しないよう注意
-          const updatedEnemies = [...currentEnemies];
-          updatedEnemies[targetIndex].takeDamage(damageAmount);
-
-          // ダメージ表示
-          combat.setDamageDisplay(targetIndex, damageAmount);
-          combat.setHitFlag(targetIndex, ENEMY_HIT_ANIMATION_DURATION);
-
-          // メッセージ表示
-          setMessage({
-            text: `${targetEnemy.name}に${skill.name}で${damageAmount}のダメージ！`,
-            sender: "player"
-          });
-
-          // 敵撃破チェック
-          if (targetEnemy.defeated) {
-            playerAttack.setEnemyDefeatedMessage(targetEnemy.name);
-
-            // 次のターゲットを探す
-            const nextIndex = StageManager.findNextAliveEnemyIndex(
-              targetIndex,
-              currentEnemies
-            );
-
-            if (nextIndex !== -1) {
-              // 次のターゲットにフォーカスを移す
-              setTargetIndex(nextIndex);
-
-              // 新しいターゲットの問題文を設定
-              setTimeout(() => {
-                const nextEnemy = currentEnemies[nextIndex];
-                if (nextEnemy && !nextEnemy.defeated) {
-                  setCurrentQuestion(nextEnemy.getNextQuestion());
-                }
-              }, 100);
-            }
-
-            // ステージクリア判定
-            checkStageCompletion();
-          }
-
-          // アニメーション終了フラグをセット
-          skillManagement.setSkillAnimationInProgress(false);
-        }
-      });
-    }
-  };
-  // 次のステージへ進むハンドラ
-  const handleNextStage = () => {
-    spawnNewStage();
-    setReadyForNextStage(false);
-  };
-
-  // レベルアップ表示を閉じる処理 - コールバック対応版
-  const handleCloseLevelUp = () => {
-    try {
-      console.log("レベルアップ表示を閉じる処理を開始");
-
-      // キューから次のレベルを処理
-      const callback = levelCompletionCallbacksRef.current.shift();
-      if (callback) {
-        // コールバック実行（次のレベルやスキル獲得処理を行う）
-        console.log("次のレベル処理用コールバックを実行");
-        callback();
-      }
-
-      // 現在のレベル表示をクリア
-      setCurrentShowingLevel(null);
-
-      // キューから次のレベルを取り出す
-      setLevelUpQueue(prev => {
-        const newQueue = [...prev];
-        if (newQueue.length > 0) {
-          console.log(`レベルアップキューから削除: ${newQueue[0]}`);
-          newQueue.shift();
-        }
-        return newQueue;
-      });
-    } catch (error) {
-      console.error('レベルアップ表示処理中にエラー:', error);
-      // エラー時は状態をリセット
-      setCurrentShowingLevel(null);
-      setLevelUpQueue([]);
-      levelCompletionCallbacksRef.current = [];
-    }
-  };
-
-  // プレイヤーが死亡したらゲームオーバー画面を表示(戦闘不能になってから5秒後)
-  useEffect(() => {
-    if (player.hp <= 0) {
-      setIsDead(true);
-      setTimeout(() => {
-        setShowGameOver(true);
-        setIsDead(false);
-      }, 5000);
-    }
-  }, [player.hp, setIsDead, setShowGameOver]);
-
+  // タブによるターゲット選択とステージ進行のためのキーダウンイベント処理
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      // ファンクションキー（F1〜F3）でスキル選択を処理
+      // Shift+Tabで反時計回りにターゲット選択
+      if (event.key === "Tab" && event.shiftKey) {
+        event.preventDefault();
+        if (gameState.currentEnemies.filter((enemy) => !enemy.defeated).length > 1) {
+          gameState.setTargetIndex((prev) => {
+            const findPrevAliveIndex = (index: number): number => {
+              let newIndex = index - 1;
+              if (newIndex < 0) {
+                newIndex = gameState.currentEnemies.length - 1;
+              }
+              if (gameState.currentEnemies[newIndex].defeated) {
+                return findPrevAliveIndex(newIndex);
+              }
+              return newIndex;
+            };
+            return findPrevAliveIndex(prev);
+          });
+        }
+      }
+      // Tabで時計回りにターゲット選択
+      else if (event.key === "Tab") {
+        event.preventDefault();
+        if (gameState.currentEnemies.filter((enemy) => !enemy.defeated).length > 1) {
+          gameState.setTargetIndex((prev) => {
+            const findNextAliveIndex = (index: number): number => {
+              const newIndex = (index + 1) % gameState.currentEnemies.length;
+              if (newIndex === index) return index;
+              if (gameState.currentEnemies[newIndex].defeated) {
+                return findNextAliveIndex(newIndex);
+              }
+              return newIndex;
+            };
+            return findNextAliveIndex(prev);
+          });
+        }
+      }
+      // Enterで次のステージへ進む
+      else if (event.key === "Enter" && gameState.readyForNextStage) {
+        spawnNewStage();
+        gameState.setReadyForNextStage(false);
+      }
+      // ファンクションキー（F1〜F3）でスキル選択を追加
       if (event.key.startsWith('F') && !isNaN(parseInt(event.key.slice(1)))) {
         const keyNum = parseInt(event.key.slice(1));
         if (keyNum >= 1 && keyNum <= 3) {
@@ -486,149 +202,380 @@ const AppContent: React.FC = () => {
           }, 200);
         }
       }
-
-      // Tab、Shift+Tab、Enterの元の機能も維持
-      // Shift+Tabで反時計回りにターゲット選択
-      if (event.key === "Tab" && event.shiftKey) {
-        event.preventDefault();
-        if (currentEnemies.filter((enemy) => !enemy.defeated).length > 1) {
-          setTargetIndex((prev) => {
-            const findPrevAliveIndex = (index: number): number => {
-              let newIndex = index - 1;
-              if (newIndex < 0) {
-                newIndex = currentEnemies.length - 1;
-              }
-              if (currentEnemies[newIndex].defeated) {
-                return findPrevAliveIndex(newIndex);
-              }
-              return newIndex;
-            };
-            return findPrevAliveIndex(prev);
-          });
-        }
-      }
-      // Tabで時計回りにターゲット選択
-      else if (event.key === "Tab") {
-        event.preventDefault();
-        if (currentEnemies.filter((enemy) => !enemy.defeated).length > 1) {
-          setTargetIndex((prev) => {
-            const findNextAliveIndex = (index: number): number => {
-              const newIndex = (index + 1) % currentEnemies.length;
-              if (newIndex === index) return index;
-              if (currentEnemies[newIndex].defeated) {
-                return findNextAliveIndex(newIndex);
-              }
-              return newIndex;
-            };
-            return findNextAliveIndex(prev);
-          });
-        }
-      }
-      // Enterで次のステージへ進む
-      else if (event.key === "Enter" && readyForNextStage) {
-        spawnNewStage();
-        setReadyForNextStage(false);
-      }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [readyForNextStage, currentEnemies, skillManagement, setTargetIndex]);
+  }, [gameState.readyForNextStage, gameState.currentEnemies, skillManagement]);
 
-  const getPlayerPosition = (): { x: number, y: number } => {
-    if (playerRef.current) {
-      const rect = playerRef.current.getBoundingClientRect();
-      return {
-        x: rect.left + rect.width / 2,
-        y: rect.top + rect.height / 2
+  // アンマウント時にタイムアウトをクリア
+  const questionTimeoutRef = useRef<number | null>(null);
+  useEffect(() => {
+    return () => {
+      if (questionTimeoutRef.current) {
+        clearTimeout(questionTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // プレイヤーが敵を攻撃する処理
+  // プレイヤーの攻撃処理を修正（アクティブスキルの処理を追加）
+  const handlePlayerAttack = (input: string) => {
+    if (!gameState.currentEnemies.length) return;
+
+    const targetEnemy = gameState.currentEnemies[gameState.targetIndex];
+    if (!targetEnemy || targetEnemy.defeated) return;
+
+    if (!gameState.currentQuestion) {
+      gameState.setCurrentQuestion(targetEnemy.getNextQuestion());
+    }
+
+    const trimmedInput = input.trim();
+
+    // 問題の正解から<>タグを除去
+    const cleanedAnswer = gameState.currentQuestion.answer.replace(/<|>/g, "");
+
+    if (trimmedInput.toLowerCase() === cleanedAnswer.toLowerCase()) {
+      // 正解の場合
+      const newCombo = gameState.comboCount + 1;
+      playerAttack.handleComboUpdate(newCombo);
+
+      // アクティブなスキルがあれば実行
+      if (skillManagement.activeSkill && skillManagement.activeSkill.activationTiming === "onCorrectAnswer") {
+        console.log("アクティブスキル発動:", skillManagement.activeSkill.name);
+
+        // スキル使用時のプレイヤーアニメーション
+        effects.showPlayerAttackEffect(true);
+
+        // スキルを実行
+        handleSkillUse(skillManagement.activeSkill, gameState.targetIndex);
+
+        // アクティブスキルをリセット
+        skillManagement.setActiveSkill(null);
+      } else {
+        // 通常攻撃処理
+        const { damage, specialMessage } =
+          playerAttack.calculateEffectiveDamage(
+            gameState.currentQuestion,
+            targetEnemy,
+            newCombo,
+            gameState.wrongAttempts
+          );
+        targetEnemy.takeDamage(damage);
+
+        // ダメージ表示とヒットアニメーション
+        combat.setDamageDisplay(gameState.targetIndex, damage);
+        combat.setHitFlag(gameState.targetIndex, ENEMY_HIT_ANIMATION_DURATION);
+
+        // ダメージメッセージを設定
+        playerAttack.setAttackResultMessage(damage, specialMessage);
+
+        // 通常攻撃時のプレイヤーアニメーション
+        effects.showPlayerAttackEffect(false);
+      }
+
+      gameState.setWrongAttempts(0);
+
+      // 敵が倒されたかチェック
+      if (targetEnemy.defeated) {
+        playerAttack.setEnemyDefeatedMessage(targetEnemy.name);
+
+        // 次のターゲットを探す
+        const nextIndex = StageManager.findNextAliveEnemyIndex(
+          gameState.targetIndex,
+          gameState.currentEnemies
+        );
+        if (nextIndex !== -1) {
+          gameState.setTargetIndex(nextIndex);
+        }
+      } else {
+        // 次の問題を取得
+        gameState.setCurrentQuestion(targetEnemy.getNextQuestion());
+      }
+
+      // ステージが完了したかチェック
+      checkStageCompletion();
+    } else {
+      // 不正解の場合
+      playerAttack.setWrongAnswerMessage();
+
+      // アクティブスキルも解除
+      skillManagement.setActiveSkill(null);
+    }
+  };
+
+  // ステージクリア判定と経験値獲得の関数 - StageManagerを使用
+  const checkStageCompletion = (enemies = gameState.currentEnemies) => {
+    return StageManager.handleStageCompletion(
+      enemies,
+      gainEXP,
+      gameState.setMessage,
+      gameState.setReadyForNextStage
+    );
+  };
+
+  // レベルアップ完了時のコールバックを保持するref
+  const levelCompletionCallbacks = useRef<(() => void)[]>([]);
+
+  // 経験値を付与する関数
+  const gainEXP = (amount: number) => {
+    // 入力検証（負の値や異常に大きな値を検出）
+    if (amount <= 0 || amount > 10000) {
+      console.error(`無効な経験値量: ${amount}`);
+      return false;
+    }
+
+    console.log(`経験値を獲得: ${amount}`);
+
+    try {
+      // レベルアップ表示のコールバック関数
+      const showLevelUpCallback = (level: number, callback: () => void) => {
+        // ロギング
+        console.log(`レベル ${level} の表示処理を開始`);
+
+        // レベルの整合性チェック
+        if (level <= 0 || level > 100) {
+          console.error(`無効なレベル値: ${level}`);
+          // エラー時は次のレベル処理へ
+          callback();
+          return;
+        }
+
+        // レベルアップキューに追加
+        gameState.setLevelUpQueue(prev => [...prev, level]);
+
+        // 表示用の状態変数を更新
+        window.setTimeout(() => {
+          // ロギング
+          console.log(`レベル ${level} の通知を表示`);
+
+          gameState.setCurrentShowingLevel(level);
+          // このレベルのコールバック関数をキューに追加
+          levelCompletionCallbacks.current.push(callback);
+        }, 100);
       };
+
+      // 前のレベルを記録
+      const oldLevel = gameState.player.level;
+
+      // ExperienceManager に改良した関数を渡す
+      const didLevelUp = ExperienceManager.gainExperience(
+        amount,
+        gameState.player,
+        gameState.setPlayer,
+        gameState.setExpGain,
+        skillManagement.acquireNewSkill,
+        showLevelUpCallback
+      );
+
+      // レベルの整合性チェック（ステージ完了後）
+      if (gameState.player.level < oldLevel) {
+        console.error(`レベルダウン検出: ${oldLevel} → ${gameState.player.level}、修正します`);
+        // 以前のレベルに戻す緊急修正
+        gameState.setPlayer(prev => new PlayerModel(
+          prev.hp,
+          prev.maxHP,
+          prev.mp,
+          prev.maxMP,
+          prev.defense,
+          prev.magicDefense,
+          oldLevel, // 元のレベルを維持
+          prev.exp,
+          prev.totalExp,
+          prev.speed,
+          prev.attack,
+          prev.luck,
+          prev.power,
+          prev.statusEffects
+        ));
+      }
+
+      // ステージ完了メッセージを設定
+      gameState.setMessage(StageManager.createCompletionMessage(amount));
+
+      return didLevelUp;
+    } catch (error) {
+      console.error('経験値獲得処理中にエラーが発生しました:', error);
+      gameState.setMessage({
+        text: "経験値獲得処理中にエラーが発生しました",
+        sender: "system"
+      });
+      return false;
     }
-
-    // プレイヤー要素が見つからない場合のデフォルト位置
-    return {
-      x: window.innerWidth / 2,
-      y: window.innerHeight - 150
-    };
   };
-  const getEnemyPosition = (targetIndex: number): { x: number, y: number } => {
-    // 敵要素のRefを取得
-    const enemyElement = enemyRefs.current[targetIndex];
 
-    // デフォルト位置（enemyRefsが利用できない場合のフォールバック）
-    const defaultPosition = {
-      x: window.innerWidth / 2,
-      y: window.innerHeight / 2 - 140,
-    };
+  // レベルアップ表示を閉じる処理
+  const handleCloseLevelUp = () => {
+    try {
+      console.log("レベルアップ表示を閉じる処理を開始");
 
-    if (!enemyElement) {
-      return defaultPosition;
+      // キューから次のレベルを処理
+      const callback = levelCompletionCallbacks.current.shift();
+      if (callback) {
+        // コールバック実行（次のレベルやスキル獲得処理を行う）
+        console.log("次のレベル処理用コールバックを実行");
+        callback();
+      }
+
+      // 現在のレベル表示をクリア
+      gameState.setCurrentShowingLevel(null);
+
+      // キューから次のレベルを取り出す
+      gameState.setLevelUpQueue(prev => {
+        const newQueue = [...prev];
+        if (newQueue.length > 0) {
+          console.log(`レベルアップキューから削除: ${newQueue[0]}`);
+          newQueue.shift();
+        }
+        return newQueue;
+      });
+    } catch (error) {
+      console.error('レベルアップ表示処理中にエラー:', error);
+      // エラー時は状態をリセット
+      gameState.setCurrentShowingLevel(null);
+      gameState.setLevelUpQueue([]);
+      levelCompletionCallbacks.current = [];
     }
-
-    // DOMの位置を取得
-    const rect = enemyElement.getBoundingClientRect();
-
-    // 敵キャラクターの中央の座標を計算
-    return {
-      x: rect.left + rect.width / 2,
-      y: rect.top + rect.height / 2,
-    };
   };
+
+  // 新しい戦闘ステージを生成
+  const spawnNewStage = () => {
+    const { enemies, message } = StageManager.createNewStage();
+    gameState.setCurrentEnemies(enemies);
+    gameState.setTargetIndex(0);
+    gameState.setMessage(message);
+  };
+
+  // ターゲット選択の処理
+  const handleSelectTarget = (index: number) => {
+    gameState.setTargetIndex(index);
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  };
+
+  // スキル使用時の処理関数
+  const handleSkillUse = (skill: SkillInstance, targetIndex?: number) => {
+    if (skillHandler) {
+      // スキル使用時のプレイヤーアニメーション
+      if (skill.activationTiming === 'onCommand') {
+        effects.showPlayerAttackEffect(true);
+        // スキル名を表示
+        effects.showSkillCallOut(skill.name);
+      }
+
+      skillHandler.handleSkillUse(skill, targetIndex);
+    } else {
+      gameState.setMessage({
+        text: "スキルシステムの初期化中...",
+        sender: "system",
+      });
+    }
+  };
+
+  // 死亡後のゲーム継続処理
+  const handleContinueGame = () => {
+    gameState.setIsDead(false);
+    gameState.setShowGameOver(false);
+    // プレイヤーを最大HPの半分で復活
+    gameState.setPlayer((prev) => {
+      const revivedHP = Math.ceil(prev.maxHP * 0.5);
+      return new PlayerModel(
+        revivedHP,
+        prev.maxHP,
+        prev.maxMP,
+        prev.maxMP,
+        prev.defense,
+        prev.magicDefense,
+        prev.level,
+        prev.exp,
+        prev.totalExp,
+        prev.speed,
+        prev.attack,
+        prev.luck,
+        prev.power,
+        []
+      );
+    });
+
+    gameState.setMessage({
+      text: "力を取り戻した！戦いを続ける！",
+      sender: "system",
+    });
+
+    // すべての敵が倒された場合は新しいステージを生成
+    if (gameState.currentEnemies.every((enemy) => enemy.defeated)) {
+      spawnNewStage();
+    }
+  };
+
+  // 次のステージへ進むハンドラ
+  const handleNextStage = () => {
+    spawnNewStage();
+    gameState.setReadyForNextStage(false);
+  };
+
+  // プレイヤーが死亡したらゲームオーバー画面を表示(戦闘不能になってから5秒後)
+  useEffect(() => {
+    if (gameState.player.hp <= 0) {
+      gameState.setIsDead(true);
+      setTimeout(() => {
+        gameState.setShowGameOver(true);
+        gameState.setIsDead(false);
+      }, 5000);
+    }
+  }, [gameState.player.hp]);
 
   return (
     <CombatEffects
       isScreenHit={combat.isScreenHit}
       isScreenShake={combat.isScreenShake}
     >
-      {/* 戦闘不能状態の表示 */}
-      {isDead && (
+      {gameState.isDead && (
         <div className="absolute inset-0 bg-black opacity-70 z-100 flex items-center justify-center">
           <span className="text-white font-bold text-xl">戦闘不能…</span>
         </div>
       )}
 
-      {/* ゲームオーバー画面 */}
-      {showGameOver && (
-        <GameOver
-          totalEXP={player.totalExp}
-          onContinue={handleContinueGame}
-        />
+      {gameState.showGameOver && (
+        <GameOver totalEXP={gameState.player.totalExp} onContinue={handleContinueGame} />
       )}
-
-      {/* ファイヤースキル発動 - z-indexを高くして修正 */}
+      {/* ファイヤースキル発動 */}
       {effects.fireSkillEffect && (
-        <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 1000 }}>
+        <div className="z-500">
           <FireSkillEffect
             skillName={effects.fireSkillEffect.skillName}
             targetPosition={effects.fireSkillEffect.targetPosition}
-            sourcePosition={effects.fireSkillEffect.sourcePosition}
+            sourcePosition={effects.fireSkillEffect.sourcePosition} 
             damageValue={effects.fireSkillEffect.damageValue}
             power={effects.fireSkillEffect.power}
             onComplete={() => {
+              // 保存されたコールバックがあれば実行
               if (effects.fireSkillEffect?.onComplete) {
                 effects.fireSkillEffect.onComplete();
               }
+              // エフェクト表示をクリア
               effects.setFireSkillEffect(null);
             }}
             duration={1500}
           />
         </div>
       )}
-      {/* メインゲーム画面 */}
-      {!showGameOver && (
+      {!gameState.showGameOver && (
         <div className="bg-black">
-          {/* スキル管理画面 (モーダル) */}
+          {/* スキル管理画面 */}
           {skillManagement.showSkillManagement && (
             <SkillManagement
               equippedSkills={skillManagement.equippedSkills}
               onEquipSkill={skillManagement.handleEquipSkill}
               onUnequipSkill={skillManagement.handleUnequipSkill}
-              playerLevel={player.level}
+              playerLevel={gameState.player.level}
               onClose={() => skillManagement.setShowSkillManagement(false)}
               availableSkillIds={skillManagement.availableSkillIds}
             />
           )}
 
-          {/* スキルエフェクト - 一般 */}
+          {/* スキルエフェクト表示 */}
           {effects.skillEffect && (
             <SkillEffect
               type={effects.skillEffect.type}
@@ -641,44 +588,51 @@ const AppContent: React.FC = () => {
           )}
 
           {/* BattleInterface - 上部に配置 */}
-          <div className="flex-1 bg-gray-900 transition-all duration-300">
+          <div
+            className="flex-1 bg-gray-900 transition-all duration-300"
+          >
             <BattleInterface
-              player={player}
+              player={gameState.player}
               onSubmit={handlePlayerAttack}
               onSkillUse={handleSkillUse}
-              expGain={expGain}
+              expGain={gameState.expGain}
               inputRef={inputRef}
-              currentEnemies={currentEnemies}
-              targetIndex={targetIndex}
+              currentEnemies={gameState.currentEnemies}
+              targetIndex={gameState.targetIndex}
               equippedSkills={skillManagement.equippedSkills}
               setEquippedSkills={skillManagement.setEquippedSkills}
-              onOpenSkillManagement={() => skillManagement.setShowSkillManagement(true)}
+              onOpenSkillManagement={() => skillManagement.toggleSkillManagement(true)}
               setActiveSkill={skillManagement.setActiveSkill}
               activeKeyIndex={skillManagement.activeKeyIndex}
             />
           </div>
 
-          {/* BattleStage - 下部に配置 */}
-          <div className="relative overflow-hidden" style={{ minHeight: '400px' }}>
+          {/* BattleStage - 下部に配置 (完全高さ指定) */}
+          <div
+            className="relative overflow-hidden"
+            style={{
+              minHeight: '400px' // 画面の高さに合わせる
+            }}
+          >
             <BattleStage
-              currentEnemies={currentEnemies}
-              targetIndex={targetIndex}
-              player={player}
+              currentEnemies={gameState.currentEnemies}
+              targetIndex={gameState.targetIndex}
+              player={gameState.player}
               onEnemyAttack={combat.handleEnemyAttack}
-              message={message}
-              currentQuestion={currentQuestion}
-              wrongAttempts={wrongAttempts}
+              message={gameState.message}
+              currentQuestion={gameState.currentQuestion}
+              wrongAttempts={gameState.wrongAttempts}
               enemyHitFlags={combat.enemyHitFlags}
               enemyAttackFlags={combat.enemyAttackFlags}
               enemyFireFlags={combat.enemyFireFlags}
               damageNumbers={combat.damageNumbers}
-              onFullRevealChange={setIsHintFullyRevealed}
+              onFullRevealChange={gameState.setIsHintFullyRevealed}
               onSelectTarget={handleSelectTarget}
-              comboCount={comboCount}
+              comboCount={gameState.comboCount}
               inputRef={inputRef}
               playerHitEffect={effects.playerHitEffect}
               playerDamageDisplay={combat.playerDamageDisplay}
-              expGain={expGain}
+              expGain={gameState.expGain}
               playerAttackEffect={effects.playerAttackEffect}
               enemyRefs={enemyRefs}
               skillAnimationInProgress={skillManagement.skillAnimationInProgress}
@@ -688,26 +642,26 @@ const AppContent: React.FC = () => {
               playerReff={playerRef}
             />
 
-            {/* 通知系UI - レベルアップ */}
-            {currentShowingLevel !== null && (
+            {/* レベルアップ通知 */}
+            {gameState.currentShowingLevel !== null && (
               <LevelUpNotifier
-                player={player}
-                level={currentShowingLevel}
+                player={gameState.player}
+                level={gameState.currentShowingLevel}
                 onClose={handleCloseLevelUp}
               />
-            )}
-
-            {/* 通知系UI - スキル獲得 */}
+            )}            
+            {/* スキル獲得通知 */}
             {skillManagement.newlyAcquiredSkill && (
               <SkillAcquisitionNotification
                 skill={skillManagement.newlyAcquiredSkill}
                 onClose={skillManagement.handleCloseSkillNotification}
               />
             )}
-
             {/* 次のステージボタン */}
-            {readyForNextStage && levelUpQueue.length === 0 && (
-              <NextStageButton onNext={handleNextStage} />
+            {gameState.readyForNextStage && gameState.levelUpQueue.length === 0 && (
+              <NextStageButton
+                onNext={handleNextStage}
+              />
             )}
           </div>
         </div>

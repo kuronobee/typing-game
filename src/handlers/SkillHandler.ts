@@ -564,7 +564,6 @@ private handleFireBoltSkill(
       this.showFireSkillEffect({
         skillName: "ファイアストーム",
         targetPosition: { x: centerX, y: centerY - 50 },
-        sourcePosition: { x: centerX, y: centerY },
         damageValue: result.damageAmount,
         power: "high", // 高威力設定
         onComplete: () => {

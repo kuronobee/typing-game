@@ -1,4 +1,4 @@
-// src/managers/ExperienceManager.ts - レベルアップ順序修正版（エラー修正）
+// src/managers/ExperienceManager.ts 完全修正版
 import { Player as PlayerModel } from "../models/Player";
 import { EXP_GAIN_DISPLAY_DURATION } from "../data/constants";
 
@@ -8,11 +8,6 @@ interface LevelSkill {
   skillId: string;
   skillName: string;
 }
-
-// 順序付けされた通知のタイプ
-type NotificationType = 
-  | { type: 'levelUp'; level: number }
-  | { type: 'skillAcquisition'; skillId: string; skillName: string };
 
 /**
  * 経験値獲得と表示を管理するクラス
@@ -41,7 +36,7 @@ export class ExperienceManager {
     player: PlayerModel,
     setPlayer: React.Dispatch<React.SetStateAction<PlayerModel>>,
     setExpGain: React.Dispatch<React.SetStateAction<number | null>>,
-    acquireNewSkill?: (skillId: string, onComplete?: () => void) => void,
+    acquireNewSkill?: (skillId: string) => void,
     showLevelUp?: (level: number, callback: () => void) => void
   ): boolean {
     // 入力チェック
@@ -96,8 +91,8 @@ export class ExperienceManager {
       if (didLevelUp && showLevelUp) {
         console.log(`レベルアップ発生: ${oldLevel} → ${newPlayer.level}`);
 
-        // 順番に各レベルとスキルを表示する通知キューを作成
-        this.createAndProcessNotificationQueue(
+        // 順番に各レベルを表示するための関数
+        this.processLevelUpsSequentially(
           oldLevel + 1,
           newPlayer.level,
           showLevelUp,
@@ -115,81 +110,63 @@ export class ExperienceManager {
   }
 
   /**
-   * レベルアップとスキル習得の通知キューを作成して順番に処理する
+   * 順番に各レベルアップ処理と表示を行う (安全対策を追加)
    */
-  private static createAndProcessNotificationQueue(
+  private static processLevelUpsSequentially(
     startLevel: number,
     endLevel: number,
     showLevelUp: (level: number, callback: () => void) => void,
-    acquireNewSkill?: (skillId: string, callback?: () => void) => void
+    acquireNewSkill?: (skillId: string) => void,
+    currentIndex: number = 0
   ): void {
     // 入力値の検証
     if (startLevel > endLevel) {
       console.error(`不正なレベル範囲: ${startLevel} → ${endLevel}`);
       return;
     }
-    
+
     // 最大レベル差の制限（無限ループ防止）
     if (endLevel - startLevel > 100) {
       console.error(`異常なレベル差を検出: ${startLevel} → ${endLevel}`);
       endLevel = startLevel + 5; // 安全な範囲に制限
     }
-    
-    // すべての通知を順序付けしてキューに入れる
-    const notificationQueue: NotificationType[] = [];
-    
-    // 各レベルとスキルを順番にキューに追加
-    for (let level = startLevel; level <= endLevel; level++) {
-      // レベルアップ通知を追加
-      notificationQueue.push({ type: 'levelUp', level });
-      
-      // このレベルで習得するスキルを追加
-      const skillsForLevel = this.getSkillsForLevel(level);
-      for (const skill of skillsForLevel) {
-        notificationQueue.push({ 
-          type: 'skillAcquisition', 
-          skillId: skill.skillId,
-          skillName: skill.skillName 
-        });
-      }
+
+    // 処理するレベルがなくなったら終了
+    if (startLevel + currentIndex > endLevel) {
+      console.log(`レベルアップ処理完了: Lv${startLevel} → Lv${endLevel}`);
+      return;
     }
-    
-    console.log("通知キューを作成:", notificationQueue);
-    
-    // 通知キューを順番に処理する関数
-    const processNextNotification = (index: number) => {
-      // すべての通知を処理し終えたら終了
-      if (index >= notificationQueue.length) {
-        console.log('すべての通知処理が完了しました');
-        return;
-      }
-      
-      const notification = notificationQueue[index];
-      
-      if (notification.type === 'levelUp') {
-        // レベルアップ通知を表示
-        console.log(`レベル ${notification.level} のレベルアップ通知を表示`);
-        showLevelUp(notification.level, () => {
-          // レベルアップ通知が閉じられたら次の通知へ
-          processNextNotification(index + 1);
+
+    // 現在のレベル
+    const currentLevel = startLevel + currentIndex;
+
+    // ロギング
+    console.log(`レベル ${currentLevel} の処理中...`);
+
+    // このレベルに関連するスキルを取得
+    const skillsForThisLevel = this.getSkillsForLevel(currentLevel);
+
+    // レベルアップ画面を表示（閉じた後のコールバックも含む）
+    showLevelUp(currentLevel, () => {
+      // 各スキルを獲得
+      if (acquireNewSkill) {
+        skillsForThisLevel.forEach((skill) => {
+          console.log(
+            `レベル${currentLevel}達成: ${skill.skillName}(${skill.skillId})スキル獲得処理`
+          );
+          acquireNewSkill(skill.skillId);
         });
-      } else if (notification.type === 'skillAcquisition' && acquireNewSkill) {
-        // スキル習得通知を表示
-        console.log(`スキル「${notification.skillName}」の習得通知を表示`);
-        acquireNewSkill(notification.skillId, () => {
-          // スキル習得通知が閉じられたら次の通知へ
-          processNextNotification(index + 1);
-        });
-      } else {
-        // 処理できない通知の場合は次へ
-        processNextNotification(index + 1);
       }
-    };
-    
-    // 最初の通知から処理開始
-    if (notificationQueue.length > 0) {
-      processNextNotification(0);
-    }
+
+      // 次のレベルを処理
+      this.processLevelUpsSequentially(
+        startLevel,
+        endLevel,
+        showLevelUp,
+        acquireNewSkill,
+        currentIndex + 1
+      );
+    });
   }
 
   /**
