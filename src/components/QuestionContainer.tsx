@@ -171,7 +171,7 @@ const QuestionContainer: React.FC<QuestionContainerProps> = ({
   const containerClasses = `
     relative 
     question-container
-    bg-black/50 
+    bg-black/10
     border-white 
     border-[1px] py-1 px-2
     text-white

@@ -89,7 +89,7 @@ const MessageDisplay: React.FC<MessageDisplayProps> = ({
   // 常にコンパクトモード用のスタイル
   const containerClasses = `
     absolute z-20 ${position}
-    bg-black/50 border-white border-2 text-white
+    bg-black/30 border-white border-2 text-white
     px-2 py-1
     rounded w-[95vw] max-w-xl
     left-1/2 transform -translate-x-1/2

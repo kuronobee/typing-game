@@ -185,7 +185,7 @@ const BattleStage: React.FC<BattleStageProps> = ({
   };
 
   // 基本的な高さ設定
-  const battleAreaHeight = "h-80";
+  const battleAreaHeight = "h-100";
   // プレイヤー領域の高さ
   const playerAreaHeight = 100; // px単位
 
@@ -195,9 +195,9 @@ const BattleStage: React.FC<BattleStageProps> = ({
 
     if (healthPercentage <= 0.3) {
       // 瀕死状態では背景を赤く点滅
-      return pulseState ? 'rgba(220, 38, 38, 0.3)' : 'rgba(0, 0, 0, 1)';
+      return pulseState ? 'rgba(220, 38, 38, 0.3)' : 'rgba(0, 0, 0, 0.3)';
     }
-    return 'rgba(0, 0, 0, 1)'; // 通常時は黒背景
+    return 'rgba(0, 0, 0, 0.3)'; // 通常時は黒背景
   };
 
   return (
@@ -211,7 +211,7 @@ const BattleStage: React.FC<BattleStageProps> = ({
             backgroundImage: `url(${bg})`,
             backgroundRepeat: "no-repeat",
             backgroundPosition: "center 70%",
-            backgroundSize: "90% auto",
+            //backgroundSize: "90%",
           }}
         />
 
@@ -237,7 +237,7 @@ const BattleStage: React.FC<BattleStageProps> = ({
               key={index}
               className="absolute z-10"
               style={{
-                bottom: `calc(80px + ${position.y}px)`,
+                bottom: `calc(160px + ${position.y}px)`,
                 left: `calc(50% + ${position.x}px)`,
                 transform: "translateX(-50%)",
               }}
@@ -296,24 +296,29 @@ const BattleStage: React.FC<BattleStageProps> = ({
         <div className="transition-all duration-300">
           <MessageDisplay
             newMessage={message}
-            position="bottom-6"
+            position="bottom-30"
           />
         </div>
-      </div>
+      
 
       {/* プレイヤー領域 - HP低下時に背景が点滅 */}
       <div
-        className="w-full relative"
+        className="w-full relative background-transparent"
         style={{
           height: `${playerAreaHeight}px`,
-          backgroundColor: getPlayerAreaBackground(),
-          transition: 'background-color 0.5s ease'
+          //backgroundColor: getPlayerAreaBackground(),
+          //transition: 'background-color 0.5s ease'
         }}
       >
         {/* レベル表示 - 左側に配置 */}
         <div
-          className="absolute z-30 left-2 top-[25%] transform -translate-y-1/2 bg-gray-800/80 p-3 rounded-lg border border-gray-600 shadow-lg player-status-panel"
-          style={{ minWidth: '130px', maxWidth: '1000px', width: '35%', height: '80px' }}
+          className="absolute z-30 left-2 top-[25%] transform -translate-y-1/2 bg-gray-800/30 p-3 rounded-lg border border-gray-600 shadow-lg player-status-panel"
+          style={{ 
+            minWidth: '130px', 
+            maxWidth: '1000px', 
+            width: '35%', 
+            height: '80px',
+          }}
         >
           <div className="text-white font-bold text-xl text-center">Lv. {player.level}</div>
           <div className="flex flex-col justify-between h-[50px]">
@@ -380,7 +385,14 @@ const BattleStage: React.FC<BattleStageProps> = ({
         {/* HP/MP表示 - 右側に配置 */}
         <div
           className="absolute z-30 right-2 top-[25%] transform -translate-y-1/2 bg-gray-800/80 p-3 rounded-lg border border-gray-600 shadow-lg player-status-panel"
-          style={{ minWidth: '130px', maxWidth: '1000px', width: '35%', height: '80px' }}
+          style={{ 
+            minWidth: '130px', 
+            maxWidth: '1000px', 
+            width: '35%', 
+            height: '80px',
+            backgroundColor: getPlayerAreaBackground(),
+            transition: 'background-color 0.5s ease'
+           }}
         >
           <div className="flex flex-col justify-center h-[60px]">
             {/* HPゲージ */}
@@ -411,6 +423,7 @@ const BattleStage: React.FC<BattleStageProps> = ({
               </div>
             </div>
           </div>
+        </div>
         </div>
       </div>
     </div>

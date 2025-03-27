@@ -140,6 +140,7 @@ const Enemy: React.FC<EnemyProps> = ({
                 </div>
             )}
             {/* 敵の頭上に小さい攻撃ゲージを表示 - 警告クラスを追加 */}
+            {!enemy.defeated && (
             <div
                 className={`absolute top-[-12px] left-1/2 transform -translate-x-1/2 w-16 h-1 bg-gray-500 rounded attack-gauge ${attackGaugeClass}`}
                 style={{ top: `${gaugeOffset - 12}px` }}
@@ -148,7 +149,7 @@ const Enemy: React.FC<EnemyProps> = ({
                     className={`h-full ${attackBarClass} rounded`}
                     style={{ width: `${Math.min(progress * 100, 100)}%` }}
                 ></div>
-            </div>
+            </div>)}
 
             {/* 危険警告アイコンを表示（95%以上の場合） */}
             {progress >= criticalThreshold && !enemyDefeated && (

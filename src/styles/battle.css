@@ -33,7 +33,7 @@
   
   /* 敵キャラクターの攻撃ゲージ */
   .attack-gauge-warning {
-    background-color: rgba(220, 38, 38, 0.3) !important;
+    background-color: rgba(107, 114, 128, 1) !important;
     box-shadow: 0 0 4px 1px rgba(239, 68, 68, 0.4);
     height: 2px !important;
     transition: all 0.2s ease;
