@@ -229,10 +229,10 @@ const enemies: IEnemyData[] = [
   {
     name: "チーター",
     level: 3,
-    maxHP: 40,
+    maxHP: 10,
     attackPower: 7,
     defense: 3,
-    exp: 40,
+    exp: 4000,
     word: "bear",
     image: new URL("../assets/enemies/cheetah.png", import.meta.url).toString(),
     scale: 1.0,
