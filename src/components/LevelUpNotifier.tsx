@@ -96,6 +96,7 @@ const LevelUpNotifier: React.FC<LevelUpNotifierProps> = ({ player, level, onClos
             if (e.key === " " || e.code === "Space" || e.key === "Enter") {
                 // デフォルトの動作を防止
                 e.preventDefault();
+                e.stopPropagation();
                 onClose();
             }
         };
@@ -136,8 +137,10 @@ const LevelUpNotifier: React.FC<LevelUpNotifierProps> = ({ player, level, onClos
 
     return (
         <div className="absolute inset-0 flex items-center justify-center z-50"
+            style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
             onClick={onClose}>
-            <div className="relative bg-black bg-opacity-75 text-white px-6 py-4 rounded-lg text-center shadow-xl border-2 border-white"
+            <div className="relative text-white px-6 py-4 rounded-lg text-center shadow-xl border-2 borde-red"
+            style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
                 onClick={(e) => e.stopPropagation()}>
                 {/* 右上の×ボタン */}
                 <button
