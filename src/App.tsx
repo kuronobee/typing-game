@@ -601,7 +601,7 @@ const App: React.FC = () => {
               targetIndex={gameState.targetIndex}
               equippedSkills={skillManagement.equippedSkills}
               setEquippedSkills={skillManagement.setEquippedSkills}
-              onOpenSkillManagement={() => skillManagement.toggleSkillManagement(true)}
+              onOpenSkillManagement={() => skillManagement.setShowSkillManagement(true)}
               setActiveSkill={skillManagement.setActiveSkill}
               activeKeyIndex={skillManagement.activeKeyIndex}
             />
