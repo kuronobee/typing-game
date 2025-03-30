@@ -310,10 +310,11 @@ const App: React.FC = () => {
       enemies,
       gainEXP,
       gameState.setMessage,
-      gameState.setReadyForNextStage
+      gameState.setReadyForNextStage,
+      gameState.setStageScale
     );
   };
-
+  
   // レベルアップ完了時のコールバックを保持するref
   const levelCompletionCallbacks = useRef<(() => void)[]>([]);
 

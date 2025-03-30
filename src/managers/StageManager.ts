@@ -12,10 +12,14 @@ export class StageManager {
    * ランダムなステージを生成する
    * @returns 生成したステージ情報（敵の配列とメッセージ）
    */
-  static createNewStage(): { enemies: EnemyModel[], message: MessageType, scale?: number } {
+  static createNewStage(): {
+    enemies: EnemyModel[];
+    message: MessageType;
+    scale?: number;
+  } {
     // ランダムにステージを選択
     const stage = stages[Math.floor(Math.random() * stages.length)];
-    
+
     // 敵インスタンスを生成し、位置情報を設定
     const enemies = stage.enemies.map((enemyData, index) => {
       const enemyInstance = new EnemyModel(enemyData);
@@ -24,9 +28,9 @@ export class StageManager {
     });
     const scale = stage.scale;
     // 開始メッセージを返す
-    const message: MessageType = { 
-      text: `問題に正しく回答して敵を倒せ！`, 
-      sender: "system" 
+    const message: MessageType = {
+      text: `問題に正しく回答して敵を倒せ！`,
+      sender: "system",
     };
 
     return { enemies, message, scale };
@@ -38,7 +42,10 @@ export class StageManager {
    * @param enemies 敵の配列
    * @returns 次の生存している敵のインデックス（見つからなければ-1）
    */
-  static findNextAliveEnemyIndex(startIndex: number, enemies: EnemyModel[]): number {
+  static findNextAliveEnemyIndex(
+    startIndex: number,
+    enemies: EnemyModel[]
+  ): number {
     // 現在のインデックスから後ろ向きに探索
     for (let i = startIndex + 1; i < enemies.length; i++) {
       if (!enemies[i].defeated) {
@@ -96,27 +103,33 @@ export class StageManager {
     enemies: EnemyModel[],
     gainEXP: (amount: number) => void,
     setMessage: (message: MessageType) => void,
-    setReadyForNextStage: (ready: boolean) => void
+    setReadyForNextStage: (ready: boolean) => void,
+    setStageScale?: (scale: number) => void
   ): boolean {
     // ステージクリア判定
     const isCompleted = this.isStageCompleted(enemies);
-    
+
     if (isCompleted) {
       // 経験値計算
       const totalEXP = this.calculateTotalExp(enemies);
-      
+
       setTimeout(() => {
         // 経験値獲得
         gainEXP(totalEXP);
-        
+
         // クリアメッセージ表示
         setMessage(this.createCompletionMessage(totalEXP));
-        
+
         // 次のステージへの準備
         setReadyForNextStage(true);
+
+        // スケールをデフォルト値（1）に戻す
+        if (setStageScale) {
+          setStageScale(1);
+        }
       }, 2000);
     }
-    
+
     return isCompleted;
   }
 }
