@@ -7,6 +7,7 @@ export interface Stage {
   enemies: IEnemyData[];
   // 配置情報。各敵ごとに画面上のオフセット（例：x, y座標）を指定する場合
   positions: { x: number; y: number }[];
+  scale?: number; // 画面スケール変更
 }
 
 export const stages: Stage[] = [
@@ -18,6 +19,7 @@ export const stages: Stage[] = [
       enemiesData.find(e => e.name === "ゴブリン")!,
     ],
     positions: [{ x: -50, y: 0 }, { x: 50, y: 0 }],
+    scale: 2,
   },
   {
     id: "stage2",
@@ -25,6 +27,7 @@ export const stages: Stage[] = [
       enemiesData.find(e => e.name === "ゴーレム")!,
     ],
     positions: [{ x: 0, y: 0 }],
+    scale: 1.5,
   },
   {
     id: "stage2",
@@ -32,6 +35,7 @@ export const stages: Stage[] = [
       enemiesData.find(e => e.name === "幽霊剣士")!,
     ],
     positions: [{ x: 0, y: 0 }],
+    scale: 2,
   },
   {
     id: "stage2",
@@ -39,7 +43,8 @@ export const stages: Stage[] = [
       enemiesData.find(e => e.name === "グリズリー")!,
       enemiesData.find(e => e.name==="グリズリー")!,
     ],
-    positions: [{ x: -90, y: 0 }, { x: 90, y: 0 }],
+    positions: [{ x: -100, y: 0 }, { x: 100, y: 0 }],
+    scale: 1.5,
   },
   {
     id: "stage2",
@@ -59,6 +64,7 @@ export const stages: Stage[] = [
     id: "stage2",
     enemies: [enemiesData.find(e => e.name === "ウォールゴーレム")!],
     positions: [{ x: 0, y: 0 }],
+    scale: 0.8,
   },
   {
     id: "stage2",
@@ -82,6 +88,7 @@ export const stages: Stage[] = [
       enemiesData.find(e => e.name === "ライノブルート")!,
     ],
     positions: [{ x: 0, y: 0 }],
+    scale: 0.5
   },
   
 

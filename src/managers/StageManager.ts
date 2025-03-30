@@ -12,7 +12,7 @@ export class StageManager {
    * ランダムなステージを生成する
    * @returns 生成したステージ情報（敵の配列とメッセージ）
    */
-  static createNewStage(): { enemies: EnemyModel[], message: MessageType } {
+  static createNewStage(): { enemies: EnemyModel[], message: MessageType, scale?: number } {
     // ランダムにステージを選択
     const stage = stages[Math.floor(Math.random() * stages.length)];
     
@@ -22,14 +22,14 @@ export class StageManager {
       enemyInstance.positionOffset = stage.positions[index] || { x: 0, y: 0 };
       return enemyInstance;
     });
-
+    const scale = stage.scale;
     // 開始メッセージを返す
     const message: MessageType = { 
       text: `問題に正しく回答して敵を倒せ！`, 
       sender: "system" 
     };
 
-    return { enemies, message };
+    return { enemies, message, scale };
   }
 
   /**

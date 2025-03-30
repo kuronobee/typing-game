@@ -15,7 +15,6 @@ import { Player } from "../models/Player";
 import { Enemy as EnemyModel } from "../models/EnemyModel";
 import MessageDisplay, { MessageType } from "./MessageDisplay";
 import SkillCallOut from "./SkillCallOut";
-import { useGameScaling } from '../hooks/useGameScaling';
 
 type DamageDisplay = {
   value: number;
@@ -48,6 +47,7 @@ interface BattleStageProps {
   specialAttackTypes?: (string | null)[]; // 追加: 特殊攻撃の種類
   criticalHits?: boolean[];
   playerReff?: React.RefObject<HTMLDivElement | null>;
+  stageScale?: number;
 }
 
 const BattleStage: React.FC<BattleStageProps> = ({
@@ -76,14 +76,8 @@ const BattleStage: React.FC<BattleStageProps> = ({
   specialAttackTypes = [],
   criticalHits = [],
   playerReff,
+  stageScale = 1,
 }) => {
-  const scaling = useGameScaling();
-  // 背景画像のスタイルを結合
-  const backgroundStyle = {
-    backgroundImage: `url(${bg})`,
-    backgroundRepeat: "no-repeat",
-    ...scaling.getBackgroundStyle()
-  };
   
   // 各敵毎の攻撃ゲージ進捗を管理する配列(0〜1)
   const [attackProgresses, setAttackProgresses] = useState<number[]>([]);
@@ -208,8 +202,7 @@ const BattleStage: React.FC<BattleStageProps> = ({
     }
     return 'rgba(0, 0, 0, 0.3)'; // 通常時は黒背景
   };
-  const viewScale = 0.8;
-  const battleAreaWidth = 200 * viewScale;
+  const battleAreaWidth = 200 * stageScale;
   return (
     <div className={mainContainerClasses}>
       {/* バトルステージ部分 */}
@@ -275,7 +268,7 @@ const BattleStage: React.FC<BattleStageProps> = ({
                 progress={enemyProgress}
                 damage={damageNumbers[index]}
                 comboCount={comboCount}
-                scaleAdjustment={0.8*viewScale}
+                scaleAdjustment={0.8*stageScale}
                 specialAttackType={specialAttackTypes[index] || null} // 追加: 特殊攻撃の種類
                 isCriticalHit={criticalHits[index] || false}
               />
@@ -377,7 +370,7 @@ const BattleStage: React.FC<BattleStageProps> = ({
             style={{
               filter: getPlayerImageFilter(),
               transition: "filter 0.5s ease",
-              scale: viewScale
+              scale: stageScale
             }}
           />
 

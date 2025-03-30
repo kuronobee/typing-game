@@ -30,7 +30,8 @@ export function useGameState() {
   const [expGain, setExpGain] = useState<number | null>(null);
   const [isDead, setIsDead] = useState(false);
   const [showGameOver, setShowGameOver] = useState(false);
-  
+  const [stageScale, setStageScale] = useState<number | null>(1);
+
   return {
     // プレイヤー状態
     player, setPlayer,
@@ -52,6 +53,7 @@ export function useGameState() {
     message, setMessage,
     expGain, setExpGain,
     isDead, setIsDead,
-    showGameOver, setShowGameOver
+    showGameOver, setShowGameOver,
+    stageScale, setStageScale,
   };
 }

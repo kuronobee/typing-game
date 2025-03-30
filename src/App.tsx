@@ -440,7 +440,8 @@ const App: React.FC = () => {
 
   // 新しい戦闘ステージを生成
   const spawnNewStage = () => {
-    const { enemies, message } = StageManager.createNewStage();
+    const { enemies, message, scale } = StageManager.createNewStage();
+    gameState.setStageScale(scale ?? 1);
     gameState.setCurrentEnemies(enemies);
     gameState.setTargetIndex(0);
     gameState.setMessage(message);
@@ -640,6 +641,7 @@ const App: React.FC = () => {
               specialAttackTypes={combat.specialAttackTypes}
               criticalHits={combat.criticalHits}
               playerReff={playerRef}
+              stageScale={gameState.stageScale ?? 1}
             />
 
             {/* レベルアップ通知 */}
