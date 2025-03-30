@@ -1,4 +1,4 @@
-// src/components/BattleStage.tsx の修正版 - isCompactパラメータの削除とコンパクトモードの常時適用
+// src/components/BattleStage.tsx - 柔軟な遷移時間対応版
 
 import React, { useEffect, useState, useRef } from "react";
 import bg from "../assets/bg/background.png";
@@ -48,6 +48,7 @@ interface BattleStageProps {
   criticalHits?: boolean[];
   playerReff?: React.RefObject<HTMLDivElement | null>;
   stageScale?: number;
+  scaleAnimationDuration?: number; // 追加: スケールアニメーションの時間（ミリ秒）
 }
 
 const BattleStage: React.FC<BattleStageProps> = ({
@@ -77,6 +78,7 @@ const BattleStage: React.FC<BattleStageProps> = ({
   criticalHits = [],
   playerReff,
   stageScale = 1,
+  scaleAnimationDuration = 1000, // デフォルト1秒
 }) => {
   
   // 各敵毎の攻撃ゲージ進捗を管理する配列(0〜1)
@@ -85,11 +87,31 @@ const BattleStage: React.FC<BattleStageProps> = ({
   // 瀕死状態の点滅効果用
   const [pulseState, setPulseState] = useState(false);
 
+  // スケールアニメーション用の状態
+  const [prevScale, setPrevScale] = useState(stageScale);
+  const [isScaleAnimating, setIsScaleAnimating] = useState(true);
+
   // プレイヤーの最新情報を保持するための ref
   const playerRef = useRef(player);
   useEffect(() => {
     playerRef.current = player;
   }, [player]);
+
+  // スケール変更時のアニメーション効果
+  useEffect(() => {
+    if (prevScale !== stageScale) {
+      console.log(`スケール変更: ${prevScale} → ${stageScale}, アニメーション時間: ${scaleAnimationDuration}ms`);
+      setIsScaleAnimating(true);
+      
+      // 指定された時間後にアニメーション状態を解除
+      const timer = setTimeout(() => {
+        setIsScaleAnimating(false);
+        setPrevScale(stageScale);
+      }, scaleAnimationDuration);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [stageScale, prevScale, scaleAnimationDuration]);
 
   // HP低下時の点滅効果
   useEffect(() => {
@@ -202,19 +224,28 @@ const BattleStage: React.FC<BattleStageProps> = ({
     }
     return 'rgba(0, 0, 0, 0.3)'; // 通常時は黒背景
   };
+
+  // アニメーション時間に基づくトランジション設定（秒単位に変換）
+  const scaleTransition = isScaleAnimating 
+    ? `all ${scaleAnimationDuration/1000}s ease-in-out` 
+    : "all 0.3s ease";
+
+  // 背景のスケールと位置
   const battleAreaWidth = 200 * stageScale;
+
   return (
     <div className={mainContainerClasses}>
       {/* バトルステージ部分 */}
       <div className={`${battleStageClasses} ${battleAreaHeight}`}>
-        {/* 背景画像 */}
+        {/* 背景画像 - スケール変更時のトランジション追加 */}
         <div
           className="absolute inset-0"
           style={{
             backgroundImage: `url(${bg})`,
             backgroundRepeat: "no-repeat",
             backgroundPosition: "center center",
-            backgroundSize: battleAreaWidth + "%"
+            backgroundSize: battleAreaWidth + "%",
+            transition: scaleTransition
           }}
         />
 
@@ -243,6 +274,7 @@ const BattleStage: React.FC<BattleStageProps> = ({
                 bottom: `calc(160px + ${position.y}px)`,
                 left: `calc(50% + ${position.x}px)`,
                 transform: "translateX(-50%)",
+                transition: scaleTransition
               }}
               onClick={(e) => {
                 e.preventDefault();
@@ -269,8 +301,10 @@ const BattleStage: React.FC<BattleStageProps> = ({
                 damage={damageNumbers[index]}
                 comboCount={comboCount}
                 scaleAdjustment={0.8*stageScale}
-                specialAttackType={specialAttackTypes[index] || null} // 追加: 特殊攻撃の種類
+                specialAttackType={specialAttackTypes[index] || null}
                 isCriticalHit={criticalHits[index] || false}
+                isScaleAnimating={isScaleAnimating}
+                scaleAnimationDuration={scaleAnimationDuration}
               />
             </div>
           );
@@ -348,7 +382,7 @@ const BattleStage: React.FC<BattleStageProps> = ({
           </div>
         </div>
 
-        {/* プレイヤーキャラクター表示 - 中央に */}
+        {/* プレイヤーキャラクター表示 - 中央に - スケール変更時のトランジション追加 */}
         <div
           className={`absolute z-20 pointer-events-none ${playerHitEffect 
             ? 'player-shake' : playerAttackEffect ? 'player-attack-m' : ''
@@ -359,7 +393,7 @@ const BattleStage: React.FC<BattleStageProps> = ({
               transform: "translateX(-50%)",
               width: "160px",
               height: "240px",
-              transition: "all 0.3s ease"
+              transition: scaleTransition
             }}
             ref={playerReff}
         >
@@ -369,8 +403,8 @@ const BattleStage: React.FC<BattleStageProps> = ({
             className="w-full h-full object-contain"
             style={{
               filter: getPlayerImageFilter(),
-              transition: "filter 0.5s ease",
-              scale: stageScale
+              transition: `filter 0.5s ease, transform ${isScaleAnimating ? scaleAnimationDuration/1000 : 0.3}s ease-in-out`,
+              transform: `scale(${stageScale})`
             }}
           />
 

@@ -642,6 +642,7 @@ const App: React.FC = () => {
               criticalHits={combat.criticalHits}
               playerReff={playerRef}
               stageScale={gameState.stageScale ?? 1}
+              scaleAnimationDuration={1500}
             />
 
             {/* レベルアップ通知 */}
