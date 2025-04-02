@@ -19,7 +19,7 @@ export const stages: Stage[] = [
       enemiesData.find(e => e.name === "ゴブリン")!,
     ],
     positions: [{ x: -50, y: 0 }, { x: 50, y: 0 }],
-    scale: 2,
+    scale: 1.5,
   },
   {
     id: "stage2",
@@ -35,7 +35,7 @@ export const stages: Stage[] = [
       enemiesData.find(e => e.name === "幽霊剣士")!,
     ],
     positions: [{ x: 0, y: 0 }],
-    scale: 2,
+    scale: 1.5,
   },
   {
     id: "stage2",
@@ -43,7 +43,7 @@ export const stages: Stage[] = [
       enemiesData.find(e => e.name === "グリズリー")!,
       enemiesData.find(e => e.name==="グリズリー")!,
     ],
-    positions: [{ x: -100, y: 0 }, { x: 100, y: 0 }],
+    positions: [{ x: -80, y: 0 }, { x: 80, y: 0 }],
     scale: 1.5,
   },
   {
@@ -52,6 +52,7 @@ export const stages: Stage[] = [
       enemiesData.find(e => e.name === "チーター")!,
     ],
     positions: [{ x: 0, y: 0 }],
+    scale: 1.5,
   },
   {
     id: "stage2",
@@ -59,12 +60,13 @@ export const stages: Stage[] = [
       enemiesData.find(e => e.name === "グリズリー")!,
     ],
     positions: [{ x: 0, y: 0 }],
+    scale: 1.5,
   },
   {
     id: "stage2",
     enemies: [enemiesData.find(e => e.name === "ウォールゴーレム")!],
-    positions: [{ x: 0, y: 0 }],
-    scale: 0.8,
+    positions: [{ x: 0, y: -60 }],
+    scale: 1,
   },
   {
     id: "stage2",
@@ -74,6 +76,7 @@ export const stages: Stage[] = [
       enemiesData.find(e => e.name === "マッドグール")!,
     ],
     positions: [{ x: -120, y: 0 },{x: 0, y: 0}, { x: 120, y: 0 }],
+    scale: 1.2,
   },
   {
     id: "stage2",
@@ -81,14 +84,15 @@ export const stages: Stage[] = [
       enemiesData.find(e => e.name === "ギズモ")!,
     ],
     positions: [{ x: 0, y: 60 }],
+    scale: 1.3
   },
   {
     id: "stage2",
     enemies: [
       enemiesData.find(e => e.name === "ライノブルート")!,
     ],
-    positions: [{ x: 0, y: 0 }],
-    scale: 0.5
+    positions: [{ x: 0, y: -60 }],
+    scale: 1
   },
   
 

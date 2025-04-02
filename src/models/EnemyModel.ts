@@ -1,6 +1,7 @@
 // src/models/EnemyModel.ts
 import { Player, StatusEffect } from "./Player";
-import { Question, commonQuestions } from "../data/questions";
+import { Question } from "../data/questions";
+import { allCommonQuestions } from "../data/questions";
 
 export interface IEnemyData {
   name: string;
@@ -138,22 +139,22 @@ export class Enemy {
   public getNextQuestion(): Question {
     if (this.questionMode === "original") {
       this._presentedQuestion = (this.originalQuestions ? this.originalQuestions[Math.floor(Math.random() * this.originalQuestions.length)]        
-      : commonQuestions[Math.floor(Math.random() * commonQuestions.length)]);
+      : allCommonQuestions[Math.floor(Math.random() * allCommonQuestions.length)]);
     } else if (this.questionMode === "common") {
-      this._presentedQuestion = commonQuestions[
-        Math.floor(Math.random() * commonQuestions.length)
+      this._presentedQuestion = allCommonQuestions[
+        Math.floor(Math.random() * allCommonQuestions.length)
       ];
     } else if (this.questionMode === "both") {
       if (this.originalQuestions && Math.random() < 0.5) {
         this._presentedQuestion = this.originalQuestions[Math.floor(Math.random() * this.originalQuestions.length)];
       } else {
-        this._presentedQuestion = commonQuestions[
-          Math.floor(Math.random() * commonQuestions.length)
+        this._presentedQuestion = allCommonQuestions[
+          Math.floor(Math.random() * allCommonQuestions.length)
         ];
       }
     }
     else {
-      this._presentedQuestion = commonQuestions[Math.floor(Math.random() * commonQuestions.length)];
+      this._presentedQuestion = allCommonQuestions[Math.floor(Math.random() * allCommonQuestions.length)];
     }
     return this._presentedQuestion;
   }

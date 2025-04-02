@@ -2,7 +2,8 @@
 import { useState } from 'react';
 import { Player as PlayerModel } from "../models/Player";
 import { Enemy as EnemyModel } from "../models/EnemyModel";
-import { Question, commonQuestions } from "../data/questions"; // commonQuestionsをインポート
+import { Question } from "../data/questions"; // commonQuestionsをインポート
+import { allCommonQuestions } from "../data/questions";
 import { MessageType } from "../components/MessageDisplay";
 
 export function useGameState() {
@@ -18,7 +19,7 @@ export function useGameState() {
   const [targetIndex, setTargetIndex] = useState<number>(0);
   // 初期状態でランダムな問題を設定
   const [currentQuestion, setCurrentQuestion] = useState<Question>(
-    commonQuestions[Math.floor(Math.random() * commonQuestions.length)]
+    allCommonQuestions[Math.floor(Math.random() * allCommonQuestions.length)]
   );
   const [wrongAttempts, setWrongAttempts] = useState(0);
   const [isHintFullyRevealed, setIsHintFullyRevealed] = useState(false);

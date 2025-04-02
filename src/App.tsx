@@ -314,7 +314,7 @@ const App: React.FC = () => {
       gameState.setStageScale
     );
   };
-  
+
   // レベルアップ完了時のコールバックを保持するref
   const levelCompletionCallbacks = useRef<(() => void)[]>([]);
 
@@ -442,7 +442,7 @@ const App: React.FC = () => {
   // 新しい戦闘ステージを生成
   const spawnNewStage = () => {
     const { enemies, message, scale } = StageManager.createNewStage();
-    gameState.setStageScale(scale ?? 1);
+    gameState.setStageScale(scale ?? 2);
     gameState.setCurrentEnemies(enemies);
     gameState.setTargetIndex(0);
     gameState.setMessage(message);

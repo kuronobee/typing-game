@@ -1,6 +1,6 @@
-// src/components/Enemy.tsx - 柔軟な遷移時間対応版
+// src/components/Enemy.tsx - スケールアニメーション対応版
 
-import React, {useEffect, useState} from "react";
+import React, { useEffect, useState } from "react";
 import { Enemy as EnemyModel } from "../models/EnemyModel";
 import MonsterMessage from "./MonsterMessage";
 
@@ -20,11 +20,11 @@ interface EnemyProps {
     progress: number;
     damage?: DamageDisplay | null;
     comboCount?: number;
-    scaleAdjustment?: number;
+    stageScale?: number;
     specialAttackType?: string | null;
     isCriticalHit?: boolean;
     isScaleAnimating?: boolean; // スケールアニメーション状態
-    scaleAnimationDuration?: number; // 追加: スケールアニメーションの時間（ミリ秒）
+    scaleAnimationDuration?: number; // アニメーションの時間（ミリ秒）
 }
 
 const Enemy: React.FC<EnemyProps> = ({
@@ -38,7 +38,7 @@ const Enemy: React.FC<EnemyProps> = ({
     progress,
     damage,
     comboCount,
-    scaleAdjustment = 1,
+    stageScale = 2,
     specialAttackType = null,
     isCriticalHit = false,
     isScaleAnimating = false, // デフォルト値を追加
@@ -46,7 +46,7 @@ const Enemy: React.FC<EnemyProps> = ({
 }) => {
     const hpPercentage = (enemy.currentHP / enemy.maxHP) * 100;
     const baseScale = enemy.scale || 1;
-    const effectiveScale = enemyDefeated ? 0 : (baseScale * scaleAdjustment);
+    const effectiveScale = enemyDefeated ? 0 : (baseScale * stageScale);
     const enemyClass = `
     ${enemyHit ? "animate-hit" : ""}
     ${playerHit ? "animate-phit" : ""}
@@ -72,29 +72,27 @@ const Enemy: React.FC<EnemyProps> = ({
         attackBarClass = "bg-red-500 animate-attack-warning";
     }
     const [showMessage, setShowMessage] = useState<string | null>(null);
-    
+
     // プレイヤーが攻撃を受けたときに特別メッセージを表示する
     useEffect(() => {
         if (playerHit) {
             setShowMessage(`${enemy.name}の攻撃！`);
-            console.log(`${enemy.name}の攻撃！`);
             // 一定時間後にメッセージを消す
             setTimeout(() => {
                 setShowMessage(null);
             }, 1000);
         }
     }, [playerHit, enemy.name]);
-    
+
     useEffect(() => {
         if (specialAttackType) {
             setShowMessage(specialAttackType);
-            console.log(specialAttackType);
             setTimeout(() => {
                 setShowMessage(null);
             }, 1000);
         }
     }, [specialAttackType]);
-    
+
     useEffect(() => {
         if (isCriticalHit) {
             setShowMessage("クリティカル！");
@@ -104,35 +102,43 @@ const Enemy: React.FC<EnemyProps> = ({
         }
     }, [isCriticalHit]);
 
-    // スケールアニメーション用のトランジション設定（秒単位に変換）
-    const scaleTransition = isScaleAnimating 
-        ? `opacity 2s ease-out, transform ${scaleAnimationDuration/1000}s ease-in-out`
-        : "opacity 2s ease-out, transform 0.3s ease";
-    
-    // 一般的なUIコンポーネント用のトランジション設定
-    const uiTransition = isScaleAnimating 
-        ? `all ${scaleAnimationDuration/1000}s ease-in-out` 
+    // // スケールアニメーション用のトランジション設定（秒単位に変換）
+    // const scaleTransition = isScaleAnimating
+    //     ? `transform ${1000 / 1000}s ease`
+    //     : "transform 1s ease";
+
+    // // 不透明度のトランジション設定（別々に設定して、スケールアニメーション中も滑らかに表示/非表示できるようにする）
+    // const opacityTransition = "opacity 0.5s ease-out";
+
+    // UI要素のトランジション設定
+    const uiTransition = isScaleAnimating
+        ? `all ${scaleAnimationDuration / 1000}s ease-in-out`
         : "all 0.3s ease";
+
+    const [scale, setScale] = useState(baseScale);
+
+    useEffect(() => {
+        setTimeout(() => setScale(effectiveScale), 0);
+    }, [effectiveScale, baseScale]);
 
     return (
         <div className="relative inline-block enemy-container">
             {/* 特殊攻撃メッセージ表示 */}
             {showMessage && (
-                <MonsterMessage 
-                    message={showMessage} 
+                <MonsterMessage
+                    message={showMessage}
                     position="top"
                 />
             )}
             {/* 親要素でscaleを適用 - トランジション設定をカスタマイズ */}
             <div
-                className="transition-all ease-out"
+                className={`transition duration-1000`}
                 style={{
-                    transform: `scale(${enemyDefeated ? 0 : effectiveScale})`,
+                    transform: `scale(${scale})`,
                     transformOrigin: "bottom",
                     opacity: enemyDefeated ? 0 : 1,
-                    transition: scaleTransition, // カスタムアニメーション時間適用
                 }}>
-                {/* 子要素でアニメーションを適用 */}
+                {/* 敵の画像 */}
                 <img
                     src={enemy.image}
                     alt={enemy.name}
@@ -143,18 +149,18 @@ const Enemy: React.FC<EnemyProps> = ({
             {showTargetIndicator && (
                 <div
                     className="absolute left-1/2 transform -translate-x-1/2 target-indicator"
-                    style={{ 
-                        top: `${gaugeOffset - 30}px`, 
+                    style={{
+                        top: `${gaugeOffset - 30}px`,
                         opacity: `${enemyDefeated ? 0 : 1}`,
                         transition: uiTransition // カスタムアニメーション時間適用
                     }}
                 />
             )}
-            {/* showHealth フラグが true の場合のみ表示 - クラス名追加 */}
+            {/* showHealth フラグが true の場合のみ表示 */}
             {showHealth && !enemyDefeated && (
-                <div 
+                <div
                     className="absolute top-[-12px] left-1/2 transform -translate-x-1/2 w-28 h-3 bg-gray-300 rounded-full border-2 border-blue-50 enemy-health-bar"
-                    style={{ 
+                    style={{
                         top: `${gaugeOffset - 7}px`,
                         transition: uiTransition // カスタムアニメーション時間適用
                     }}>
@@ -163,26 +169,26 @@ const Enemy: React.FC<EnemyProps> = ({
                         style={{ width: `${hpPercentage}%` }} />
                 </div>
             )}
-            {/* 敵の頭上に小さい攻撃ゲージを表示 - 警告クラスを追加 */}
+            {/* 敵の頭上に小さい攻撃ゲージを表示 */}
             {!enemy.defeated && (
-            <div
-                className={`absolute top-[-12px] left-1/2 transform -translate-x-1/2 w-16 h-1 bg-gray-500 rounded attack-gauge ${attackGaugeClass}`}
-                style={{ 
-                    top: `${gaugeOffset - 12}px`,
-                    transition: uiTransition // カスタムアニメーション時間適用
-                }}
-            >
                 <div
-                    className={`h-full ${attackBarClass} rounded`}
-                    style={{ width: `${Math.min(progress * 100, 100)}%` }}
-                ></div>
-            </div>)}
+                    className={`absolute top-[-12px] left-1/2 transform -translate-x-1/2 w-16 h-1 bg-gray-500 rounded attack-gauge ${attackGaugeClass}`}
+                    style={{
+                        top: `${gaugeOffset - 12}px`,
+                        transition: uiTransition // カスタムアニメーション時間適用
+                    }}
+                >
+                    <div
+                        className={`h-full ${attackBarClass} rounded`}
+                        style={{ width: `${Math.min(progress * 100, 100)}%` }}
+                    ></div>
+                </div>)}
 
             {/* 危険警告アイコンを表示（95%以上の場合） */}
             {progress >= criticalThreshold && !enemyDefeated && (
                 <div
                     className="absolute top-[-20px] left-1/2 transform -translate-x-1/2 text-red-500 animate-pulse"
-                    style={{ 
+                    style={{
                         top: `${gaugeOffset - 20}px`,
                         transition: uiTransition // カスタムアニメーション時間適用
                     }}

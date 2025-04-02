@@ -1,4 +1,4 @@
-// src/components/BattleStage.tsx - 柔軟な遷移時間対応版
+// src/components/BattleStage.tsx - 背景とモンスターを一体としてスケーリングする版
 
 import React, { useEffect, useState, useRef } from "react";
 import bg from "../assets/bg/background.png";
@@ -77,10 +77,10 @@ const BattleStage: React.FC<BattleStageProps> = ({
   specialAttackTypes = [],
   criticalHits = [],
   playerReff,
-  stageScale = 1,
+  stageScale = 2,
   scaleAnimationDuration = 1000, // デフォルト1秒
 }) => {
-  
+
   // 各敵毎の攻撃ゲージ進捗を管理する配列(0〜1)
   const [attackProgresses, setAttackProgresses] = useState<number[]>([]);
 
@@ -102,13 +102,13 @@ const BattleStage: React.FC<BattleStageProps> = ({
     if (prevScale !== stageScale) {
       console.log(`スケール変更: ${prevScale} → ${stageScale}, アニメーション時間: ${scaleAnimationDuration}ms`);
       setIsScaleAnimating(true);
-      
+
       // 指定された時間後にアニメーション状態を解除
       const timer = setTimeout(() => {
         setIsScaleAnimating(false);
         setPrevScale(stageScale);
       }, scaleAnimationDuration);
-      
+
       return () => clearTimeout(timer);
     }
   }, [stageScale, prevScale, scaleAnimationDuration]);
@@ -178,7 +178,7 @@ const BattleStage: React.FC<BattleStageProps> = ({
   // バトルステージ部分のクラス
   const battleStageClasses = `
     relative w-full
-    compact-battle-stage p-0
+     p-0
     transition-all duration-300
   `;
 
@@ -211,8 +211,6 @@ const BattleStage: React.FC<BattleStageProps> = ({
 
   // 基本的な高さ設定
   const battleAreaHeight = "h-100";
-  // プレイヤー領域の高さ
-  const playerAreaHeight = 100; // px単位
 
   // HP低下時のプレイヤー領域の背景色
   const getPlayerAreaBackground = () => {
@@ -225,94 +223,136 @@ const BattleStage: React.FC<BattleStageProps> = ({
     return 'rgba(0, 0, 0, 0.3)'; // 通常時は黒背景
   };
 
-  // アニメーション時間に基づくトランジション設定（秒単位に変換）
-  const scaleTransition = isScaleAnimating 
-    ? `all ${scaleAnimationDuration/1000}s ease-in-out` 
-    : "all 0.3s ease";
-
-  // 背景のスケールと位置
-  const battleAreaWidth = 200 * stageScale;
+  // バトルエリア全体をラップするコンテナのスタイル
+  const battleAreaStyle = {
+    transform: `scale(${stageScale})`,
+    transformOrigin: 'center bottom', // 中央下を原点としてスケール
+    transition: isScaleAnimating ? `transform ${scaleAnimationDuration / 1000}s ease-in-out` : 'transform 0.3s ease',
+    position: "relative" as 'relative',
+    width: stageScale < 1 ? `${100 / stageScale}%` : '100%', // スケールが小さくなると幅が広がる
+    height:  '100%', // スケールが小さくなると高さが広がる 
+    left: stageScale < 1 ? `${(100 - 100 / stageScale) / 2}%` : '0%', // スケールが小さくなると左にずれる
+  };
 
   return (
     <div className={mainContainerClasses}>
       {/* バトルステージ部分 */}
       <div className={`${battleStageClasses} ${battleAreaHeight}`}>
-        {/* 背景画像 - スケール変更時のトランジション追加 */}
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage: `url(${bg})`,
-            backgroundRepeat: "no-repeat",
-            backgroundPosition: "center center",
-            backgroundSize: battleAreaWidth + "%",
-            transition: scaleTransition
-          }}
-        />
-
-        {/* 瀕死状態の表示 - 非常に控えめな赤い境界線のみ */}
-        {player.hp <= player.maxHP * 0.3 && (
+        {/* スケーリングコンテナ - 背景と敵をまとめてスケーリング */}
+        <div style={battleAreaStyle}>
+          {/* 背景画像 */}
           <div
-            className="absolute top-0 left-0 right-0 h-2 z-25"
+            className="absolute inset-0 w-full h-full z-10"
             style={{
-              backgroundColor: pulseState ? 'rgba(220, 38, 38, 0.5)' : 'rgba(220, 38, 38, 0.3)',
-              transition: 'background-color 0.5s ease'
+              backgroundImage: `url(${bg})`,
+              backgroundRepeat: "no-repeat",
+              backgroundPosition: "center center",
+              backgroundSize: `100%`,
             }}
           />
-        )}
 
-        {/* 敵の表示 */}
-        {currentEnemies.map((enemy, index) => {
-          const isTarget = index === targetIndex;
-          const enemyProgress = attackProgresses[index] || 0;
-          const position = getEnemyPosition(enemy);
-
-          return (
+          {/* 瀕死状態の表示 - 非常に控えめな赤い境界線のみ */}
+          {player.hp <= player.maxHP * 0.3 && (
             <div
-              key={index}
-              className="absolute z-10"
+              className="absolute top-0 left-0 right-0 h-2 z-25"
               style={{
-                bottom: `calc(160px + ${position.y}px)`,
-                left: `calc(50% + ${position.x}px)`,
-                transform: "translateX(-50%)",
-                transition: scaleTransition
+                backgroundColor: pulseState ? 'rgba(220, 38, 38, 0.5)' : 'rgba(220, 38, 38, 0.3)',
+                transition: 'background-color 0.5s ease'
               }}
-              onClick={(e) => {
-                e.preventDefault();
-                if (!enemy.defeated) {
-                  onSelectTarget(index);
-                }
+            />
+          )}
+
+          {/* 敵の表示 */}
+          {currentEnemies.map((enemy, index) => {
+            const isTarget = index === targetIndex;
+            const enemyProgress = attackProgresses[index] || 0;
+            const position = getEnemyPosition(enemy);
+
+            return (
+              <div
+                key={index}
+                className="absolute z-10"
+                style={{
+                  bottom: `calc(150px + ${position.y}px)`,
+                  left: `calc(50% + ${position.x}px)`,
+                  transform: "translateX(-50%)",
+                }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (!enemy.defeated) {
+                    onSelectTarget(index);
+                  }
+                }}
+                ref={(el) => {
+                  // 敵要素のRefを設定
+                  if (enemyRefs.current) {
+                    enemyRefs.current[index] = el;
+                  }
+                }}
+              >
+                <Enemy
+                  enemy={enemy}
+                  enemyHit={enemyHitFlags[index]}
+                  playerHit={enemyAttackFlags[index]}
+                  playerFire={enemyFireFlags[index]}
+                  enemyDefeated={enemy.defeated}
+                  showHealth={isTarget}
+                  showTargetIndicator={isTarget}
+                  progress={enemyProgress}
+                  damage={damageNumbers[index]}
+                  comboCount={comboCount}
+                  stageScale={1}
+                  specialAttackType={specialAttackTypes[index] || null}
+                  isCriticalHit={criticalHits[index] || false}
+                />
+              </div>
+            );
+          })}
+
+          {/* プレイヤーキャラクターの上にスキルコールアウトを表示 */}
+          {skillCallOut && (
+            <SkillCallOut skillName={skillCallOut} />
+          )}
+
+          {/* プレイヤーキャラクター表示 */}
+          <div
+            className={`absolute z-20 bottom-[-30px] pointer-events-none ${playerHitEffect
+              ? 'player-shake' : playerAttackEffect ? 'player-attack-m' : ''
+              }`}
+            style={{
+              //top: `300px`,
+              left: "50%",
+              transform: "translateX(-50%)",
+              width: "120px",
+              height: "180px",
+            }}
+            ref={playerReff}
+          >
+            <img
+              src={playerImage}
+              alt="Player Character"
+              className="w-full h-full object-contain"
+              style={{
+                filter: getPlayerImageFilter(),
               }}
-              ref={(el) => {
-                // 敵要素のRefを設定
-                if (enemyRefs.current) {
-                  enemyRefs.current[index] = el;
-                }
-              }}
-            >
-              <Enemy
-                enemy={enemy}
-                enemyHit={enemyHitFlags[index]}
-                playerHit={enemyAttackFlags[index]}
-                playerFire={enemyFireFlags[index]}
-                enemyDefeated={enemy.defeated}
-                showHealth={isTarget}
-                showTargetIndicator={isTarget}
-                progress={enemyProgress}
-                damage={damageNumbers[index]}
-                comboCount={comboCount}
-                scaleAdjustment={0.8*stageScale}
-                specialAttackType={specialAttackTypes[index] || null}
-                isCriticalHit={criticalHits[index] || false}
-                isScaleAnimating={isScaleAnimating}
-                scaleAnimationDuration={scaleAnimationDuration}
-              />
-            </div>
-          );
-        })}
-        {/* プレイヤーキャラクターの上にスキルコールアウトを表示 */}
-        {skillCallOut && (
-          <SkillCallOut skillName={skillCallOut} />
-        )}
+            />
+
+            {/* プレイヤーダメージ表示 */}
+            {playerDamageDisplay && (
+              <div
+                key={playerDamageDisplay.id}
+                className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-red-500 font-bold text-3xl animate-damage-fade"
+                style={{ textShadow: '2px 2px 4px rgba(0, 0, 0, 0.7)', zIndex: 30 }}
+              >
+                {playerDamageDisplay.value}
+              </div>
+            )}
+
+
+
+          </div>
+        </div>
+
         {/* 質問コンテナ */}
         {currentEnemies[targetIndex] &&
           currentEnemies[targetIndex].currentHP > 0 && (
@@ -329,32 +369,25 @@ const BattleStage: React.FC<BattleStageProps> = ({
             </div>
           )}
 
-        {/* メッセージ表示 */}
-        <div className="transition-all duration-300">
-          <MessageDisplay
-            newMessage={message}
-            position="bottom-30"
-          />
-        </div>
-      
 
+      </div>
+      {/* メッセージ表示 */}
+      <div className="transition-all duration-300">
+        <MessageDisplay
+          newMessage={message}
+          position="bottom-35"
+        />
+      </div>
       {/* プレイヤー領域 - HP低下時に背景が点滅 */}
-      <div
-        className="w-full relative background-transparent"
-        style={{
-          height: `${playerAreaHeight}px`,
-          //backgroundColor: getPlayerAreaBackground(),
-          //transition: 'background-color 0.5s ease'
-        }}
-      >
+      <div className="w-full relative">
         {/* レベル表示 - 左側に配置 */}
         <div
-          className="absolute z-30 left-2 top-[25%] transform -translate-y-1/2 bg-gray-800/30 p-3 rounded-lg border border-gray-600 shadow-lg player-status-panel"
-          style={{ 
-            minWidth: '130px', 
-            maxWidth: '1000px', 
-            width: '35%', 
-            height: '80px',
+          className="absolute z-30 left-2 top-[-50px] transform -translate-y-1/2 bg-gray-800/30 p-3 rounded-lg border border-gray-600 shadow-lg player-status-panel"
+          style={{
+            minWidth: '130px',
+            maxWidth: '1000px',
+            width: '35%',
+            height: '90px',
           }}
         >
           <div className="text-white font-bold text-xl text-center">Lv. {player.level}</div>
@@ -382,55 +415,17 @@ const BattleStage: React.FC<BattleStageProps> = ({
           </div>
         </div>
 
-        {/* プレイヤーキャラクター表示 - 中央に - スケール変更時のトランジション追加 */}
-        <div
-          className={`absolute z-20 pointer-events-none ${playerHitEffect 
-            ? 'player-shake' : playerAttackEffect ? 'player-attack-m' : ''
-            }`}
-            style={{
-              top: `-90px`,
-              left: "50%",
-              transform: "translateX(-50%)",
-              width: "160px",
-              height: "240px",
-              transition: scaleTransition
-            }}
-            ref={playerReff}
-        >
-          <img
-            src={playerImage}
-            alt="Player Character"
-            className="w-full h-full object-contain"
-            style={{
-              filter: getPlayerImageFilter(),
-              transition: `filter 0.5s ease, transform ${isScaleAnimating ? scaleAnimationDuration/1000 : 0.3}s ease-in-out`,
-              transform: `scale(${stageScale})`
-            }}
-          />
-
-          {/* プレイヤーダメージ表示 */}
-          {playerDamageDisplay && (
-            <div
-              key={playerDamageDisplay.id}
-              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-red-500 font-bold text-3xl animate-damage-fade"
-              style={{ textShadow: '2px 2px 4px rgba(0, 0, 0, 0.7)', zIndex: 30 }}
-            >
-              {playerDamageDisplay.value}
-            </div>
-          )}
-        </div>
-
         {/* HP/MP表示 - 右側に配置 */}
         <div
-          className="absolute z-30 right-2 top-[25%] transform -translate-y-1/2 bg-gray-800/80 p-3 rounded-lg border border-gray-600 shadow-lg player-status-panel"
-          style={{ 
-            minWidth: '130px', 
-            maxWidth: '1000px', 
-            width: '35%', 
-            height: '80px',
+          className="absolute z-30 right-2 top-[-50px] transform -translate-y-1/2 bg-gray-800/80 p-3 rounded-lg border border-gray-600 shadow-lg player-status-panel"
+          style={{
+            minWidth: '130px',
+            maxWidth: '1000px',
+            width: '35%',
+            height: '90px',
             backgroundColor: getPlayerAreaBackground(),
             transition: 'background-color 0.5s ease'
-           }}
+          }}
         >
           <div className="flex flex-col justify-center h-[60px]">
             {/* HPゲージ */}
@@ -461,7 +456,7 @@ const BattleStage: React.FC<BattleStageProps> = ({
               </div>
             </div>
           </div>
-        </div>
+
         </div>
       </div>
     </div>

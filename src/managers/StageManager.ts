@@ -123,9 +123,9 @@ export class StageManager {
         // 次のステージへの準備
         setReadyForNextStage(true);
 
-        // スケールをデフォルト値（1）に戻す
+        // スケールをデフォルト値（2）に戻す
         if (setStageScale) {
-          setStageScale(1);
+          setStageScale(2);
         }
       }, 2000);
     }
