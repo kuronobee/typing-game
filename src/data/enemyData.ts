@@ -92,7 +92,7 @@ const enemies: IEnemyData[] = [
     exp: 200,
     word: "golem",
     image: new URL("../assets/enemies/golem.png", import.meta.url).toString(),
-    scale: 1.2,
+    scale: 1.1,
     speed: 70,
     questionMode: "both",
     originalQuestions: [{

@@ -1,7 +1,7 @@
 // src/components/BattleStage.tsx - 背景とモンスターを一体としてスケーリングする版
 
 import React, { useEffect, useState, useRef } from "react";
-import bg from "../assets/bg/background.png";
+import bg from "../assets/bg/background.jpg";
 import playerImage from "../assets/chara/player.png"; // パスを修正
 import Enemy from "./Enemy";
 import {
@@ -273,7 +273,7 @@ const BattleStage: React.FC<BattleStageProps> = ({
                 key={index}
                 className="absolute z-10"
                 style={{
-                  bottom: `calc(150px + ${position.y}px)`,
+                  bottom: `calc(140px + ${position.y}px)`,
                   left: `calc(50% + ${position.x}px)`,
                   transform: "translateX(-50%)",
                 }}
@@ -316,9 +316,9 @@ const BattleStage: React.FC<BattleStageProps> = ({
 
           {/* プレイヤーキャラクター表示 */}
           <div
-            className={`absolute z-20 bottom-[-30px] pointer-events-none ${playerHitEffect
+            className={`absolute bottom-[-30px] pointer-events-none ${playerHitEffect
               ? 'player-shake' : playerAttackEffect ? 'player-attack-m' : ''
-              }`}
+              } z-20`}
             style={{
               //top: `300px`,
               left: "50%",

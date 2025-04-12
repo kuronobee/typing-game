@@ -544,7 +544,7 @@ const App: React.FC = () => {
       )}
       {/* ファイヤースキル発動 */}
       {effects.fireSkillEffect && (
-        <div className="z-500">
+        <div className="z-70">
           <FireSkillEffect
             skillName={effects.fireSkillEffect.skillName}
             targetPosition={effects.fireSkillEffect.targetPosition}
