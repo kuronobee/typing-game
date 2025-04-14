@@ -320,7 +320,7 @@ const App: React.FC = () => {
       }
 
       // ステージが完了したかチェック
-      checkStageCompletion();
+      checkStageCompletion(gameState.currentEnemies, currentStageId, currentFloorIndex);
     } else {
       // 不正解の場合
       playerAttack.setWrongAnswerMessage();
@@ -331,14 +331,16 @@ const App: React.FC = () => {
   };
 
   // ステージクリア判定と経験値獲得の関数 - StageManagerを使用
-  const checkStageCompletion = (enemies = gameState.currentEnemies) => {
+  const checkStageCompletion = (enemies = gameState.currentEnemies, stageId = currentStageId, floorIndex = currentFloorIndex) => {
     return StageManager.handleStageCompletion(
       enemies,
       gainEXP,
       gameState.setMessage,
       gameState.setReadyForNextStage,
       gameState.setStageScale,
-      isBossFloor
+      isBossFloor,
+      stageId,
+      floorIndex
     );
   };
 
@@ -354,7 +356,7 @@ const App: React.FC = () => {
     gameState.setCurrentEnemies(enemies);
     gameState.setTargetIndex(0);
     gameState.setMessage(message);
-    setBackgroundImage(bg);
+    setBackgroundImage(bg ?? "");
   };
 
   // 新規追加: 次のフロアに進む処理
@@ -529,7 +531,7 @@ const App: React.FC = () => {
         effects.showSkillCallOut(skill.name);
       }
 
-      skillHandler.handleSkillUse(skill, targetIndex);
+      skillHandler.handleSkillUse(skill, currentStageId, currentFloorIndex, targetIndex);
     } else {
       gameState.setMessage({
         text: "スキルシステムの初期化中...",
@@ -777,6 +779,8 @@ const App: React.FC = () => {
                 onNext={handleNextStage}
                 onStay={stayOnCurrentFloor}
                 isBossFloor={isBossFloor}
+                stageId={currentStageId}
+                floorIndex={currentFloorIndex}
               />
             )}
             {showRespawnEffect && (

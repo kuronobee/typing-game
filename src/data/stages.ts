@@ -12,7 +12,6 @@ export interface MonsterSet {
   description?: string; // モンスターセットの説明（任意）
 }
 
-// フロア情報の定義
 export interface Floor {
   id: string;
   name: string; // フロア名
@@ -22,6 +21,7 @@ export interface Floor {
   isBossFloor?: boolean; // ボスフロアかどうか
   description: string; // フロアの説明
   expBonus?: number; // 経験値ボーナス（通常の1.0倍に対する倍率）
+  minCompletionCount?: number; // 次のフロアに進むために必要な最低クリア回数
 }
 
 // ステージ情報の定義
@@ -42,44 +42,47 @@ export const stages: Stage[] = [
     name: "荒野",
     difficulty: "英検2級",
     backgroundClass: "../assets/bg/wildland.png",
-    description: "広大な荒野を舞台にした冒険。敵は素早く、攻撃力が高いため注意が必要です。",
+    description:
+      "広大な荒野を舞台にした冒険。敵は素早く、攻撃力が高いため注意が必要です。",
     unlocked: true, // 最初から解放
     floors: [
       {
         id: "wildlands_1",
         name: "草原地帯",
+        bg: new URL("../assets/bg/wildland.png", import.meta.url).toString(),
         monsterSets: [
           {
             id: "slime_pair",
             monsters: [
-              enemiesData.find(e => e.name === "スライム")!,
-              enemiesData.find(e => e.name === "スライム")!
+              enemiesData.find((e) => e.name === "スライム")!,
+              enemiesData.find((e) => e.name === "スライム")!,
             ],
-            positions: [{ x: -80, y: 0 }, { x: 80, y: 0 }],
+            positions: [
+              { x: -80, y: 0 },
+              { x: 80, y: 0 },
+            ],
             encounterRate: 0.6, // 60%の確率で出現
-            description: "2体のスライムが出現する一般的なパターン"
+            description: "2体のスライムが出現する一般的なパターン",
           },
           {
             id: "goblin_solo",
-            monsters: [
-              enemiesData.find(e => e.name === "ゴブリン")!
-            ],
+            monsters: [enemiesData.find((e) => e.name === "ゴブリン")!],
             positions: [{ x: 0, y: 0 }],
             encounterRate: 0.3, // 30%の確率で出現
-            description: "1体のゴブリンが単独で出現する珍しいパターン"
+            description: "1体のゴブリンが単独で出現する珍しいパターン",
           },
           {
             id: "rare_grizzly",
-            monsters: [
-              enemiesData.find(e => e.name === "グリズリー")!
-            ],
+            monsters: [enemiesData.find((e) => e.name === "グリズリー")!],
             positions: [{ x: 0, y: 0 }],
             encounterRate: 0.1, // 10%の確率で出現
-            description: "まれに出現する強敵グリズリー。このフロアでは特に危険"
-          }
+            description: "まれに出現する強敵グリズリー。このフロアでは特に危険",
+          },
         ],
         scale: 1.5,
-        description: "広大な草原地帯。弱い敵が多く出現します。時々、強敵に遭遇することも。"
+        description:
+          "広大な草原地帯。弱い敵が多く出現します。時々、強敵に遭遇することも。",
+        minCompletionCount: 3, // 次のフロアに進むためには最低3回クリアする必要がある
       },
       {
         id: "wildlands_2",
@@ -89,27 +92,35 @@ export const stages: Stage[] = [
           {
             id: "goblin_slime",
             monsters: [
-              enemiesData.find(e => e.name === "ゴブリン")!,
-              enemiesData.find(e => e.name === "スライム")!
+              enemiesData.find((e) => e.name === "ゴブリン")!,
+              enemiesData.find((e) => e.name === "スライム")!,
             ],
-            positions: [{ x: -70, y: 0 }, { x: 70, y: 0 }],
+            positions: [
+              { x: -70, y: 0 },
+              { x: 70, y: 0 },
+            ],
             encounterRate: 0.7, // 70%の確率で出現
-            description: "ゴブリンとスライムの組み合わせ。最も一般的なパターン"
+            description: "ゴブリンとスライムの組み合わせ。最も一般的なパターン",
           },
           {
             id: "multi_goblin",
             monsters: [
-              enemiesData.find(e => e.name === "ゴブリン")!,
-              enemiesData.find(e => e.name === "ゴブリン")!,
-              enemiesData.find(e => e.name === "ゴブリン")!
+              enemiesData.find((e) => e.name === "ゴブリン")!,
+              enemiesData.find((e) => e.name === "ゴブリン")!,
+              enemiesData.find((e) => e.name === "ゴブリン")!,
             ],
-            positions: [{ x: -100, y: 0 }, { x: 0, y: 0 }, { x: 100, y: 0 }],
+            positions: [
+              { x: -100, y: 0 },
+              { x: 0, y: 0 },
+              { x: 100, y: 0 },
+            ],
             encounterRate: 0.3, // 30%の確率で出現
-            description: "3体のゴブリンが一度に現れる厄介なパターン"
-          }
+            description: "3体のゴブリンが一度に現れる厄介なパターン",
+          },
         ],
         scale: 1.5,
-        description: "険しい岩場。ゴブリンが現れるようになります。"
+        description: "険しい岩場。ゴブリンが現れるようになります。",
+        minCompletionCount: 3, // 次のフロアに進むためには最低3回クリアする必要がある
       },
       {
         id: "wildlands_3",
@@ -119,36 +130,43 @@ export const stages: Stage[] = [
           {
             id: "goblin_pair_slime",
             monsters: [
-              enemiesData.find(e => e.name === "ゴブリン")!,
-              enemiesData.find(e => e.name === "ゴブリン")!,
-              enemiesData.find(e => e.name === "スライム")!
+              enemiesData.find((e) => e.name === "ゴブリン")!,
+              enemiesData.find((e) => e.name === "ゴブリン")!,
+              enemiesData.find((e) => e.name === "スライム")!,
             ],
-            positions: [{ x: -100, y: 0 }, { x: 0, y: 0 }, { x: 100, y: 0 }],
+            positions: [
+              { x: -100, y: 0 },
+              { x: 0, y: 0 },
+              { x: 100, y: 0 },
+            ],
             encounterRate: 0.5, // 50%の確率で出現
-            description: "2体のゴブリンと1体のスライムの組み合わせ"
+            description: "2体のゴブリンと1体のスライムの組み合わせ",
           },
           {
             id: "grizzly_slime",
             monsters: [
-              enemiesData.find(e => e.name === "グリズリー")!,
-              enemiesData.find(e => e.name === "スライム")!
+              enemiesData.find((e) => e.name === "グリズリー")!,
+              enemiesData.find((e) => e.name === "スライム")!,
             ],
-            positions: [{ x: -80, y: 0 }, { x: 80, y: 0 }],
+            positions: [
+              { x: -80, y: 0 },
+              { x: 80, y: 0 },
+            ],
             encounterRate: 0.4, // 40%の確率で出現
-            description: "グリズリーとスライムの組み合わせ。危険度が高い"
+            description: "グリズリーとスライムの組み合わせ。危険度が高い",
           },
           {
             id: "rare_golem",
-            monsters: [
-              enemiesData.find(e => e.name === "ゴーレム")!
-            ],
+            monsters: [enemiesData.find((e) => e.name === "ゴーレム")!],
             positions: [{ x: 0, y: 0 }],
             encounterRate: 0.1, // 10%の確率で出現
-            description: "まれに出現する非常に強力なゴーレム。このフロアでは特に警戒が必要"
-          }
+            description:
+              "まれに出現する非常に強力なゴーレム。このフロアでは特に警戒が必要",
+          },
         ],
         scale: 1.4,
-        description: "崖に囲まれた狭い通路。複数の敵が待ち構えています。"
+        description: "崖に囲まれた狭い通路。複数の敵が待ち構えています。",
+        minCompletionCount: 3, // 次のフロアに進むためには最低3回クリアする必要がある
       },
       {
         id: "wildlands_4",
@@ -157,27 +175,27 @@ export const stages: Stage[] = [
         monsterSets: [
           {
             id: "boss_grizzly",
-            monsters: [
-              enemiesData.find(e => e.name === "グリズリー")!
-            ],
+            monsters: [enemiesData.find((e) => e.name === "グリズリー")!],
             positions: [{ x: 0, y: 0 }],
             encounterRate: 1.0, // ボスは100%の確率で出現
-            description: "この荒野を支配する強大な獣。ボス戦となる"
-          }
+            description: "この荒野を支配する強大な獣。ボス戦となる",
+          },
         ],
         scale: 1.3,
         isBossFloor: true,
         expBonus: 1.5, // ボスフロアなので経験値1.5倍
-        description: "この荒野を支配する強大な獣の巣。ボスとの戦いに備えよう！"
-      }
-    ]
+        description: "この荒野を支配する強大な獣の巣。ボスとの戦いに備えよう！",
+        minCompletionCount: 1, // ボスフロアなのでクリア回数は1回でOK
+      },
+    ],
   },
   {
     id: "cave",
     name: "洞窟",
     difficulty: "英検2級",
     backgroundClass: "cave-bg",
-    description: "洞窟の奥深くに潜む強敵と戦います。防御力が高く、特殊な攻撃にも備えましょう。",
+    description:
+      "洞窟の奥深くに潜む強敵と戦います。防御力が高く、特殊な攻撃にも備えましょう。",
     unlocked: true, // 最初から解放
     floors: [
       {
@@ -187,25 +205,28 @@ export const stages: Stage[] = [
           {
             id: "bat_pair",
             monsters: [
-              enemiesData.find(e => e.name === "コウモリ") || enemiesData.find(e => e.name === "スライム")!,
-              enemiesData.find(e => e.name === "コウモリ") || enemiesData.find(e => e.name === "スライム")!
+              enemiesData.find((e) => e.name === "コウモリ") ||
+                enemiesData.find((e) => e.name === "スライム")!,
+              enemiesData.find((e) => e.name === "コウモリ") ||
+                enemiesData.find((e) => e.name === "スライム")!,
             ],
-            positions: [{ x: -70, y: 0 }, { x: 70, y: 0 }],
+            positions: [
+              { x: -70, y: 0 },
+              { x: 70, y: 0 },
+            ],
             encounterRate: 0.8, // 80%の確率で出現
-            description: "2体のコウモリの組み合わせ。最も一般的"
+            description: "2体のコウモリの組み合わせ。最も一般的",
           },
           {
             id: "rare_ghoul",
-            monsters: [
-              enemiesData.find(e => e.name === "マッドグール")!
-            ],
+            monsters: [enemiesData.find((e) => e.name === "マッドグール")!],
             positions: [{ x: 0, y: 0 }],
             encounterRate: 0.2, // 20%の確率で出現
-            description: "まれに出現する強敵。この階層では特に危険"
-          }
+            description: "まれに出現する強敵。この階層では特に危険",
+          },
         ],
         scale: 1.2,
-        description: "洞窟の入口付近。まだ明るく、比較的弱い敵が出現します。"
+        description: "洞窟の入口付近。まだ明るく、比較的弱い敵が出現します。",
       },
       {
         id: "cave_2",
@@ -213,26 +234,29 @@ export const stages: Stage[] = [
         monsterSets: [
           {
             id: "single_ghoul",
-            monsters: [
-              enemiesData.find(e => e.name === "マッドグール")!
-            ],
+            monsters: [enemiesData.find((e) => e.name === "マッドグール")!],
             positions: [{ x: 0, y: 0 }],
             encounterRate: 0.6, // 60%の確率で出現
-            description: "1体のマッドグール。一般的なパターン"
+            description: "1体のマッドグール。一般的なパターン",
           },
           {
             id: "bat_ghoul",
             monsters: [
-              enemiesData.find(e => e.name === "コウモリ") || enemiesData.find(e => e.name === "スライム")!,
-              enemiesData.find(e => e.name === "マッドグール")!
+              enemiesData.find((e) => e.name === "コウモリ") ||
+                enemiesData.find((e) => e.name === "スライム")!,
+              enemiesData.find((e) => e.name === "マッドグール")!,
             ],
-            positions: [{ x: -80, y: 0 }, { x: 80, y: 0 }],
+            positions: [
+              { x: -80, y: 0 },
+              { x: 80, y: 0 },
+            ],
             encounterRate: 0.4, // 40%の確率で出現
-            description: "コウモリとマッドグールの組み合わせ。対処が難しい"
-          }
+            description: "コウモリとマッドグールの組み合わせ。対処が難しい",
+          },
         ],
         scale: 1.2,
-        description: "美しい鍾乳石が垂れ下がる洞窟。しかし危険な敵が潜んでいます。"
+        description:
+          "美しい鍾乳石が垂れ下がる洞窟。しかし危険な敵が潜んでいます。",
       },
       {
         id: "cave_3",
@@ -241,37 +265,48 @@ export const stages: Stage[] = [
           {
             id: "dual_ghoul",
             monsters: [
-              enemiesData.find(e => e.name === "マッドグール")!,
-              enemiesData.find(e => e.name === "マッドグール")!
+              enemiesData.find((e) => e.name === "マッドグール")!,
+              enemiesData.find((e) => e.name === "マッドグール")!,
             ],
-            positions: [{ x: -80, y: 0 }, { x: 80, y: 0 }],
+            positions: [
+              { x: -80, y: 0 },
+              { x: 80, y: 0 },
+            ],
             encounterRate: 0.6, // 60%の確率で出現
-            description: "2体のマッドグール。最も一般的なパターン"
+            description: "2体のマッドグール。最も一般的なパターン",
           },
           {
             id: "rare_mini_golem",
             monsters: [
-              enemiesData.find(e => e.name === "ゴーレム")!,
-              enemiesData.find(e => e.name === "マッドグール")!
+              enemiesData.find((e) => e.name === "ゴーレム")!,
+              enemiesData.find((e) => e.name === "マッドグール")!,
             ],
-            positions: [{ x: -100, y: 0 }, { x: 100, y: 0 }],
+            positions: [
+              { x: -100, y: 0 },
+              { x: 100, y: 0 },
+            ],
             encounterRate: 0.3, // 30%の確率で出現
-            description: "ゴーレムとマッドグールの組み合わせ。ボス戦の前触れ"
+            description: "ゴーレムとマッドグールの組み合わせ。ボス戦の前触れ",
           },
           {
             id: "very_rare_triple",
             monsters: [
-              enemiesData.find(e => e.name === "マッドグール")!,
-              enemiesData.find(e => e.name === "マッドグール")!,
-              enemiesData.find(e => e.name === "マッドグール")!
+              enemiesData.find((e) => e.name === "マッドグール")!,
+              enemiesData.find((e) => e.name === "マッドグール")!,
+              enemiesData.find((e) => e.name === "マッドグール")!,
             ],
-            positions: [{ x: -120, y: 0 }, { x: 0, y: 0 }, { x: 120, y: 0 }],
+            positions: [
+              { x: -120, y: 0 },
+              { x: 0, y: 0 },
+              { x: 120, y: 0 },
+            ],
             encounterRate: 0.1, // 10%の確率で出現
-            description: "3体のマッドグールが一度に現れる非常に稀なパターン。最高難度"
-          }
+            description:
+              "3体のマッドグールが一度に現れる非常に稀なパターン。最高難度",
+          },
         ],
         scale: 1.2,
-        description: "地下水が流れる湿った通路。多くの敵が待ち構えています。"
+        description: "地下水が流れる湿った通路。多くの敵が待ち構えています。",
       },
       {
         id: "cave_4",
@@ -279,27 +314,28 @@ export const stages: Stage[] = [
         monsterSets: [
           {
             id: "boss_golem",
-            monsters: [
-              enemiesData.find(e => e.name === "ゴーレム")!
-            ],
+            monsters: [enemiesData.find((e) => e.name === "ゴーレム")!],
             positions: [{ x: 0, y: -30 }],
             encounterRate: 1.0, // ボスは100%の確率で出現
-            description: "洞窟の主であるゴーレム。強力な一撃に注意"
-          }
+            description: "洞窟の主であるゴーレム。強力な一撃に注意",
+          },
         ],
         scale: 1.0, // ボス戦なので少し引きで表示
         isBossFloor: true,
         expBonus: 1.8, // ボスフロアなので経験値1.8倍
-        description: "洞窟の最深部に広がる広大な空間。ここに洞窟の主が待ち構えています！"
-      }
-    ]
-  }
+        description:
+          "洞窟の最深部に広がる広大な空間。ここに洞窟の主が待ち構えています！",
+      },
+    ],
+  },
 ];
 
 // プレーヤーの現在の進行状況を管理するクラス
 export class StageProgressionManager {
   // 現在のステージとフロアの保存用キー
-  private static readonly STORAGE_KEY = 'game_progression';
+  private static readonly STORAGE_KEY = "game_progression";
+  // フロア別クリア回数保存用キー
+  private static readonly COMPLETION_COUNT_KEY = "floor_completion_counts";
 
   // 現在のステージとフロアのインデックスを取得
   static getCurrentProgress(): { stageId: string; floorIndex: number } {
@@ -309,7 +345,7 @@ export class StageProgressionManager {
         return JSON.parse(savedData);
       }
     } catch (error) {
-      console.error('進行状況の取得に失敗しました', error);
+      console.error("進行状況の取得に失敗しました", error);
     }
 
     // 初期値：最初のステージの最初のフロア
@@ -319,15 +355,21 @@ export class StageProgressionManager {
   // 進行状況を保存
   static saveProgress(stageId: string, floorIndex: number): void {
     try {
-      localStorage.setItem(this.STORAGE_KEY, JSON.stringify({ stageId, floorIndex }));
+      localStorage.setItem(
+        this.STORAGE_KEY,
+        JSON.stringify({ stageId, floorIndex })
+      );
     } catch (error) {
-      console.error('進行状況の保存に失敗しました', error);
+      console.error("進行状況の保存に失敗しました", error);
     }
   }
 
   // 次のフロアへ進む（同じステージ内）
-  static advanceToNextFloor(currentStageId: string, currentFloorIndex: number): { stageId: string; floorIndex: number } {
-    const currentStage = stages.find(s => s.id === currentStageId);
+  static advanceToNextFloor(
+    currentStageId: string,
+    currentFloorIndex: number
+  ): { stageId: string; floorIndex: number } {
+    const currentStage = stages.find((s) => s.id === currentStageId);
     if (!currentStage) {
       return { stageId: currentStageId, floorIndex: currentFloorIndex };
     }
@@ -340,7 +382,7 @@ export class StageProgressionManager {
     }
 
     // 次のステージがあるかチェック
-    const currentStageIndex = stages.findIndex(s => s.id === currentStageId);
+    const currentStageIndex = stages.findIndex((s) => s.id === currentStageId);
     if (currentStageIndex < stages.length - 1) {
       const nextStageId = stages[currentStageIndex + 1].id;
       this.saveProgress(nextStageId, 0);
@@ -353,7 +395,7 @@ export class StageProgressionManager {
 
   // 特定のステージとフロアを取得
   static getFloor(stageId: string, floorIndex: number): Floor | null {
-    const stage = stages.find(s => s.id === stageId);
+    const stage = stages.find((s) => s.id === stageId);
     if (!stage || floorIndex < 0 || floorIndex >= stage.floors.length) {
       return null;
     }
@@ -367,17 +409,22 @@ export class StageProgressionManager {
     }
 
     // エンカウント率の合計が1.0になっていることを確認
-    const totalRate = floor.monsterSets.reduce((sum, set) => sum + set.encounterRate, 0);
-    
+    const totalRate = floor.monsterSets.reduce(
+      (sum, set) => sum + set.encounterRate,
+      0
+    );
+
     // ほぼ1.0に近い場合は正規化せずそのまま使用
     if (Math.abs(totalRate - 1.0) > 0.01) {
-      console.warn(`フロア ${floor.id} のエンカウント率合計が1.0ではありません (${totalRate})`);
+      console.warn(
+        `フロア ${floor.id} のエンカウント率合計が1.0ではありません (${totalRate})`
+      );
       // 必要に応じて正規化することも可能
     }
 
     // 乱数を生成 (0.0〜1.0)
     const rand = Math.random();
-    
+
     // 乱数に基づいてモンスターセットを選択
     let cumulativeRate = 0;
     for (const monsterSet of floor.monsterSets) {
@@ -399,13 +446,94 @@ export class StageProgressionManager {
 
   // ステージ内の総フロア数を取得
   static getTotalFloorsInStage(stageId: string): number {
-    const stage = stages.find(s => s.id === stageId);
+    const stage = stages.find((s) => s.id === stageId);
     return stage ? stage.floors.length : 0;
   }
 
   // 現在のステージを取得
   static getCurrentStage(): Stage | null {
     const { stageId } = this.getCurrentProgress();
-    return stages.find(s => s.id === stageId) || null;
+    return stages.find((s) => s.id === stageId) || null;
+  }
+
+  // フロアのクリア回数を加算
+  static incrementFloorCompletionCount(
+    stageId: string,
+    floorIndex: number
+  ): void {
+    try {
+      // 現在のクリア回数を取得
+      const counts = this.getFloorCompletionCounts();
+      const key = `${stageId}:${floorIndex}`;
+
+      // 現在の値があれば加算、なければ1を設定
+      counts[key] = (counts[key] || 0) + 1;
+
+      // 更新した値を保存
+      localStorage.setItem(this.COMPLETION_COUNT_KEY, JSON.stringify(counts));
+      console.log(`フロアクリア回数更新: ${key} = ${counts[key]}回`);
+    } catch (error) {
+      console.error("フロアクリア回数の更新に失敗しました", error);
+    }
+  }
+
+  // 特定のフロアのクリア回数を取得
+  static getFloorCompletionCount(stageId: string, floorIndex: number): number {
+    try {
+      const counts = this.getFloorCompletionCounts();
+      const key = `${stageId}:${floorIndex}`;
+      return counts[key] || 0;
+    } catch (error) {
+      console.error("フロアクリア回数の取得に失敗しました", error);
+      return 0;
+    }
+  }
+  // すべてのフロアのクリア回数を取得
+  static getFloorCompletionCounts(): Record<string, number> {
+    try {
+      const savedData = localStorage.getItem(this.COMPLETION_COUNT_KEY);
+      return savedData ? JSON.parse(savedData) : {};
+    } catch (error) {
+      console.error("フロアクリア回数の取得に失敗しました", error);
+      return {};
+    }
+  }
+
+  // フロアが次に進むための条件を満たしているか確認
+  static canAdvanceToNextFloor(stageId: string, floorIndex: number): boolean {
+    // フロア情報を取得
+    const floor = this.getFloor(stageId, floorIndex);
+    if (!floor) return true; // フロア情報がない場合は制限なし
+
+    // 最低クリア回数の制限がある場合はチェック
+    const minRequired = floor.minCompletionCount || 0;
+    if (minRequired <= 0) return true; // 制限なし
+
+    // 現在のクリア回数と比較
+    const currentCount = this.getFloorCompletionCount(stageId, floorIndex);
+    return currentCount >= minRequired;
+  }
+
+  // 現在の条件状況を含めた詳細情報を取得
+  static getFloorAdvanceStatus(
+    stageId: string,
+    floorIndex: number
+  ): {
+    canAdvance: boolean;
+    currentCount: number;
+    requiredCount: number;
+    remainingCount: number;
+  } {
+    const floor = this.getFloor(stageId, floorIndex);
+    const minRequired = floor?.minCompletionCount || 0;
+    const currentCount = this.getFloorCompletionCount(stageId, floorIndex);
+    const remainingCount = Math.max(0, minRequired - currentCount);
+
+    return {
+      canAdvance: this.canAdvanceToNextFloor(stageId, floorIndex),
+      currentCount,
+      requiredCount: minRequired,
+      remainingCount,
+    };
   }
 }

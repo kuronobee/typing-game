@@ -35,7 +35,7 @@ export class SkillHandler {
   private setHitFlag: (targetIndex: number, duration: number) => void;
   private showSkillEffect: (props: SkillEffectProps) => void;
   private showFireSkillEffect: (props: FireSkillEffectProps) => void;
-  private checkStageCompletion: (enemies: Enemy[]) => void;
+  private checkStageCompletion: (enemies: Enemy[], stageId: string, floorIndex: number) => void;
   private setEnemyDefeatedMessage: (enemyName: string) => void;
   private findNextAliveEnemyIndex: (
     startIndex: number,
@@ -69,7 +69,7 @@ export class SkillHandler {
     setHitFlag: (targetIndex: number, duration: number) => void,
     showSkillEffect: (props: SkillEffectProps) => void,
     showFireSkillEffect: (props: FireSkillEffectProps) => void,
-    checkStageCompletion: (enemies: Enemy[]) => void,
+    checkStageCompletion: (enemies: Enemy[], stageId: string, floorIndex: number) => void,
     setEnemyDefeatedMessage: (enemyName: string) => void,
     findNextAliveEnemyIndex: (startIndex: number, enemies: Enemy[]) => number,
     setTargetIndex: React.Dispatch<React.SetStateAction<number>>,
@@ -172,32 +172,32 @@ export class SkillHandler {
   /**
    * スキル使用ハンドラのメインメソッド
    */
-  handleSkillUse(skill: SkillInstance, targetIndex?: number): void {
+  handleSkillUse(skill: SkillInstance, currentStageId: string, currentFloorIndex: number, targetIndex?: number): void {
     // スキルがコマンド型（即時発動）の場合
     if (skill.activationTiming === "onCommand") {
-      this.handleCommandSkill(skill, targetIndex);
+      this.handleCommandSkill(skill, currentStageId, currentFloorIndex, targetIndex);
     }
     // onCorrectAnswerスキルの場合はスキルタイプに基づいて処理
     else if (skill.activationTiming === "onCorrectAnswer") {
       // ファイヤボルトスキルの場合
       if (skill.id === "fire_bolt") {
         // 既にsetActiveSkill(null)が呼ばれた後に実行される
-        this.handleFireBoltSkill(skill, targetIndex);
+        this.handleFireBoltSkill(skill, currentStageId, currentFloorIndex, targetIndex);
       }
       // ファイヤボールスキルの場合
       else if (skill.id === "fire_ball") {
-        this.handleFireBallSkill(skill, targetIndex);
+        this.handleFireBallSkill(skill, currentStageId, currentFloorIndex, targetIndex);
       }
       // ファイヤストームスキルの場合
       else if (skill.id === "fire_storm") {
         if (targetIndex !== undefined) {
-            this.handleFireStormSkill(skill, targetIndex);
+            this.handleFireStormSkill(skill, currentStageId, currentFloorIndex, targetIndex);
         }
       }
       // その他のスキル
       else {
         // 他のonCorrectAnswerスキルがあれば追加
-        this.handleGenericDamageSkill(skill, targetIndex);
+        this.handleGenericDamageSkill(skill, currentStageId, currentFloorIndex,targetIndex);
       }
     } else {
       // コマンド型でないスキルは活性化して後で使用
@@ -207,7 +207,7 @@ export class SkillHandler {
   /**
    * コマンド型スキル（即時発動）の処理
    */
-  private handleCommandSkill(skill: SkillInstance, targetIndex?: number): void {
+  private handleCommandSkill(skill: SkillInstance, stageId: string, floorIndex: number, targetIndex?: number): void {
     // 単体敵対象スキルの場合は targetIndex を確認
     if (skill.targetType === "singleEnemy" && targetIndex === undefined) {
       this.setMessage({
@@ -232,7 +232,7 @@ export class SkillHandler {
         this.handleHealSkill(skill);
         break;
       case "damage":
-        this.handleDamageSkill(skill, targetIndex);
+        this.handleDamageSkill(skill, stageId, floorIndex, targetIndex);
         break;
       case "buff":
         this.handleBuffSkill(skill);
@@ -310,17 +310,17 @@ export class SkillHandler {
   /**
    * ダメージ系スキル処理
    */
-  private handleDamageSkill(skill: SkillInstance, targetIndex?: number): void {
+  private handleDamageSkill(skill: SkillInstance, stageId: string, floorIndex: number, targetIndex?: number): void {
     // スキルIDに基づいた個別処理
     if (skill.id === "fire_bolt") {
-      this.handleFireBoltSkill(skill, targetIndex);
+      this.handleFireBoltSkill(skill, stageId, floorIndex, targetIndex);
     } else if (skill.id === "fire_ball") {
-      this.handleFireBallSkill(skill, targetIndex);
+      this.handleFireBallSkill(skill, stageId, floorIndex, targetIndex);
     } else if (skill.id === "fire_storm") {
-      this.handleFireStormSkill(skill, targetIndex || 0);
+      this.handleFireStormSkill(skill, stageId, floorIndex, targetIndex || 0);
     } else {
       // 一般的なダメージスキル処理
-      this.handleGenericDamageSkill(skill, targetIndex);
+      this.handleGenericDamageSkill(skill, stageId, floorIndex, targetIndex);
     }
   }
 
@@ -331,7 +331,9 @@ export class SkillHandler {
  */
 private handleFireBoltSkill(
     skill: SkillInstance,
-    targetIndex?: number
+    currentStageId: string,
+    currentFloorIndex: number,
+    targetIndex?: number,
   ): void {
     if (targetIndex === undefined) {
       this.setMessage({ text: "攻撃対象が定まっていない！", sender: "system" });
@@ -425,7 +427,7 @@ private handleFireBoltSkill(
                 }
   
                 // 全ての敵が倒されたかを確認してステージクリア処理
-                this.checkStageCompletion(this.currentEnemies);
+                this.checkStageCompletion(this.currentEnemies, currentStageId, currentFloorIndex);
               }, 2000);
             }
           }
@@ -443,6 +445,8 @@ private handleFireBoltSkill(
    */
   private handleFireBallSkill(
     skill: SkillInstance,
+    currentStageId: string,
+    currentFloorIndex: number,
     targetIndex?: number
   ): void {
     if (targetIndex === undefined) {
@@ -511,7 +515,7 @@ private handleFireBoltSkill(
               }, 2000);
             }
 
-            this.checkStageCompletion(this.currentEnemies);
+            this.checkStageCompletion(this.currentEnemies, currentStageId, currentFloorIndex);
           }
         },
       });
@@ -523,6 +527,8 @@ private handleFireBoltSkill(
    */
   private handleFireStormSkill(
     skill: SkillInstance,
+    currentStageId: string,
+    currentFloorIndex: number,
     targetIndex: number
   ): void {
     // MP消費処理
@@ -621,7 +627,7 @@ private handleFireBoltSkill(
           }
 
           // ステージクリア判定
-          this.checkStageCompletion(this.currentEnemies);
+          this.checkStageCompletion(this.currentEnemies, currentStageId, currentFloorIndex);
         },
       });
     }
@@ -632,6 +638,8 @@ private handleFireBoltSkill(
    */
   private handleGenericDamageSkill(
     skill: SkillInstance,
+    currentStageId: string,
+    currentFloorIndex: number,
     targetIndex?: number
   ): void {
     if (skill.targetType === "singleEnemy" && targetIndex === undefined) {
@@ -715,7 +723,7 @@ private handleFireBoltSkill(
       });
 
       // ステージクリア判定
-      this.checkStageCompletion(this.currentEnemies);
+      this.checkStageCompletion(this.currentEnemies, currentStageId, currentFloorIndex);
     } else {
       this.setMessage({
         text: result.message,
