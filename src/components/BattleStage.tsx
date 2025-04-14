@@ -1,7 +1,7 @@
 // src/components/BattleStage.tsx - 背景とモンスターを一体としてスケーリングする版
 
 import React, { useEffect, useState, useRef } from "react";
-import bg from "../assets/bg/background.jpg";
+import bg from "../assets/bg/wildland.png";
 import playerImage from "../assets/chara/player.png"; // パスを修正
 import Enemy from "./Enemy";
 import {
@@ -49,6 +49,7 @@ interface BattleStageProps {
   playerReff?: React.RefObject<HTMLDivElement | null>;
   stageScale?: number;
   scaleAnimationDuration?: number; // 追加: スケールアニメーションの時間（ミリ秒）
+  backgroundImage?: string; // 追加: 背景画像のURL
 }
 
 const BattleStage: React.FC<BattleStageProps> = ({
@@ -77,8 +78,9 @@ const BattleStage: React.FC<BattleStageProps> = ({
   specialAttackTypes = [],
   criticalHits = [],
   playerReff,
-  stageScale = 2,
+  stageScale = 1,
   scaleAnimationDuration = 1000, // デフォルト1秒
+  backgroundImage = bg, // デフォルトの背景画像
 }) => {
 
   // 各敵毎の攻撃ゲージ進捗を管理する配列(0〜1)
@@ -244,10 +246,10 @@ const BattleStage: React.FC<BattleStageProps> = ({
           <div
             className="absolute inset-0 w-full h-full z-10"
             style={{
-              backgroundImage: `url(${bg})`,
+              backgroundImage: `url(${backgroundImage})`,
               backgroundRepeat: "no-repeat",
               backgroundPosition: "center center",
-              backgroundSize: `100%`,
+              //backgroundSize: `100%`,
             }}
           />
 

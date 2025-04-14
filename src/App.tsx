@@ -6,9 +6,11 @@ import GameOver from "./components/GameOver";
 import LevelUpNotifier from "./components/LevelUpNotifier";
 import CombatEffects from "./components/CombatEffects";
 import NextStageButton from "./components/NextStageButton";
+import StageSelection from "./components/StageSelection";
 
 import { Player as PlayerModel } from "./models/Player";
 import { ENEMY_HIT_ANIMATION_DURATION } from "./data/constants";
+import { StageProgressionManager } from "./data/stages";  // ステージ進行管理クラス
 
 // カスタムフックのインポート
 import useIOSScrollPrevention from "./hooks/useIOSScrollPrevention";
@@ -33,12 +35,21 @@ import SkillAcquisitionNotification from "./components/SkillAcquisitionNotificat
 const App: React.FC = () => {
   const inputRef = useRef<HTMLInputElement | null>(null);
 
+  // 変更部分: ステージとフロア管理の状態変数追加
+  const [gameStarted, setGameStarted] = useState(false);
+  const [currentStageId, setCurrentStageId] = useState<string>("");
+  const [currentFloorIndex, setCurrentFloorIndex] = useState<number>(0);
+  const [isBossFloor, setIsBossFloor] = useState<boolean>(false);
+  const [backgroundImage, setBackgroundImage] = useState<string>("");
+  // 状態変数追加
+  const [showRespawnEffect, setShowRespawnEffect] = useState(false);
+
   // カスタムフックの使用
   useIOSScrollPrevention(inputRef);
 
   // ゲーム状態管理フックを使用
   const gameState = useGameState();
-  
+
   // 視覚効果管理フックを使用
   const effects = useEffects();
 
@@ -47,10 +58,10 @@ const App: React.FC = () => {
 
   // マウント時に入力フィールドにフォーカス
   useEffect(() => {
-    if (inputRef.current) {
+    if (inputRef.current && gameStarted) {
       inputRef.current.focus();
     }
-  }, []);
+  }, [gameStarted]);
 
   // 敵キャラクターのDOM要素への参照を保持するためのRef配列
   const enemyRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -67,10 +78,10 @@ const App: React.FC = () => {
 
   // 戦闘システムフック
   const combat = useCombatSystem(
-    gameState.player, 
-    gameState.setPlayer, 
-    gameState.currentEnemies, 
-    gameState.setMessage, 
+    gameState.player,
+    gameState.setPlayer,
+    gameState.currentEnemies,
+    gameState.setMessage,
     effects.showPlayerHitEffect
   );
 
@@ -113,10 +124,25 @@ const App: React.FC = () => {
     }
   }, [gameState.player, gameState.currentEnemies, effects, skillManagement]);
 
-  // マウント時に初期ステージを生成
-  useEffect(() => {
-    spawnNewStage();
-  }, []);
+  // // マウント時に初期ステージを生成
+  // useEffect(() => {
+  //   spawnNewStage();
+  // }, []);
+  // ステージ選択時の処理
+  const handleStageSelect = (stageId: string, floorIndex: number) => {
+    // 選択されたステージとフロアを保存
+    setCurrentStageId(stageId);
+    setCurrentFloorIndex(floorIndex);
+
+    // 進行状況を保存
+    StageProgressionManager.saveProgress(stageId, floorIndex);
+
+    // ゲーム開始状態に設定
+    setGameStarted(true);
+
+    // 選択されたステージとフロアに基づいてステージを生成
+    spawnStage(stageId, floorIndex);
+  };
 
   // ターゲットが変わったときに現在の問題を更新
   useEffect(() => {
@@ -311,8 +337,45 @@ const App: React.FC = () => {
       gainEXP,
       gameState.setMessage,
       gameState.setReadyForNextStage,
-      gameState.setStageScale
+      gameState.setStageScale,
+      isBossFloor
     );
+  };
+
+  // 新規追加: 特定のステージとフロアを生成
+  const spawnStage = (stageId: string, floorIndex: number) => {
+    const { enemies, message, scale, bg, isBossFloor: isNewBossFloor } = StageManager.createStage(stageId, floorIndex);
+
+    // ボスフロアの情報を更新
+    setIsBossFloor(isNewBossFloor || false);
+
+    // ゲーム状態を更新
+    gameState.setStageScale(scale ?? 2);
+    gameState.setCurrentEnemies(enemies);
+    gameState.setTargetIndex(0);
+    gameState.setMessage(message);
+    setBackgroundImage(bg);
+  };
+
+  // 新規追加: 次のフロアに進む処理
+  const advanceToNextFloor = () => {
+    // 次のフロア情報を取得
+    // 現在のステージとフロアを取得
+    const { stageId: currentStageId, floorIndex: currentFloorIndex } =
+      StageProgressionManager.getCurrentProgress();
+
+    // 次のフロア情報を取得
+    const { stageId: nextStageId, floorIndex: nextFloorIndex } =
+      StageProgressionManager.advanceToNextFloor(currentStageId, currentFloorIndex);
+    // 現在のステージとフロアを更新
+    setCurrentStageId(nextStageId);
+    setCurrentFloorIndex(nextFloorIndex);
+
+    // 次のフロアを生成
+    spawnStage(nextStageId, nextFloorIndex);
+
+    // 準備完了状態をリセット
+    gameState.setReadyForNextStage(false);
   };
 
   // レベルアップ完了時のコールバックを保持するref
@@ -440,8 +503,8 @@ const App: React.FC = () => {
   };
 
   // 新しい戦闘ステージを生成
-  const spawnNewStage = () => {
-    const { enemies, message, scale } = StageManager.createNewStage();
+  const spawnNewStage = (stageId?: string) => {
+    const { enemies, message, scale } = StageManager.createNewStage(stageId);
     gameState.setStageScale(scale ?? 2);
     gameState.setCurrentEnemies(enemies);
     gameState.setTargetIndex(0);
@@ -509,12 +572,40 @@ const App: React.FC = () => {
     if (gameState.currentEnemies.every((enemy) => enemy.defeated)) {
       spawnNewStage();
     }
+
+    if (gameState.currentEnemies.every((enemy) => enemy.defeated)) {
+      const { stageId, floorIndex } = StageProgressionManager.getCurrentProgress();
+      spawnStage(stageId, floorIndex);
+    }
+  };
+
+  // 新しい関数: 現在のフロアに留まる処理
+  const stayOnCurrentFloor = () => {
+    // クリア効果を表示
+    setShowRespawnEffect(true);
+
+    // エフェクト表示後に敵を再生成
+    setTimeout(() => {
+      // 現在のステージとフロアを再生成
+      spawnStage(currentStageId, currentFloorIndex);
+      // 準備完了状態をリセット
+      gameState.setReadyForNextStage(false);
+      // 留まったことを示すメッセージを表示
+      gameState.setMessage({
+        text: `同じフロアで訓練を続けます。`,
+        sender: "system",
+      });
+
+      // エフェクトを一定時間後に非表示
+      setTimeout(() => {
+        setShowRespawnEffect(false);
+      }, 1000);
+    }, 500);
   };
 
   // 次のステージへ進むハンドラ
   const handleNextStage = () => {
-    spawnNewStage();
-    gameState.setReadyForNextStage(false);
+    advanceToNextFloor();
   };
 
   // プレイヤーが死亡したらゲームオーバー画面を表示(戦闘不能になってから5秒後)
@@ -528,6 +619,11 @@ const App: React.FC = () => {
     }
   }, [gameState.player.hp]);
 
+  // ゲーム開始前はステージ選択画面を表示
+  if (!gameStarted) {
+    return <StageSelection onStageSelect={handleStageSelect} />;
+  }
+
   return (
     <CombatEffects
       isScreenHit={combat.isScreenHit}
@@ -540,7 +636,20 @@ const App: React.FC = () => {
       )}
 
       {gameState.showGameOver && (
-        <GameOver totalEXP={gameState.player.totalExp} onContinue={handleContinueGame} />
+        <div className="bg-black">
+          {/* フロア情報を表示 */}
+          <div className="absolute top-0 left-0 bg-gray-900 bg-opacity-70 px-3 py-1 m-2 rouonded-md z-50 text-xs">
+            <div className="text-white">
+              {isBossFloor ? (
+                <span className="text-red-400 font-bold">ボスフロア</span>
+              ) : (
+                <span>フロア: </span>
+              )}
+              {currentFloorIndex + 1}/{StageProgressionManager.getTotalFloorsInStage(currentStageId)}
+            </div>
+          </div>
+          <GameOver totalEXP={gameState.player.totalExp} onContinue={handleContinueGame} />
+        </div>
       )}
       {/* ファイヤースキル発動 */}
       {effects.fireSkillEffect && (
@@ -548,7 +657,7 @@ const App: React.FC = () => {
           <FireSkillEffect
             skillName={effects.fireSkillEffect.skillName}
             targetPosition={effects.fireSkillEffect.targetPosition}
-            sourcePosition={effects.fireSkillEffect.sourcePosition} 
+            sourcePosition={effects.fireSkillEffect.sourcePosition}
             damageValue={effects.fireSkillEffect.damageValue}
             power={effects.fireSkillEffect.power}
             onComplete={() => {
@@ -644,6 +753,7 @@ const App: React.FC = () => {
               playerReff={playerRef}
               stageScale={gameState.stageScale ?? 1}
               scaleAnimationDuration={1500}
+              backgroundImage={backgroundImage}
             />
 
             {/* レベルアップ通知 */}
@@ -653,7 +763,7 @@ const App: React.FC = () => {
                 level={gameState.currentShowingLevel}
                 onClose={handleCloseLevelUp}
               />
-            )}            
+            )}
             {/* スキル獲得通知 */}
             {skillManagement.newlyAcquiredSkill && (
               <SkillAcquisitionNotification
@@ -665,7 +775,12 @@ const App: React.FC = () => {
             {gameState.readyForNextStage && gameState.levelUpQueue.length === 0 && (
               <NextStageButton
                 onNext={handleNextStage}
+                onStay={stayOnCurrentFloor}
+                isBossFloor={isBossFloor}
               />
+            )}
+            {showRespawnEffect && (
+              <div className="clear-flash"></div>
             )}
           </div>
         </div>
