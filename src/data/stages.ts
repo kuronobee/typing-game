@@ -408,18 +408,13 @@ export class StageProgressionManager {
       return null;
     }
 
-    // エンカウント率の合計が1.0になっていることを確認
-    const totalRate = floor.monsterSets.reduce(
-      (sum, set) => sum + set.encounterRate,
-      0
-    );
-
-    // ほぼ1.0に近い場合は正規化せずそのまま使用
-    if (Math.abs(totalRate - 1.0) > 0.01) {
+    // エンカウント率の合計が1.0になっていることを確認し、必要なら正規化
+    const totalRate = floor.monsterSets.reduce((sum, set) => sum + set.encounterRate, 0);
+    const needsNormalize = Math.abs(totalRate - 1.0) > 0.01 && totalRate > 0;
+    if (needsNormalize) {
       console.warn(
-        `フロア ${floor.id} のエンカウント率合計が1.0ではありません (${totalRate})`
+        `フロア ${floor.id} のエンカウント率合計が1.0ではありません (${totalRate})。正規化して使用します。`
       );
-      // 必要に応じて正規化することも可能
     }
 
     // 乱数を生成 (0.0〜1.0)
@@ -427,10 +422,13 @@ export class StageProgressionManager {
 
     // 乱数に基づいてモンスターセットを選択
     let cumulativeRate = 0;
-    for (const monsterSet of floor.monsterSets) {
-      cumulativeRate += monsterSet.encounterRate;
+    for (let i = 0; i < floor.monsterSets.length; i++) {
+      const rate = needsNormalize
+        ? floor.monsterSets[i].encounterRate / totalRate
+        : floor.monsterSets[i].encounterRate;
+      cumulativeRate += rate;
       if (rand <= cumulativeRate) {
-        return monsterSet;
+        return floor.monsterSets[i];
       }
     }
 

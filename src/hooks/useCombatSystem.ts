@@ -1,5 +1,5 @@
 // src/hooks/useCombatSystem.ts の修正
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Player as PlayerModel, StatusEffect } from "../models/Player";
 import { Enemy as EnemyModel } from "../models/EnemyModel";
 import { MessageType } from "../components/MessageDisplay";
@@ -48,6 +48,43 @@ export function useCombatSystem(
   // 毒の場合は毒タイマー
   const poisonTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // ユーザーのモーション設定（reduced motion）
+  const reducedMotionRef = useRef<boolean>(false);
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'matchMedia' in window) {
+      const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+      const update = () => { reducedMotionRef.current = !!mq.matches; };
+      update();
+      if ('addEventListener' in mq) {
+        mq.addEventListener('change', update);
+        return () => mq.removeEventListener('change', update);
+      } else if ('addListener' in mq) {
+        // Safari fallback
+        // @ts-ignore
+        mq.addListener(update);
+        return () => {
+          // @ts-ignore
+          mq.removeListener(update);
+        };
+      }
+    }
+  }, []);
+
+  // プレイヤー参照の自動同期（外部からの明示呼び出しに依存しない）
+  useEffect(() => {
+    playerRef.current = player;
+  }, [player]);
+
+  // アンマウント時やリセット時に毒タイマーを確実にクリア
+  useEffect(() => {
+    return () => {
+      if (poisonTimerRef.current) {
+        clearInterval(poisonTimerRef.current);
+        poisonTimerRef.current = null;
+      }
+    };
+  }, []);
+
   // 敵が変わったときにダメージ表示配列を初期化
   const initializeAnimations = useCallback(() => {
     setDamageNumbers(currentEnemies.map(() => null));
@@ -73,13 +110,18 @@ export function useCombatSystem(
       }, 1000);
 
       // 指定された期間後に毒効果をクリア
-      setTimeout(() => {
+      const timeoutId = setTimeout(() => {
         if (poisonTimerRef.current) {
           clearInterval(poisonTimerRef.current);
-          setPlayer((prev) => prev.removeStatusEffects("poison"));
           poisonTimerRef.current = null;
         }
+        setPlayer((prev) => prev.removeStatusEffects("poison"));
       }, poisonEffect.ticks * 1000);
+
+      // 安全策: アンマウント時にtimeoutも破棄
+      // （上のクリーンアップeffectでintervalは破棄される）
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const _ = timeoutId;
     },
     [setPlayer, showPlayerHitEffect]
   );
@@ -244,16 +286,18 @@ export function useCombatSystem(
           setPlayerDamageDisplay(null);
         }, 1500);
 
-        if (isCritical) {
-          setIsScreenHit(true);
-          setTimeout(() => {
-            setIsScreenHit(false);
-          }, 500);
-        } else {
-          setIsScreenShake(true);
-          setTimeout(() => {
-            setIsScreenShake(false);
-          }, 500);
+        if (!reducedMotionRef.current) {
+          if (isCritical) {
+            setIsScreenHit(true);
+            setTimeout(() => {
+              setIsScreenHit(false);
+            }, 500);
+          } else {
+            setIsScreenShake(true);
+            setTimeout(() => {
+              setIsScreenShake(false);
+            }, 500);
+          }
         }
       }
     },

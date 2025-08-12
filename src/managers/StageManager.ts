@@ -8,6 +8,7 @@ import {
   MonsterSet,
 } from "../data/stages";
 import { MessageType } from "../components/MessageDisplay";
+import { MESSAGE_DISPLAY_DURATION } from "../data/constants";
 
 /**
  * ステージの管理とステージ関連の機能を提供するクラス
@@ -311,19 +312,23 @@ export class StageManager {
       );
 
       setTimeout(() => {
-        // 経験値獲得
-        gainEXP(totalEXP);
-
-        // クリアメッセージ表示
+        // 先にクリアメッセージを表示（被らないようにする）
         setMessage(this.createCompletionMessage(totalEXP, isBossFloor));
-
-        // 次のステージへの準備
-        setReadyForNextStage(true);
 
         // スケールをデフォルト値（2）に戻す
         if (setStageScale) {
           setStageScale(2);
         }
+
+        // クリアメッセージの表示が終わってから経験値処理（＝レベルアップ通知）を開始
+        setTimeout(() => {
+          gainEXP(totalEXP);
+        }, MESSAGE_DISPLAY_DURATION + 50); // わずかに余白
+
+        // メッセージ表示が終わってから進行用のボタンを出す
+        setTimeout(() => {
+          setReadyForNextStage(true);
+        }, MESSAGE_DISPLAY_DURATION + 150); // 少しバッファを追加
       }, 2000);
     }
 

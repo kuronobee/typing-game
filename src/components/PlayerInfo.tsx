@@ -69,4 +69,4 @@ const PlayerInfo: React.FC<PlayerInfoProps> = ({
     );
 };
 
-export default PlayerInfo;
+export default React.memo(PlayerInfo);

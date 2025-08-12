@@ -43,4 +43,4 @@ const ExperienceBar: React.FC<ExperienceBarProps> = ({
   );
 };
 
-export default ExperienceBar;
+export default React.memo(ExperienceBar);

@@ -98,7 +98,12 @@ const MessageDisplay: React.FC<MessageDisplayProps> = ({
   `;
 
   return (
-    <div className={containerClasses}>
+    <div
+      className={containerClasses}
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+    >
       {/* 複数メッセージを改行して表示 */}
       <div className="flex flex-col gap-1">
         {messages.map((message, index) => (

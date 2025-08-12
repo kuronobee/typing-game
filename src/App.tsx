@@ -7,6 +7,7 @@ import LevelUpNotifier from "./components/LevelUpNotifier";
 import CombatEffects from "./components/CombatEffects";
 import NextStageButton from "./components/NextStageButton";
 import StageSelection from "./components/StageSelection";
+import StageClear from "./components/StageClear";
 
 import { Player as PlayerModel } from "./models/Player";
 import { ENEMY_HIT_ANIMATION_DURATION } from "./data/constants";
@@ -31,6 +32,7 @@ import SkillEffect from "./components/SkillEffect";
 import FireSkillEffect from "./components/FireSkillEffect";
 import { SkillHandler } from "./handlers/SkillHandler";
 import SkillAcquisitionNotification from "./components/SkillAcquisitionNotification";
+import BossAppearEffect from "./components/BossAppearEffect";
 
 const App: React.FC = () => {
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -43,6 +45,7 @@ const App: React.FC = () => {
   const [backgroundImage, setBackgroundImage] = useState<string>("");
   // 状態変数追加
   const [showRespawnEffect, setShowRespawnEffect] = useState(false);
+  const [showBossAppear, setShowBossAppear] = useState(false);
 
   // カスタムフックの使用
   useIOSScrollPrevention(inputRef);
@@ -204,11 +207,7 @@ const App: React.FC = () => {
           });
         }
       }
-      // Enterで次のステージへ進む
-      else if (event.key === "Enter" && gameState.readyForNextStage) {
-        spawnNewStage();
-        gameState.setReadyForNextStage(false);
-      }
+      // Enter キーの進行は NextStageButton 側で処理する（ここでは何もしない）
       // ファンクションキー（F1〜F3）でスキル選択を追加
       if (event.key.startsWith('F') && !isNaN(parseInt(event.key.slice(1)))) {
         const keyNum = parseInt(event.key.slice(1));
@@ -351,6 +350,12 @@ const App: React.FC = () => {
     // ボスフロアの情報を更新
     setIsBossFloor(isNewBossFloor || false);
 
+    // ボス出現演出
+    if (isNewBossFloor) {
+      setShowBossAppear(true);
+      window.setTimeout(() => setShowBossAppear(false), 1800);
+    }
+
     // ゲーム状態を更新
     gameState.setStageScale(scale ?? 2);
     gameState.setCurrentEnemies(enemies);
@@ -361,6 +366,10 @@ const App: React.FC = () => {
 
   // 新規追加: 次のフロアに進む処理
   const advanceToNextFloor = () => {
+    // レベルアップ表示中は進行禁止
+    if (gameState.levelUpQueue.length > 0 || gameState.currentShowingLevel !== null) {
+      return;
+    }
     // 次のフロア情報を取得
     // 現在のステージとフロアを取得
     const { stageId: currentStageId, floorIndex: currentFloorIndex } =
@@ -455,9 +464,6 @@ const App: React.FC = () => {
           prev.statusEffects
         ));
       }
-
-      // ステージ完了メッセージを設定
-      gameState.setMessage(StageManager.createCompletionMessage(amount));
 
       return didLevelUp;
     } catch (error) {
@@ -583,6 +589,10 @@ const App: React.FC = () => {
 
   // 新しい関数: 現在のフロアに留まる処理
   const stayOnCurrentFloor = () => {
+    // レベルアップ表示中は再出現禁止
+    if (gameState.levelUpQueue.length > 0 || gameState.currentShowingLevel !== null) {
+      return;
+    }
     // クリア効果を表示
     setShowRespawnEffect(true);
 
@@ -608,6 +618,12 @@ const App: React.FC = () => {
   // 次のステージへ進むハンドラ
   const handleNextStage = () => {
     advanceToNextFloor();
+  };
+
+  // ボス討伐後：タイトルに戻す
+  const handleReturnToTitle = () => {
+    gameState.setReadyForNextStage(false);
+    setGameStarted(false);
   };
 
   // プレイヤーが死亡したらゲームオーバー画面を表示(戦闘不能になってから5秒後)
@@ -758,14 +774,18 @@ const App: React.FC = () => {
               backgroundImage={backgroundImage}
             />
 
-            {/* レベルアップ通知 */}
-            {gameState.currentShowingLevel !== null && (
-              <LevelUpNotifier
-                player={gameState.player}
-                level={gameState.currentShowingLevel}
-                onClose={handleCloseLevelUp}
-              />
-            )}
+          {/* レベルアップ通知 */}
+          {gameState.currentShowingLevel !== null && (
+            <LevelUpNotifier
+              player={gameState.player}
+              level={gameState.currentShowingLevel}
+              onClose={handleCloseLevelUp}
+            />
+          )}
+          {/* ボス出現エフェクト */}
+          {showBossAppear && (
+            <BossAppearEffect onComplete={() => setShowBossAppear(false)} />
+          )}
             {/* スキル獲得通知 */}
             {skillManagement.newlyAcquiredSkill && (
               <SkillAcquisitionNotification
@@ -773,15 +793,19 @@ const App: React.FC = () => {
                 onClose={skillManagement.handleCloseSkillNotification}
               />
             )}
-            {/* 次のステージボタン */}
-            {gameState.readyForNextStage && gameState.levelUpQueue.length === 0 && (
-              <NextStageButton
-                onNext={handleNextStage}
-                onStay={stayOnCurrentFloor}
-                isBossFloor={isBossFloor}
-                stageId={currentStageId}
-                floorIndex={currentFloorIndex}
-              />
+            {/* 次の行動ウィンドウ */}
+            {gameState.readyForNextStage && gameState.levelUpQueue.length === 0 && gameState.currentShowingLevel === null && (
+              isBossFloor ? (
+                <StageClear onReturnToTitle={handleReturnToTitle} />
+              ) : (
+                <NextStageButton
+                  onNext={handleNextStage}
+                  onStay={stayOnCurrentFloor}
+                  isBossFloor={isBossFloor}
+                  stageId={currentStageId}
+                  floorIndex={currentFloorIndex}
+                />
+              )
             )}
             {showRespawnEffect && (
               <div className="clear-flash"></div>

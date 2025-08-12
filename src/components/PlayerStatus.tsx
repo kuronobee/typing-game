@@ -56,4 +56,4 @@ const PlayerStatus: React.FC<PlayerStatusProps> = ({
   );
 };
 
-export default PlayerStatus;
+export default React.memo(PlayerStatus);
