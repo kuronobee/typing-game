@@ -122,7 +122,7 @@ const SkillManagement: React.FC<SkillManagementProps> = ({
           <div className="mb-4">
             <h3 className="text-lg text-white mb-2">利用可能なスキル</h3>
             <div className="grid grid-cols-3 gap-2 max-h-60 overflow-y-auto">
-              {availableSkills.map((skill) => {
+              {availableSkills.map((skill, idx) => {
                 // すでに装備済みのスキルを確認
                 const isEquipped = equippedSkills.some(
                   equippedSkill => equippedSkill && equippedSkill.id === skill.id
@@ -130,7 +130,7 @@ const SkillManagement: React.FC<SkillManagementProps> = ({
                 
                 return (
                   <div 
-                    key={skill.id}
+                    key={`${skill.id}-${idx}`}
                     className={`p-2 rounded-md border flex flex-col items-center ${
                       isEquipped 
                         ? 'bg-gray-600 border-gray-500 cursor-not-allowed opacity-50' 
