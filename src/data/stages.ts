@@ -201,6 +201,7 @@ export const stages: Stage[] = [
       {
         id: "cave_1",
         name: "洞窟入口",
+        bg: new URL("../assets/bg/cave.jpg", import.meta.url).toString(),
         monsterSets: [
           {
             id: "bat_pair",
@@ -231,6 +232,7 @@ export const stages: Stage[] = [
       {
         id: "cave_2",
         name: "鍾乳洞",
+        bg: new URL("../assets/bg/cave.jpg", import.meta.url).toString(),
         monsterSets: [
           {
             id: "single_ghoul",
@@ -261,6 +263,7 @@ export const stages: Stage[] = [
       {
         id: "cave_3",
         name: "地下水脈",
+        bg: new URL("../assets/bg/cave.jpg", import.meta.url).toString(),
         monsterSets: [
           {
             id: "dual_ghoul",
@@ -311,6 +314,7 @@ export const stages: Stage[] = [
       {
         id: "cave_4",
         name: "深淵の間",
+        bg: new URL("../assets/bg/cave.jpg", import.meta.url).toString(),
         monsterSets: [
           {
             id: "boss_golem",
