@@ -42,6 +42,12 @@ const FireSkillEffect: React.FC<FireSkillEffectProps> = ({
   // タイマー参照を保持して確実にクリーンアップ
   const timersRef = useRef<number[]>([]);
 
+  // 最新の完了コールバック参照を保持（親の再レンダーで関数が再生成されても影響しないように）
+  const onCompleteRef = useRef(onComplete);
+  useEffect(() => {
+    onCompleteRef.current = onComplete;
+  }, [onComplete]);
+
   // パワーに応じてパラメータを調整 (定数を使用してハードコード)
   const powerSettings = useMemo(() => {
     switch (power) {
@@ -124,7 +130,9 @@ const FireSkillEffect: React.FC<FireSkillEffectProps> = ({
       // コールバックは一度だけ実行する
       if (!completedRef.current) {
         completedRef.current = true;
-        onComplete(); // 一度だけ実行されることを保証
+        if (onCompleteRef.current) {
+          onCompleteRef.current(); // 一度だけ実行されることを保証
+        }
       }
     }, duration);
     timersRef.current.push(completionTimer);
@@ -134,7 +142,7 @@ const FireSkillEffect: React.FC<FireSkillEffectProps> = ({
       timersRef.current.forEach(timer => clearTimeout(timer));
       timersRef.current = [];
     };
-  }, [powerSettings.chargeDuration, duration, onComplete]);
+  }, [powerSettings.chargeDuration, duration]);
 
   const effectiveSourcePosition = sourcePosition || {
     x: window.innerWidth / 2,
